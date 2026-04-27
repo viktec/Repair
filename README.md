@@ -46,8 +46,6 @@ Sostituisce il caos di chat WhatsApp e foglietti con un sistema unico per ticket
 | **Pro** | 19,90 €/mese | 10.000 ticket, 1 negozio | + magazzino, POS, ordini fornitori, documenti, report |
 | **Business** | 25,90 €/mese | ticket illimitati, 2 sedi incluse (+10€/sede) | + AI fattura, Telegram bot, multi‑sede, Art.36 |
 
-Add‑on (post‑MVP): Trinity AI centralinista, Fiscal addon scontrino digitale.
-
 > **Nota billing**: Stripe non è collegato in questa fase. I piani sono modellati nel DB con feature flag, ma l'attivazione è manuale finché non si integra il provider.
 
 ---

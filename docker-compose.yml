@@ -1,25 +1,31 @@
-# Repair / Riparoio — Docker Compose skeleton
+# Repair / Riparoio — Docker Compose
 #
 # Reti:
 #   - npm_proxy        : esterna, condivisa con Nginx Proxy Manager (deve esistere già sull'host)
 #   - repair_internal  : privata, solo i servizi interni (DB, redis)
 #
-# Per usare:
-#   1. Creare la rete NPM se non esiste: `docker network create npm_proxy`
-#   2. Copiare `.env.example` in `.env` e compilare i segreti
-#   3. `docker compose up -d`
-#   4. Configurare in NPM i Proxy Hosts che puntano a:
-#        app:3000        →  riparoio.it, app.riparoio.it, t.riparoio.it
-#        minio:9000      →  cdn.riparoio.it
-#        minio:9001      →  s3-console.riparoio.it (con Access List)
+# Per usare su VPS:
+#   1. Creare la rete NPM se non esiste:  docker network create npm_proxy
+#   2. Copiare .env.example in .env e compilare tutti i segreti
+#   3. docker compose up -d
+#   4. Configurare in NPM i Proxy Hosts:
+#        app:3000      →  app.riparoio.it   (SSL Let's Encrypt, WebSocket on)
+#        app:3000      →  t.riparoio.it     (stesso container, route /t/*)
+#        minio:9000    →  cdn.riparoio.it
+#        minio:9001    →  s3-console.riparoio.it  (+ Access List per proteggerla)
+#
+# NOTA: il servizio `app` usa `build: .` — richiede il codice Next.js.
+#       Prima di `docker compose up -d app`, fare `git pull` sulla VPS.
+#       I servizi infra (postgres, redis, minio) si avviano subito senza codice.
 
 services:
   app:
-    image: ghcr.io/viktec/repair-app:latest
-    # In sviluppo locale, sostituire con:
-    # build:
-    #   context: .
-    #   dockerfile: apps/web/Dockerfile
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: runner
+    # Alternativa immagine prebuilt da GitHub Actions (Phase 1+):
+    # image: ghcr.io/viktec/repair-app:latest
     container_name: repair_app
     restart: unless-stopped
     env_file: .env
@@ -42,25 +48,6 @@ services:
       - repair_internal
     expose:
       - "3000"
-
-  worker:
-    image: ghcr.io/viktec/repair-app:latest
-    container_name: repair_worker
-    restart: unless-stopped
-    command: ["node", "apps/worker/dist/index.js"]
-    env_file: .env
-    environment:
-      NODE_ENV: production
-      DATABASE_URL: postgresql://repair:${POSTGRES_PASSWORD}@postgres:5432/repair
-      REDIS_URL: redis://redis:6379
-      S3_ENDPOINT: http://minio:9000
-    depends_on:
-      postgres:
-        condition: service_healthy
-      redis:
-        condition: service_started
-    networks:
-      - repair_internal
 
   postgres:
     image: postgres:16-alpine

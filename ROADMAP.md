@@ -92,12 +92,10 @@ Stime sono ottimistiche per un solo sviluppatore senior con sessioni Claude Code
 
 ---
 
-## Phase 4 — Add‑on (post‑launch)
+## Phase 4 — Espansioni (post‑launch)
 
-- **Trinity AI** (centralinista vocale): integrazione con provider voice AI per rispondere alle chiamate fuori orario, prendere appuntamenti, dare stato ticket per IMEI.
-- **Fiscal addon**: scontrino fiscale via fornitore certificato AdE (Epson cloud RT, Custom Cloud) — _non si reinventa la fiscalità, si integra_.
-- **API WhatsApp Cloud** (sostituzione del flusso copia/incolla quando l'utente avrà account Meta Business approvato).
-- **App mobile native** (React Native + Expo) — solo se la PWA non basta per casi d'uso specifici.
+- **API WhatsApp Cloud**: sostituzione del flusso copia/incolla quando si vuole automatizzare gli invii (richiede account Meta Business approvato).
+- **App mobile native** (React Native + Expo): solo se la PWA non basta per casi d'uso specifici (fotocamera, NFC, ecc.).
 
 ---
 
