@@ -1,0 +1,66 @@
+# Node
+node_modules/
+.pnpm-store/
+.npm/
+.yarn/
+
+# Build output
+.next/
+out/
+dist/
+build/
+*.tsbuildinfo
+
+# Env
+.env
+.env.local
+.env.*.local
+!.env.example
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Local agent / IDE settings
+.claude/
+
+# IDE / OS
+.vscode/
+.idea/
+*.swp
+*.swo
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Coverage / cache
+coverage/
+.nyc_output/
+.cache/
+.turbo/
+.parcel-cache/
+
+# Database / volumes locali
+data/
+volumes/
+*.sqlite
+*.db
+postgres-data/
+minio-data/
+redis-data/
+
+# Backup locali
+backups/
+*.sql.gz
+*.dump
+
+# Drizzle
+drizzle/_journal.json.bak
+
+# Temp
+tmp/
+temp/
+*.tmp

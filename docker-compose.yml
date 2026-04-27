@@ -1,0 +1,142 @@
+# Repair / Riparoio — Docker Compose skeleton
+#
+# Reti:
+#   - npm_proxy        : esterna, condivisa con Nginx Proxy Manager (deve esistere già sull'host)
+#   - repair_internal  : privata, solo i servizi interni (DB, redis)
+#
+# Per usare:
+#   1. Creare la rete NPM se non esiste: `docker network create npm_proxy`
+#   2. Copiare `.env.example` in `.env` e compilare i segreti
+#   3. `docker compose up -d`
+#   4. Configurare in NPM i Proxy Hosts che puntano a:
+#        app:3000        →  riparoio.it, app.riparoio.it, t.riparoio.it
+#        minio:9000      →  cdn.riparoio.it
+#        minio:9001      →  s3-console.riparoio.it (con Access List)
+
+services:
+  app:
+    image: ghcr.io/viktec/repair-app:latest
+    # In sviluppo locale, sostituire con:
+    # build:
+    #   context: .
+    #   dockerfile: apps/web/Dockerfile
+    container_name: repair_app
+    restart: unless-stopped
+    env_file: .env
+    environment:
+      NODE_ENV: production
+      DATABASE_URL: postgresql://repair:${POSTGRES_PASSWORD}@postgres:5432/repair
+      REDIS_URL: redis://redis:6379
+      S3_ENDPOINT: http://minio:9000
+      S3_BUCKET_PUBLIC: repair-public-readonly
+      S3_BUCKET_PRIVATE: repair-private
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_started
+      minio:
+        condition: service_started
+    networks:
+      - npm_proxy
+      - repair_internal
+    expose:
+      - "3000"
+
+  worker:
+    image: ghcr.io/viktec/repair-app:latest
+    container_name: repair_worker
+    restart: unless-stopped
+    command: ["node", "apps/worker/dist/index.js"]
+    env_file: .env
+    environment:
+      NODE_ENV: production
+      DATABASE_URL: postgresql://repair:${POSTGRES_PASSWORD}@postgres:5432/repair
+      REDIS_URL: redis://redis:6379
+      S3_ENDPOINT: http://minio:9000
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_started
+    networks:
+      - repair_internal
+
+  postgres:
+    image: postgres:16-alpine
+    container_name: repair_postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: repair
+      POSTGRES_USER: repair
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U repair -d repair"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - repair_internal
+
+  redis:
+    image: redis:7-alpine
+    container_name: repair_redis
+    restart: unless-stopped
+    command: ["redis-server", "--appendonly", "yes", "--save", "60", "1"]
+    volumes:
+      - redis_data:/data
+    networks:
+      - repair_internal
+
+  minio:
+    image: minio/minio:latest
+    container_name: repair_minio
+    restart: unless-stopped
+    command: server /data --console-address ":9001"
+    environment:
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD}
+      MINIO_BROWSER_REDIRECT_URL: https://s3-console.riparoio.it
+    volumes:
+      - minio_data:/data
+    networks:
+      - npm_proxy
+      - repair_internal
+    expose:
+      - "9000"
+      - "9001"
+
+  # Crea i bucket al primo avvio
+  minio_init:
+    image: minio/mc:latest
+    container_name: repair_minio_init
+    depends_on:
+      - minio
+    entrypoint: >
+      /bin/sh -c "
+      sleep 5;
+      mc alias set local http://minio:9000 $$MINIO_ROOT_USER $$MINIO_ROOT_PASSWORD;
+      mc mb -p local/repair-public-readonly || true;
+      mc mb -p local/repair-private || true;
+      mc anonymous set download local/repair-public-readonly || true;
+      exit 0;
+      "
+    environment:
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD}
+    networks:
+      - repair_internal
+    restart: "no"
+
+volumes:
+  postgres_data:
+  redis_data:
+  minio_data:
+
+networks:
+  npm_proxy:
+    external: true
+  repair_internal:
+    driver: bridge
