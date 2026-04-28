@@ -15,6 +15,13 @@
       "when": 1777379359821,
       "tag": "0001_parallel_peter_quill",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1777389901052,
+      "tag": "0002_broad_wrecker",
+      "breakpoints": true
     }
   ]
 }

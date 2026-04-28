@@ -2,12 +2,13 @@
 
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
-import { tickets, ticketStatuses } from "@/db/schema";
+import { tickets, ticketStatuses, customDeviceModels } from "@/db/schema";
 import { eq, and, max } from "drizzle-orm";
 import { z } from "zod";
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { generateQrToken } from "@/lib/utils";
+import { DEVICE_MODELS } from "@/lib/devices";
 
 const ticketSchema = z.object({
   customerId: z.string().uuid().optional().or(z.literal("")),
@@ -22,7 +23,7 @@ const ticketSchema = z.object({
   estimatedCost: z.string().optional(),
 });
 
-type TicketState = { errors?: Record<string, string[]> } | null;
+type TicketState = { errors?: Record<string, string[]> } | { ticketId: string } | null;
 
 export async function createTicketAction(
   _prev: TicketState,
@@ -76,8 +77,19 @@ export async function createTicketAction(
     })
     .returning({ id: tickets.id });
 
+  // Salva brand/model custom se non sono nel database statico
+  if (data.deviceBrand && data.deviceModel) {
+    const staticModels = DEVICE_MODELS[data.deviceBrand] ?? [];
+    if (!staticModels.includes(data.deviceModel)) {
+      await db
+        .insert(customDeviceModels)
+        .values({ organizationId: orgId, brand: data.deviceBrand, model: data.deviceModel })
+        .onConflictDoNothing();
+    }
+  }
+
   revalidatePath("/tickets");
-  redirect(`/tickets/${ticket.id}`);
+  return { ticketId: ticket.id };
 }
 
 export async function updateTicketStatusAction(ticketId: string, statusId: string) {

@@ -21,7 +21,7 @@ const navItems = [
   { href: "/customers", icon: Users, label: "Clienti", available: true },
   { href: "/inventory", icon: Package, label: "Magazzino", available: false, plan: "Pro" },
   { href: "/reports", icon: BarChart3, label: "Report", available: false, plan: "Pro" },
-  { href: "/settings", icon: Settings, label: "Impostazioni", available: false, soon: true },
+  { href: "/settings", icon: Settings, label: "Impostazioni", available: true },
 ];
 
 export function Sidebar() {
@@ -54,7 +54,7 @@ export function Sidebar() {
             >
               <item.icon className="h-4 w-4 shrink-0" />
               <span className="flex-1">{item.label}</span>
-              {item.soon && (
+              {"soon" in item && (item as { soon?: boolean }).soon && (
                 <Badge variant="secondary" className="text-[10px] px-1.5 py-0">
                   Presto
                 </Badge>

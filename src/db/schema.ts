@@ -43,6 +43,7 @@ export const organizations = pgTable("organizations", {
   brandingLogoUrl: text("branding_logo_url"),
   brandingPrimaryColor: varchar("branding_primary_color", { length: 7 }).default("#0D8F7A"),
   phone: varchar("phone", { length: 50 }),
+  whatsappPhone: varchar("whatsapp_phone", { length: 50 }),
   address: text("address"),
   city: varchar("city", { length: 100 }),
   postalCode: varchar("postal_code", { length: 20 }),
@@ -211,3 +212,13 @@ export const ticketsRelations = relations(tickets, ({ one, many }) => ({
 export const ticketPhotosRelations = relations(ticketPhotos, ({ one }) => ({
   ticket: one(tickets, { fields: [ticketPhotos.ticketId], references: [tickets.id] }),
 }));
+
+export const customDeviceModels = pgTable("custom_device_models", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  organizationId: uuid("organization_id")
+    .notNull()
+    .references(() => organizations.id, { onDelete: "cascade" }),
+  brand: varchar("brand", { length: 100 }).notNull(),
+  model: varchar("model", { length: 150 }).notNull(),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+});

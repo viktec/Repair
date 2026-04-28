@@ -1,0 +1,187 @@
+"use client";
+
+import { useTransition, useRef, useState } from "react";
+import { updateOrganizationAction, getLogoUploadUrl, saveLogoUrl } from "./actions";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Separator } from "@/components/ui/separator";
+import { Check, Loader2, Upload, X } from "lucide-react";
+
+type Org = {
+  name: string;
+  phone: string | null;
+  whatsappPhone: string | null;
+  address: string | null;
+  city: string | null;
+  postalCode: string | null;
+  vatNumber: string | null;
+  brandingPrimaryColor: string | null;
+  brandingLogoUrl: string | null;
+};
+
+export function SettingsForm({ org }: { org: Org }) {
+  const [isPending, startTransition] = useTransition();
+  const [saved, setSaved] = useState(false);
+  const [logoUrl, setLogoUrl] = useState(org.brandingLogoUrl ?? "");
+  const [uploadingLogo, setUploadingLogo] = useState(false);
+  const logoInputRef = useRef<HTMLInputElement>(null);
+
+  function handleSave(formData: FormData) {
+    startTransition(async () => {
+      await updateOrganizationAction(formData);
+      setSaved(true);
+      setTimeout(() => setSaved(false), 2500);
+    });
+  }
+
+  async function handleLogoUpload(file: File) {
+    setUploadingLogo(true);
+    try {
+      const { uploadUrl, key } = await getLogoUploadUrl(file.name, file.type);
+      await fetch(uploadUrl, { method: "PUT", body: file, headers: { "Content-Type": file.type } });
+      await saveLogoUrl(key);
+      const { getPublicUrl } = await import("@/lib/storage");
+      setLogoUrl(getPublicUrl(key));
+    } catch {
+      alert("Errore nel caricamento del logo. Riprova.");
+    } finally {
+      setUploadingLogo(false);
+    }
+  }
+
+  return (
+    <form action={handleSave} className="space-y-6">
+      {/* Dati negozio */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-base">Dati centro di riparazione</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="space-y-1.5">
+            <Label htmlFor="name">Nome attività <span className="text-destructive">*</span></Label>
+            <Input id="name" name="name" defaultValue={org.name} required />
+          </div>
+
+          <div className="grid grid-cols-2 gap-3">
+            <div className="space-y-1.5">
+              <Label htmlFor="phone">Telefono</Label>
+              <Input id="phone" name="phone" type="tel" defaultValue={org.phone ?? ""} placeholder="+39 02 0000000" />
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="whatsappPhone">
+                WhatsApp <span className="text-xs text-muted-foreground">(per il tracking cliente)</span>
+              </Label>
+              <Input id="whatsappPhone" name="whatsappPhone" type="tel" defaultValue={org.whatsappPhone ?? ""} placeholder="+39 333 000 0000" />
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-3">
+            <div className="space-y-1.5">
+              <Label htmlFor="address">Indirizzo</Label>
+              <Input id="address" name="address" defaultValue={org.address ?? ""} placeholder="Via Roma, 1" />
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="city">Città</Label>
+              <Input id="city" name="city" defaultValue={org.city ?? ""} placeholder="Milano" />
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-3">
+            <div className="space-y-1.5">
+              <Label htmlFor="postalCode">CAP</Label>
+              <Input id="postalCode" name="postalCode" defaultValue={org.postalCode ?? ""} placeholder="20100" maxLength={5} />
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="vatNumber">P. IVA / C.F.</Label>
+              <Input id="vatNumber" name="vatNumber" defaultValue={org.vatNumber ?? ""} placeholder="IT12345678901" />
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Branding */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-base">Branding</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          {/* Logo */}
+          <div className="space-y-2">
+            <Label>Logo</Label>
+            <div className="flex items-center gap-4">
+              {logoUrl ? (
+                <div className="relative">
+                  <img src={logoUrl} alt="Logo" className="h-14 w-auto max-w-[160px] rounded-lg border object-contain p-1" />
+                  <button
+                    type="button"
+                    onClick={() => { setLogoUrl(""); saveLogoUrl(""); }}
+                    className="absolute -right-2 -top-2 rounded-full bg-white border p-0.5 text-muted-foreground shadow-sm hover:text-destructive"
+                  >
+                    <X className="h-3 w-3" />
+                  </button>
+                </div>
+              ) : (
+                <div className="flex h-14 w-32 items-center justify-center rounded-lg border-2 border-dashed border-slate-200 text-muted-foreground/50">
+                  <span className="text-xs">Nessun logo</span>
+                </div>
+              )}
+              <div>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  disabled={uploadingLogo}
+                  onClick={() => logoInputRef.current?.click()}
+                  className="gap-1.5"
+                >
+                  {uploadingLogo ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Upload className="h-3.5 w-3.5" />}
+                  {logoUrl ? "Cambia logo" : "Carica logo"}
+                </Button>
+                <p className="mt-1 text-xs text-muted-foreground">PNG o SVG, sfondo trasparente consigliato</p>
+              </div>
+            </div>
+            <input
+              ref={logoInputRef}
+              type="file"
+              accept="image/png,image/svg+xml,image/jpeg,image/webp"
+              className="hidden"
+              onChange={(e) => e.target.files?.[0] && handleLogoUpload(e.target.files[0])}
+            />
+          </div>
+
+          <Separator />
+
+          {/* Colore primario */}
+          <div className="space-y-1.5">
+            <Label htmlFor="brandingPrimaryColor">Colore primario</Label>
+            <div className="flex items-center gap-3">
+              <input
+                type="color"
+                id="brandingPrimaryColor"
+                name="brandingPrimaryColor"
+                defaultValue={org.brandingPrimaryColor ?? "#0D8F7A"}
+                className="h-10 w-16 cursor-pointer rounded-md border p-1"
+              />
+              <p className="text-xs text-muted-foreground">
+                Usato nell'header della pagina tracking e nelle ricevute
+              </p>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      <div className="flex justify-end">
+        <Button type="submit" disabled={isPending} className="gap-2">
+          {isPending ? (
+            <Loader2 className="h-4 w-4 animate-spin" />
+          ) : saved ? (
+            <Check className="h-4 w-4" />
+          ) : null}
+          {saved ? "Salvato!" : "Salva impostazioni"}
+        </Button>
+      </div>
+    </form>
+  );
+}

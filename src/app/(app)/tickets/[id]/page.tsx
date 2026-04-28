@@ -12,14 +12,16 @@ import { Separator } from "@/components/ui/separator";
 import { formatDate, formatCurrency } from "@/lib/utils";
 import { TicketActions } from "./actions-client";
 import { PhotoUpload } from "./photo-upload";
-import { SignaturePad } from "./signature-pad";
 import { getPublicUrl, getPresignedDownloadUrl } from "@/lib/storage";
+import { ensureDefaultStatuses } from "@/lib/seed-statuses";
 
 export default async function TicketDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   const session = await auth();
   if (!session?.user.organizationId) redirect("/login");
   const orgId = session.user.organizationId;
+
+  await ensureDefaultStatuses(orgId);
 
   const [ticket] = await db
     .select({
@@ -81,7 +83,8 @@ export default async function TicketDetailPage({ params }: { params: Promise<{ i
   );
 
   const displayPhotos = photosWithUrls.filter((p) => p.photoType !== "signature");
-  const hasSignature = photosWithUrls.some((p) => p.photoType === "signature");
+  const signaturePhoto = photosWithUrls.find((p) => p.photoType === "signature");
+  const signatureUrl = signaturePhoto?.url ?? null;
 
   const trackingUrl = `${process.env.TRACKING_URL ?? "https://t.my-repair.it"}/${ticket.qrToken}`;
 
@@ -213,9 +216,30 @@ export default async function TicketDetailPage({ params }: { params: Promise<{ i
             waLink={ticket.customerPhone ? waLink : null}
           />
           <PhotoUpload ticketId={ticket.id} initialPhotos={displayPhotos} />
-          <SignaturePad ticketId={ticket.id} hasSavedSignature={hasSignature} />
+          <SignatureReadOnly signatureUrl={signatureUrl} />
         </div>
       </div>
+    </div>
+  );
+}
+
+function SignatureReadOnly({ signatureUrl }: { signatureUrl: string | null }) {
+  return (
+    <div className="rounded-lg border bg-white p-4 space-y-2">
+      <div className="flex items-center gap-2">
+        <span className="text-sm font-medium text-muted-foreground">Firma cliente</span>
+        {signatureUrl && (
+          <span className="ml-auto flex items-center gap-1 text-xs text-emerald-600 font-medium">
+            <svg className="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" /></svg>
+            Firmato
+          </span>
+        )}
+      </div>
+      {signatureUrl ? (
+        <img src={signatureUrl} alt="Firma cliente" className="w-full rounded-lg border bg-slate-50 object-contain" style={{ maxHeight: 120 }} />
+      ) : (
+        <p className="text-xs text-muted-foreground italic">Nessuna firma raccolta — la firma viene acquisita durante la creazione del ticket.</p>
+      )}
     </div>
   );
 }
