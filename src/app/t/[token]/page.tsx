@@ -64,6 +64,18 @@ export default async function TrackingPage({ params }: { params: Promise<{ token
     ? `https://wa.me/${org.phone.replace(/\D/g, "")}`
     : null;
 
+  const STATUS_MESSAGES: Record<string, string> = {
+    "In attesa":      "Il tuo dispositivo è stato ricevuto e sarà preso in carico a breve.",
+    "Diagnosi":       "Il tuo dispositivo è in fase di diagnosi. Ti informeremo sull'esito a breve.",
+    "In riparazione": "La riparazione è in corso. Ti avviseremo non appena il dispositivo sarà pronto.",
+    "Pronto":         "Il tuo dispositivo è pronto per il ritiro. Puoi passare a prenderlo quando vuoi.",
+    "Consegnato":     "La riparazione è completata. Grazie per averci scelto!",
+  };
+
+  const statusMessage = ticket.statusName
+    ? (STATUS_MESSAGES[ticket.statusName] ?? `Il tuo dispositivo è attualmente in stato: ${ticket.statusName}.`)
+    : "Il tuo dispositivo è in lavorazione.";
+
   const updatedDate = new Intl.DateTimeFormat("it-IT", {
     day: "2-digit", month: "long", year: "numeric",
     hour: "2-digit", minute: "2-digit",
@@ -117,11 +129,7 @@ export default async function TrackingPage({ params }: { params: Promise<{ token
             </div>
           </div>
 
-          <p className="mt-3 text-sm text-muted-foreground">
-            {ticket.isFinal
-              ? "La tua riparazione è completata. Puoi venire a ritirare il dispositivo."
-              : "Il tuo dispositivo è in lavorazione. Riceverai un aggiornamento non appena ci saranno novità."}
-          </p>
+          <p className="mt-3 text-sm text-muted-foreground">{statusMessage}</p>
 
           {hasSigned && (
             <div className="mt-3 flex items-center gap-2 rounded-lg bg-emerald-50 px-3 py-2 text-sm text-emerald-700">
