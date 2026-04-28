@@ -9,7 +9,7 @@ const nextConfig: NextConfig = {
     remotePatterns: [
       {
         protocol: "https",
-        hostname: "cdn.riparoio.it",
+        hostname: "cdn.my-repair.it",
       },
     ],
   },

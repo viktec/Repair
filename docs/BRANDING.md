@@ -1,58 +1,42 @@
 # Branding
 
-> **Stato**: candidato "Riparoio". Da confermare con whois ufficiale prima di registrare.
+## Dominio
 
-## Nome
+**`my-repair.it`** — confermato il 2026‑04‑28.
 
-**Riparoio** — fusione di "ripara" + suffisso "‑oio" (italiano, evoca officina, laboratorio: panificio, panettoio, riparoio).
-Suono caldo, italiano, immediato. Non è un anglismo, ma è anche pronunciabile da non‑italiani.
+Sottodomini operativi:
 
-### Alternative valutate
+| Sottodominio | Destinazione | Note |
+|---|---|---|
+| `my-repair.it` / `www.my-repair.it` | app | landing pubblica + login |
+| `app.my-repair.it` | app | area autenticata |
+| `t.my-repair.it` | app | tracking pubblico QR (host corto per QR più leggibili) |
+| `cdn.my-repair.it` | MinIO | presigned URL foto + file pubblici |
+| `s3-console.my-repair.it` | MinIO console | admin MinIO (Access List NPM) |
 
-| Nome | Pro | Contro | Stato dominio (DNS NS, 2026‑04‑27) |
-|---|---|---|---|
-| **Riparoio** ⭐ | italiano, memorabile, .it/.com/.app/.io tutti liberi | poco "tech" | tutti liberi |
-| Repaio | corto, tech | meno chiaro | .it libero |
-| Repairly | tech, internazionale | .com / .app / .io tutti presi | .it libero |
-| Repairio | italianizzante | .com preso | .it libero |
-| TicketRepair | descrittivo | piatto, lungo | .it libero |
-| FixTicket | tech, conciso | "fix" già saturo | .it libero |
-| SOSRiparo | empatico | suona da call center | .it libero |
-| Riparoo | giocoso, moderno | .com preso | .it / .app liberi |
+## Nome prodotto
 
-Da evitare per collisioni con concorrenti / parking:
-- `fixhub.it` (concorrente diretto)
-- `repairsystem.it` (concorrente)
-- `repairhub.it` (sito Wix attivo)
-- `riparami.it`, `riparalo.it` (parked / sedoparking)
+**Repair** — nome interno e nel codice. Può evolvere nel branding visivo in futuro.
 
-## Domini
+## Identità visiva (proposta — da formalizzare)
 
-Pacchetto da registrare se l'utente conferma "Riparoio":
-- `riparoio.it` (primario)
-- `riparoio.com` (difensivo + brand internazionale)
-- `riparoio.app` (per future PWA / app store presence)
-- `riparoio.io` (difensivo, opzionale)
+- **Palette primaria**: teal `#0D8F7A` (CSS var `--primary: 173 78% 30%`) — già nel codice.
+- **Palette alternativa**: indigo `#4F46E5` se si punta a un look più "tech enterprise".
+- **Tipografia UI**: Inter (già in `src/app/layout.tsx`).
+- **Tipografia codici**: JetBrains Mono (da aggiungere per IMEI, codici ticket, numeri seriali).
+- **Logo**: da progettare — monogramma "R" con chiave/cacciavite stilizzato, minimal.
 
-Sottodomini operativi (vedi INFRASTRUCTURE.md):
-- `app.riparoio.it` — area autenticata
-- `t.riparoio.it` — tracking pubblico QR (host corto = QR più leggibili)
-- `cdn.riparoio.it` — MinIO pubblico
-- `s3-console.riparoio.it` — admin MinIO (protetto)
+## Tone of voice
 
-## Identità visiva (proposta iniziale)
+Diretto, professionale ma caldo. Parla come un collega esperto, non come un manuale.
 
-- **Palette**: blu‑verde tech (#0A7F5C primario, #06B6D4 accent) + grigio caldo (#0F172A testo, #F8FAFC sfondo). Niente nero puro, niente bianco abbagliante.
-- **Tipografia**: Inter (UI) + JetBrains Mono (codici, IMEI).
-- **Logo**: monogramma "R" stilizzato come chiave inglese o cacciavite, ma minimal.
-- **Tone of voice**: diretto, professionale ma caldo, niente paroloni. "Aggiungi un ticket" non "Crea una richiesta di intervento".
+- ✅ "Aggiungi un ticket"
+- ❌ "Crea una nuova richiesta di intervento tecnico"
+- ✅ "Il cliente è in attesa"
+- ❌ "Lo stato della commessa risulta in pending"
 
-> Da formalizzare in Phase 0 con un mini design system (`packages/ui/`).
+## Tagline (da testare A/B sulla landing)
 
-## Tagline candidate
-
-- "Il banco riparazioni, ordinato."
-- "Smetti di cercare le foto del danno tra 50 chat."
-- "Gestione riparazioni che non ti rallenta."
-
-(Test A/B sulla landing in Phase 1.)
+1. "Il banco riparazioni, finalmente ordinato."
+2. "Smetti di cercare le foto del danno tra 50 chat."
+3. "Gestione riparazioni che non ti rallenta."

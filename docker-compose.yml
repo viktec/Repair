@@ -1,4 +1,4 @@
-# Repair / Riparoio — Docker Compose
+# Repair / my-repair.it — Docker Compose
 #
 # Reti:
 #   - npm_proxy        : esterna, condivisa con Nginx Proxy Manager (deve esistere già sull'host)
@@ -9,10 +9,10 @@
 #   2. Copiare .env.example in .env e compilare tutti i segreti
 #   3. docker compose up -d
 #   4. Configurare in NPM i Proxy Hosts:
-#        app:3000      →  app.riparoio.it   (SSL Let's Encrypt, WebSocket on)
-#        app:3000      →  t.riparoio.it     (stesso container, route /t/*)
-#        minio:9000    →  cdn.riparoio.it
-#        minio:9001    →  s3-console.riparoio.it  (+ Access List per proteggerla)
+#        app:3000      →  app.my-repair.it   (SSL Let's Encrypt, WebSocket on)
+#        app:3000      →  t.my-repair.it     (stesso container, route /t/*)
+#        minio:9000    →  cdn.my-repair.it
+#        minio:9001    →  s3-console.my-repair.it  (+ Access List per proteggerla)
 #
 # NOTA: il servizio `app` usa `build: .` — richiede il codice Next.js.
 #       Prima di `docker compose up -d app`, fare `git pull` sulla VPS.
@@ -85,7 +85,7 @@ services:
     environment:
       MINIO_ROOT_USER: ${MINIO_ROOT_USER}
       MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD}
-      MINIO_BROWSER_REDIRECT_URL: https://s3-console.riparoio.it
+      MINIO_BROWSER_REDIRECT_URL: https://s3-console.my-repair.it
     volumes:
       - minio_data:/data
     networks:

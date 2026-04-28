@@ -47,6 +47,6 @@ Pratiche minime obbligatorie. Non esaustivo — vedi anche [INFRASTRUCTURE.md](.
 
 ## Incident response
 
-- Contatto: `security@riparoio.it` (forwarder a email personale founder per ora).
+- Contatto: `security@my-repair.it` (forwarder a email personale founder per ora).
 - Disclosure: 30 giorni dalla conferma; CVE se rilevante.
 - Notifica utenti entro 72h se data breach (obbligo GDPR Art.33–34).

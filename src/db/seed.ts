@@ -7,7 +7,7 @@ import * as schema from "./schema";
 const sql = postgres(process.env.DATABASE_URL!, { max: 1 });
 const db = drizzle(sql, { schema });
 
-const email = process.env.SEED_EMAIL ?? "admin@riparoio.it";
+const email = process.env.SEED_EMAIL ?? "admin@my-repair.it";
 const password = process.env.SEED_PASSWORD ?? "password123";
 const shopName = "Laboratorio Demo";
 

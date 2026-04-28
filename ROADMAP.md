@@ -1,4 +1,4 @@
-# Roadmap — Repair / Riparoio
+# Roadmap — Repair (my-repair.it)
 
 Approccio: **una fase alla volta, ogni fase deve produrre qualcosa di funzionante e demo‑abile**.
 Non si passa alla fase successiva finché la precedente non è in produzione (anche solo su staging) e usata almeno in modo dogfood.
@@ -21,7 +21,7 @@ Stime sono ottimistiche per un solo sviluppatore senior con sessioni Claude Code
 - [ ] Pipeline CI base (lint + typecheck + build)
 - [ ] Deploy iniziale su VPS via Nginx Proxy Manager
 
-**Definition of Done**: posso aprire `https://app.riparoio.it`, registrarmi, completare il wizard, vedere la dashboard vuota.
+**Definition of Done**: posso aprire `https://app.my-repair.it`, registrarmi, completare il wizard, vedere la dashboard vuota. ✅ Completato 2026-04-28.
 
 ---
 

@@ -4,7 +4,7 @@ Documento di onboarding per future sessioni di Claude Code che lavorano su quest
 
 ## Cosa è questo progetto
 
-Repair (working name **Riparoio**): SaaS gestionale per centri di riparazione. Vedi [README.md](./README.md) per il quadro generale, [ROADMAP.md](./ROADMAP.md) per le fasi.
+Repair (dominio: **my-repair.it**): SaaS gestionale per centri di riparazione. Vedi [README.md](./README.md) per il quadro generale, [ROADMAP.md](./ROADMAP.md) per le fasi.
 
 ## Lingua
 

@@ -1,10 +1,10 @@
-# Repair (working name: **Riparoio**)
+# Repair — [my-repair.it](https://my-repair.it)
 
 Gestionale SaaS per centri di riparazione (smartphone, tablet, PC, TV).
 Sostituisce il caos di chat WhatsApp e foglietti con un sistema unico per ticket, foto pre/post, magazzino ricambi, comunicazioni cliente.
 
-> **Stato**: in fase di setup iniziale. Nessun codice ancora — solo piano d'azione e infrastruttura.
-> **Brand**: candidato "Riparoio" (`riparoio.it/.com/.app/.io` tutti disponibili al 2026‑04‑27, da verificare con whois ufficiale).
+> **Stato**: Phase 0 completata — scaffold Next.js 16, auth, landing page, onboarding wizard funzionante.
+> **Dominio**: `my-repair.it` (confermato 2026‑04‑28).
 
 ---
 

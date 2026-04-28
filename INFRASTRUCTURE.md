@@ -56,15 +56,15 @@ Due reti Docker:
 
 ---
 
-## Hostname proposti (Riparoio)
+## Hostname (my-repair.it)
 
 | Host | Container | Note |
 |---|---|---|
-| `riparoio.it` / `www.riparoio.it` | app | landing pubblica + login |
-| `app.riparoio.it` | app | area autenticata (stesso container, route diverse) |
-| `t.riparoio.it` | app | tracking pubblico QR (short host per QR code piccoli) |
-| `cdn.riparoio.it` | minio | API S3 + presigned URL foto |
-| `s3-console.riparoio.it` | minio | console admin MinIO (protetta da Access List NPM) |
+| `my-repair.it` / `www.my-repair.it` | app | landing pubblica + login |
+| `app.my-repair.it` | app | area autenticata (stesso container, route diverse) |
+| `t.my-repair.it` | app | tracking pubblico QR (short host per QR code piccoli) |
+| `cdn.my-repair.it` | minio | API S3 + presigned URL foto |
+| `s3-console.my-repair.it` | minio | console admin MinIO (protetta da Access List NPM) |
 
 NPM si occupa di: SSL Let's Encrypt, redirect 80→443, WebSocket (necessario per HMR in dev e per SSE quando arriverà).
 
@@ -167,9 +167,9 @@ Stack minimo, no sovra‑engineering:
 - [ ] VPS provisioned, OS aggiornato, UFW attivo
 - [ ] Nginx Proxy Manager up con admin protetto
 - [ ] Docker e compose plugin installati
-- [ ] DNS configurato per `*.riparoio.it`
+- [ ] DNS configurato per `*.my-repair.it`
 - [ ] Backup script attivo + restore testato una volta
-- [ ] Uptime Kuma che pinga `app.riparoio.it`
+- [ ] Uptime Kuma che pinga `app.my-repair.it`
 - [ ] Email SMTP testato (prima registrazione manda mail di benvenuto)
 - [ ] Cron host: `0 3 * * * /srv/repair/scripts/backup.sh`
 - [ ] `.env` permessi `600`, niente segreti in git

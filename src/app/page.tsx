@@ -268,7 +268,7 @@ export default function LandingPage() {
 
           <p className="mt-12 text-center text-sm text-muted-foreground">
             Più di 3 sedi o esigenze particolari?{" "}
-            <a href="mailto:info@riparoio.it" className="text-primary font-medium underline-offset-4 hover:underline">
+            <a href="mailto:info@my-repair.it" className="text-primary font-medium underline-offset-4 hover:underline">
               Contattaci per un piano Enterprise
             </a>
           </p>
