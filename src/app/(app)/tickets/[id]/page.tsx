@@ -75,7 +75,7 @@ export default async function TicketDetailPage({ params }: { params: Promise<{ i
     rawPhotos.map(async (p) => ({
       ...p,
       url: p.isPublic
-        ? await getPublicUrl(p.storageKey)
+        ? getPublicUrl(p.storageKey)
         : await getPresignedDownloadUrl(p.storageKey),
     })),
   );
