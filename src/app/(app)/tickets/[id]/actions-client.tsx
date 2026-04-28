@@ -35,8 +35,8 @@ export function TicketActions({
 
   function handleStatusChange(statusId: string) {
     setSelectedStatus(statusId);
-    startTransition(() => {
-      updateTicketStatusAction(ticketId, statusId);
+    startTransition(async () => {
+      await updateTicketStatusAction(ticketId, statusId);
     });
   }
 

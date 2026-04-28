@@ -2,7 +2,7 @@ import { db } from "@/lib/db";
 import { tickets, customers, ticketStatuses, organizations, ticketPhotos } from "@/db/schema";
 import { eq } from "drizzle-orm";
 import { notFound } from "next/navigation";
-import { CheckCircle2, Clock, Wrench, Phone, MapPin } from "lucide-react";
+import { CheckCircle2, Clock, Wrench, Phone, MapPin, PenLine } from "lucide-react";
 import { getPublicUrl } from "@/lib/storage";
 
 export default async function TrackingPage({ params }: { params: Promise<{ token: string }> }) {
@@ -49,11 +49,13 @@ export default async function TrackingPage({ params }: { params: Promise<{ token
     .where(eq(organizations.id, ticket.orgId))
     .limit(1);
 
-  const publicPhotos = await db
+  const allPhotos = await db
     .select({ id: ticketPhotos.id, storageKey: ticketPhotos.storageKey, photoType: ticketPhotos.photoType, isPublic: ticketPhotos.isPublic })
     .from(ticketPhotos)
-    .where(eq(ticketPhotos.ticketId, ticket.id))
-    .then((rows) => rows.filter((r) => r.isPublic && r.photoType !== "signature"));
+    .where(eq(ticketPhotos.ticketId, ticket.id));
+
+  const publicPhotos = allPhotos.filter((r) => r.isPublic && r.photoType !== "signature");
+  const hasSigned = allPhotos.some((r) => r.photoType === "signature");
 
   const primaryColor = org?.brandingPrimaryColor ?? "#0D8F7A";
   const device = [ticket.deviceBrand, ticket.deviceModel].filter(Boolean).join(" ") || "Dispositivo";
@@ -120,6 +122,13 @@ export default async function TrackingPage({ params }: { params: Promise<{ token
               ? "La tua riparazione è completata. Puoi venire a ritirare il dispositivo."
               : "Il tuo dispositivo è in lavorazione. Riceverai un aggiornamento non appena ci saranno novità."}
           </p>
+
+          {hasSigned && (
+            <div className="mt-3 flex items-center gap-2 rounded-lg bg-emerald-50 px-3 py-2 text-sm text-emerald-700">
+              <PenLine className="h-4 w-4 shrink-0" />
+              <span className="font-medium">Accettazione firmata</span>
+            </div>
+          )}
         </div>
 
         {/* Riepilogo dispositivo */}
