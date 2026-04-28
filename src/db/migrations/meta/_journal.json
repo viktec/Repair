@@ -8,6 +8,13 @@
       "when": 1777369218083,
       "tag": "0000_brave_amazoness",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1777379359821,
+      "tag": "0001_parallel_peter_quill",
+      "breakpoints": true
     }
   ]
 }

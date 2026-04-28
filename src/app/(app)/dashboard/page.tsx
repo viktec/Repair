@@ -1,7 +1,7 @@
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
-import { organizations } from "@/db/schema";
-import { eq } from "drizzle-orm";
+import { organizations, tickets, customers, ticketStatuses } from "@/db/schema";
+import { eq, and, isNull, count } from "drizzle-orm";
 import { redirect } from "next/navigation";
 import Link from "next/link";
 import { Ticket, Users, Package, TrendingUp, ArrowRight, Wrench } from "lucide-react";
@@ -12,22 +12,47 @@ import { Badge } from "@/components/ui/badge";
 export default async function DashboardPage() {
   const session = await auth();
   if (!session?.user.organizationId) redirect("/onboarding");
+  const orgId = session.user.organizationId;
 
   const [org] = await db
     .select()
     .from(organizations)
-    .where(eq(organizations.id, session.user.organizationId))
+    .where(eq(organizations.id, orgId))
     .limit(1);
 
   if (!org) redirect("/login");
-
   if (!org.onboardingCompletedAt) redirect("/onboarding");
 
+  const [ticketCount, customerCount, openTicketCount] = await Promise.all([
+    db
+      .select({ count: count() })
+      .from(tickets)
+      .where(and(eq(tickets.organizationId, orgId), isNull(tickets.deletedAt)))
+      .then((r) => r[0].count),
+    db
+      .select({ count: count() })
+      .from(customers)
+      .where(eq(customers.organizationId, orgId))
+      .then((r) => r[0].count),
+    db
+      .select({ count: count() })
+      .from(tickets)
+      .leftJoin(ticketStatuses, eq(ticketStatuses.id, tickets.statusId))
+      .where(
+        and(
+          eq(tickets.organizationId, orgId),
+          isNull(tickets.deletedAt),
+          eq(ticketStatuses.isFinal, false),
+        ),
+      )
+      .then((r) => r[0].count),
+  ]);
+
   const stats = [
-    { label: "Ticket aperti", value: "—", icon: Ticket, color: "text-blue-600" },
-    { label: "Clienti", value: "—", icon: Users, color: "text-emerald-600" },
+    { label: "Ticket aperti", value: String(openTicketCount), icon: Ticket, color: "text-blue-600" },
+    { label: "Clienti", value: String(customerCount), icon: Users, color: "text-emerald-600" },
     { label: "Ricambi in magazzino", value: "—", icon: Package, color: "text-amber-600" },
-    { label: "Entrate questo mese", value: "—", icon: TrendingUp, color: "text-primary" },
+    { label: "Ticket totali", value: String(ticketCount), icon: TrendingUp, color: "text-primary" },
   ];
 
   return (
@@ -92,16 +117,15 @@ export default async function DashboardPage() {
             cliente riceverà automaticamente il link di tracking.
           </p>
           <div className="mt-8 flex gap-3">
-            <Button disabled className="gap-2">
-              <Ticket className="h-4 w-4" />
-              Nuovo Ticket
-              <Badge variant="secondary" className="ml-1 text-[10px]">
-                In arrivo
-              </Badge>
-            </Button>
-            <Link href="/">
+            <Link href="/tickets/new">
+              <Button className="gap-2">
+                <Ticket className="h-4 w-4" />
+                Nuovo ticket
+              </Button>
+            </Link>
+            <Link href="/customers/new">
               <Button variant="outline" className="gap-2">
-                Esplora i piani
+                Aggiungi cliente
                 <ArrowRight className="h-4 w-4" />
               </Button>
             </Link>

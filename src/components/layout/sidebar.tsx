@@ -17,8 +17,8 @@ import { Badge } from "@/components/ui/badge";
 
 const navItems = [
   { href: "/dashboard", icon: LayoutDashboard, label: "Dashboard", available: true },
-  { href: "/tickets", icon: Ticket, label: "Ticket", available: false, soon: true },
-  { href: "/customers", icon: Users, label: "Clienti", available: false, soon: true },
+  { href: "/tickets", icon: Ticket, label: "Ticket", available: true },
+  { href: "/customers", icon: Users, label: "Clienti", available: true },
   { href: "/inventory", icon: Package, label: "Magazzino", available: false, plan: "Pro" },
   { href: "/reports", icon: BarChart3, label: "Report", available: false, plan: "Pro" },
   { href: "/settings", icon: Settings, label: "Impostazioni", available: false, soon: true },

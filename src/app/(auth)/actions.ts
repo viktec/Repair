@@ -2,7 +2,7 @@
 
 import { signIn, signOut } from "@/lib/auth";
 import { db } from "@/lib/db";
-import { users, organizations, memberships, stores } from "@/db/schema";
+import { users, organizations, memberships, stores, ticketStatuses } from "@/db/schema";
 import { eq } from "drizzle-orm";
 import bcrypt from "bcryptjs";
 import { z } from "zod";
@@ -71,6 +71,17 @@ export async function registerAction(_prev: RegisterState, formData: FormData): 
         name: shopName,
         isDefault: true,
       });
+
+      const defaultStatuses = [
+        { name: "In attesa", color: "#6B7280", sortOrder: 0, isDefault: true },
+        { name: "Diagnosi", color: "#F59E0B", sortOrder: 1 },
+        { name: "In riparazione", color: "#3B82F6", sortOrder: 2 },
+        { name: "Pronto", color: "#10B981", sortOrder: 3 },
+        { name: "Consegnato", color: "#8B5CF6", sortOrder: 4, isFinal: true },
+      ];
+      await tx.insert(ticketStatuses).values(
+        defaultStatuses.map((s) => ({ ...s, organizationId: org.id })),
+      );
     });
   } catch {
     return { errors: { _form: ["Errore durante la registrazione. Riprova."] } };
