@@ -47,6 +47,33 @@ export async function createCustomerAction(
   redirect("/customers");
 }
 
+export async function createCustomerInlineAction(data: {
+  name: string;
+  phone: string;
+  email: string;
+  gdprConsent: boolean;
+}): Promise<{ id: string; name: string; phone: string | null } | { error: string }> {
+  const session = await auth();
+  if (!session?.user.organizationId) return { error: "Non autenticato" };
+
+  if (!data.name.trim()) return { error: "Il nome è obbligatorio" };
+
+  const [created] = await db
+    .insert(customers)
+    .values({
+      organizationId: session.user.organizationId,
+      name: data.name.trim(),
+      phone: data.phone || null,
+      email: data.email || null,
+      gdprConsentAt: data.gdprConsent ? new Date() : null,
+    })
+    .returning({ id: customers.id, name: customers.name, phone: customers.phone });
+
+  revalidatePath("/customers");
+  revalidatePath("/tickets/new");
+  return created;
+}
+
 export async function deleteCustomerAction(customerId: string) {
   const session = await auth();
   if (!session?.user.organizationId) redirect("/login");
