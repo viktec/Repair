@@ -19,8 +19,7 @@ WORKDIR /app
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 
-# Genera le migration Drizzle (non richiede DB) e compila Next.js
-RUN mkdir -p src/db/migrations && pnpm db:generate 2>/dev/null || true
+# Le migration sono nel repo (generate localmente e committate)
 ENV NEXT_TELEMETRY_DISABLED=1
 RUN pnpm build
 
@@ -38,8 +37,9 @@ COPY --from=builder /app/public ./public
 COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
 COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
 
-# Script di migrazione plain JS (nessuna compilazione necessaria)
+# Script di migrazione e seed (plain JS, nessuna compilazione necessaria)
 COPY --from=builder --chown=nextjs:nodejs /app/src/db/migrate.mjs ./migrate.mjs
+COPY --from=builder --chown=nextjs:nodejs /app/src/db/seed.mjs ./seed.mjs
 COPY --from=builder --chown=nextjs:nodejs /app/src/db/migrations ./src/db/migrations
 
 # Pacchetti necessari per le migration (non tracciati da Next.js standalone)
