@@ -9,29 +9,48 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { formatDate } from "@/lib/utils";
+import { ViewToggle } from "./view-toggle";
+import { KanbanBoard } from "./kanban-board";
+import { Suspense } from "react";
 
-export default async function TicketsPage() {
+export default async function TicketsPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ view?: string }>;
+}) {
+  const { view } = await searchParams;
+  const isKanban = view === "kanban";
+
   const session = await auth();
   if (!session?.user.organizationId) redirect("/login");
   const orgId = session.user.organizationId;
 
-  const rows = await db
-    .select({
-      id: tickets.id,
-      ticketNumber: tickets.ticketNumber,
-      deviceBrand: tickets.deviceBrand,
-      deviceModel: tickets.deviceModel,
-      faultDescription: tickets.faultDescription,
-      createdAt: tickets.createdAt,
-      customerName: customers.name,
-      statusName: ticketStatuses.name,
-      statusColor: ticketStatuses.color,
-    })
-    .from(tickets)
-    .leftJoin(customers, eq(customers.id, tickets.customerId))
-    .leftJoin(ticketStatuses, eq(ticketStatuses.id, tickets.statusId))
-    .where(and(eq(tickets.organizationId, orgId), isNull(tickets.deletedAt)))
-    .orderBy(tickets.ticketNumber);
+  const [rows, statuses] = await Promise.all([
+    db
+      .select({
+        id: tickets.id,
+        ticketNumber: tickets.ticketNumber,
+        deviceBrand: tickets.deviceBrand,
+        deviceModel: tickets.deviceModel,
+        faultDescription: tickets.faultDescription,
+        createdAt: tickets.createdAt,
+        customerName: customers.name,
+        statusName: ticketStatuses.name,
+        statusColor: ticketStatuses.color,
+        statusId: tickets.statusId,
+      })
+      .from(tickets)
+      .leftJoin(customers, eq(customers.id, tickets.customerId))
+      .leftJoin(ticketStatuses, eq(ticketStatuses.id, tickets.statusId))
+      .where(and(eq(tickets.organizationId, orgId), isNull(tickets.deletedAt)))
+      .orderBy(tickets.ticketNumber),
+
+    db
+      .select({ id: ticketStatuses.id, name: ticketStatuses.name, color: ticketStatuses.color })
+      .from(ticketStatuses)
+      .where(eq(ticketStatuses.organizationId, orgId))
+      .orderBy(ticketStatuses.sortOrder),
+  ]);
 
   return (
     <div className="space-y-6">
@@ -42,12 +61,17 @@ export default async function TicketsPage() {
             {rows.length} {rows.length === 1 ? "ticket" : "ticket"} totali
           </p>
         </div>
-        <Link href="/tickets/new">
-          <Button className="gap-2">
-            <Plus className="h-4 w-4" />
-            Nuovo ticket
-          </Button>
-        </Link>
+        <div className="flex items-center gap-2">
+          <Suspense>
+            <ViewToggle current={isKanban ? "kanban" : "list"} />
+          </Suspense>
+          <Link href="/tickets/new">
+            <Button className="gap-2">
+              <Plus className="h-4 w-4" />
+              Nuovo ticket
+            </Button>
+          </Link>
+        </div>
       </div>
 
       {rows.length === 0 ? (
@@ -68,6 +92,8 @@ export default async function TicketsPage() {
             </Link>
           </CardContent>
         </Card>
+      ) : isKanban ? (
+        <KanbanBoard tickets={rows} statuses={statuses} />
       ) : (
         <div className="rounded-lg border bg-white">
           <table className="w-full text-sm">
