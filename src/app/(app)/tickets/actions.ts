@@ -3,7 +3,7 @@
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { tickets, ticketStatuses, customDeviceModels, customers, organizations } from "@/db/schema";
-import { eq, and, max } from "drizzle-orm";
+import { eq, and, max, count, isNull } from "drizzle-orm";
 import { z } from "zod";
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
@@ -40,6 +40,15 @@ export async function createTicketAction(
   }
 
   const data = parsed.data;
+
+  const TICKET_LIMIT = 5000;
+  const [countRow] = await db
+    .select({ total: count() })
+    .from(tickets)
+    .where(and(eq(tickets.organizationId, orgId), isNull(tickets.deletedAt)));
+  if ((countRow?.total ?? 0) >= TICKET_LIMIT) {
+    return { errors: { faultDescription: [`Limite di ${TICKET_LIMIT} ticket raggiunto per questo account.`] } };
+  }
 
   const [defaultStatus] = await db
     .select({ id: ticketStatuses.id })
