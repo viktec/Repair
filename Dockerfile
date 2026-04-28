@@ -42,9 +42,10 @@ COPY --from=builder --chown=nextjs:nodejs /app/src/db/migrate.mjs ./migrate.mjs
 COPY --from=builder --chown=nextjs:nodejs /app/src/db/seed.mjs ./seed.mjs
 COPY --from=builder --chown=nextjs:nodejs /app/src/db/migrations ./src/db/migrations
 
-# Pacchetti necessari per le migration (non tracciati da Next.js standalone)
+# Pacchetti necessari per migration e seed (non sempre tracciati da Next.js standalone)
 COPY --from=deps --chown=nextjs:nodejs /app/node_modules/drizzle-orm ./node_modules/drizzle-orm
 COPY --from=deps --chown=nextjs:nodejs /app/node_modules/postgres ./node_modules/postgres
+COPY --from=deps --chown=nextjs:nodejs /app/node_modules/bcryptjs ./node_modules/bcryptjs
 
 # Entrypoint: esegue le migration poi avvia il server
 COPY --chown=nextjs:nodejs docker-entrypoint.sh ./docker-entrypoint.sh
