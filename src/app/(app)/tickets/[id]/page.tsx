@@ -1,16 +1,19 @@
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
-import { tickets, customers, ticketStatuses, organizations } from "@/db/schema";
+import { tickets, customers, ticketStatuses, organizations, ticketPhotos } from "@/db/schema";
 import { eq, and } from "drizzle-orm";
 import { redirect, notFound } from "next/navigation";
 import Link from "next/link";
-import { ArrowLeft, QrCode } from "lucide-react";
+import { ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { formatDate, formatCurrency } from "@/lib/utils";
 import { TicketActions } from "./actions-client";
+import { PhotoUpload } from "./photo-upload";
+import { SignaturePad } from "./signature-pad";
+import { getPublicUrl, getPresignedDownloadUrl } from "@/lib/storage";
 
 export default async function TicketDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -62,6 +65,23 @@ export default async function TicketDetailPage({ params }: { params: Promise<{ i
     .from(organizations)
     .where(eq(organizations.id, orgId))
     .limit(1);
+
+  const rawPhotos = await db
+    .select()
+    .from(ticketPhotos)
+    .where(eq(ticketPhotos.ticketId, id));
+
+  const photosWithUrls = await Promise.all(
+    rawPhotos.map(async (p) => ({
+      ...p,
+      url: p.isPublic
+        ? await getPublicUrl(p.storageKey)
+        : await getPresignedDownloadUrl(p.storageKey),
+    })),
+  );
+
+  const displayPhotos = photosWithUrls.filter((p) => p.photoType !== "signature");
+  const hasSignature = photosWithUrls.some((p) => p.photoType === "signature");
 
   const trackingUrl = `${process.env.TRACKING_URL ?? "https://t.my-repair.it"}/${ticket.qrToken}`;
 
@@ -192,6 +212,8 @@ export default async function TicketDetailPage({ params }: { params: Promise<{ i
             whatsappTemplate={whatsappTemplate}
             waLink={ticket.customerPhone ? waLink : null}
           />
+          <PhotoUpload ticketId={ticket.id} initialPhotos={displayPhotos} />
+          <SignaturePad ticketId={ticket.id} hasSavedSignature={hasSignature} />
         </div>
       </div>
     </div>

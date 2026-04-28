@@ -2,12 +2,20 @@ import { auth } from "@/lib/auth";
 import { NextResponse } from "next/server";
 
 const APP_HOST = "app.my-repair.it";
+const TRACKING_HOST = "t.my-repair.it";
 const MARKETING_HOSTS = new Set(["my-repair.it", "www.my-repair.it"]);
 
 export default auth((req) => {
   const { pathname, search } = req.nextUrl;
   const host = req.headers.get("host") ?? "";
   const isLoggedIn = !!req.auth;
+
+  // Tracking subdomain: t.my-repair.it/<token> → /t/<token> interno
+  if (host === TRACKING_HOST) {
+    const url = req.nextUrl.clone();
+    url.pathname = `/t${pathname}`;
+    return NextResponse.rewrite(url);
+  }
 
   // Marketing site: serve only landing and auth callbacks
   if (MARKETING_HOSTS.has(host)) {
