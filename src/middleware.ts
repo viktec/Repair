@@ -1,0 +1,43 @@
+import { auth } from "@/lib/auth";
+import { NextResponse } from "next/server";
+
+const APP_HOST = "app.my-repair.it";
+const MARKETING_HOSTS = new Set(["my-repair.it", "www.my-repair.it"]);
+
+export default auth((req) => {
+  const { pathname, search } = req.nextUrl;
+  const host = req.headers.get("host") ?? "";
+  const isLoggedIn = !!req.auth;
+
+  // Marketing site: serve only landing and auth callbacks
+  if (MARKETING_HOSTS.has(host)) {
+    if (pathname === "/" || pathname.startsWith("/api/auth")) {
+      return NextResponse.next();
+    }
+    return NextResponse.redirect(`https://${APP_HOST}${pathname}${search}`);
+  }
+
+  // app.my-repair.it + localhost dev: full auth routing
+  const isAppHost = host === APP_HOST;
+
+  const isPublicPath =
+    pathname.startsWith("/login") ||
+    pathname.startsWith("/register") ||
+    pathname.startsWith("/t/") ||
+    pathname.startsWith("/api/auth") ||
+    (!isAppHost && pathname === "/"); // landing pubblica solo in dev
+
+  if (isLoggedIn && (pathname === "/" || pathname === "/login" || pathname === "/register")) {
+    return NextResponse.redirect(new URL("/dashboard", req.url));
+  }
+
+  if (!isLoggedIn && !isPublicPath) {
+    return NextResponse.redirect(new URL("/login", req.url));
+  }
+
+  return NextResponse.next();
+});
+
+export const config = {
+  matcher: ["/((?!_next/static|_next/image|favicon.ico|.*\\.svg|.*\\.png|.*\\.ico).*)"],
+};
