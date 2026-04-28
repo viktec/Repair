@@ -1,10 +1,10 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { updateTicketStatusAction, updateTicketNotesAction } from "../actions";
+import { updateTicketStatusAction, updateTicketNotesAction, sendStatusEmailAction } from "../actions";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Check, Copy, ExternalLink, Loader2, Printer, QrCode } from "lucide-react";
+import { Check, Copy, ExternalLink, Loader2, Mail, Printer, QrCode } from "lucide-react";
 
 type Status = { id: string; name: string; color: string };
 
@@ -17,6 +17,7 @@ type Props = {
   whatsappTemplate: string;
   waLink: string | null;
   printUrl: string;
+  hasCustomerEmail: boolean;
 };
 
 export function TicketActions({
@@ -28,12 +29,15 @@ export function TicketActions({
   whatsappTemplate,
   waLink,
   printUrl,
+  hasCustomerEmail,
 }: Props) {
   const [isPending, startTransition] = useTransition();
   const [selectedStatus, setSelectedStatus] = useState(currentStatusId ?? "");
   const [notes, setNotes] = useState(internalNotes);
   const [notesSaved, setNotesSaved] = useState(false);
   const [copied, setCopied] = useState<"url" | "wa" | null>(null);
+  const [emailState, setEmailState] = useState<"idle" | "sending" | "ok" | "err">("idle");
+  const [emailError, setEmailError] = useState<string | null>(null);
 
   function handleStatusChange(statusId: string) {
     setSelectedStatus(statusId);
@@ -47,6 +51,22 @@ export function TicketActions({
       await updateTicketNotesAction(ticketId, notes);
       setNotesSaved(true);
       setTimeout(() => setNotesSaved(false), 2000);
+    });
+  }
+
+  function handleSendEmail() {
+    setEmailState("sending");
+    setEmailError(null);
+    startTransition(async () => {
+      const res = await sendStatusEmailAction(ticketId);
+      if (res.ok) {
+        setEmailState("ok");
+        setTimeout(() => setEmailState("idle"), 3000);
+      } else {
+        setEmailState("err");
+        setEmailError(res.error ?? "Errore invio email");
+        setTimeout(() => setEmailState("idle"), 4000);
+      }
     });
   }
 
@@ -159,6 +179,41 @@ export function TicketActions({
           Stampa ricevuta
         </Button>
       </a>
+
+      {/* Email cliente */}
+      {hasCustomerEmail && (
+        <Card>
+          <CardHeader>
+            <div className="flex items-center gap-2">
+              <Mail className="h-4 w-4 text-muted-foreground" />
+              <CardTitle className="text-sm font-medium text-muted-foreground">Email cliente</CardTitle>
+            </div>
+          </CardHeader>
+          <CardContent className="space-y-2">
+            <p className="text-xs text-muted-foreground">
+              Invia un&apos;email con lo stato attuale e il link di tracking.
+            </p>
+            <Button
+              size="sm"
+              variant="outline"
+              className="w-full gap-1.5"
+              onClick={handleSendEmail}
+              disabled={isPending || emailState === "sending"}
+            >
+              {emailState === "sending" ? (
+                <><Loader2 className="h-3.5 w-3.5 animate-spin" /> Invio in corso…</>
+              ) : emailState === "ok" ? (
+                <><Check className="h-3.5 w-3.5 text-emerald-600" /> Email inviata!</>
+              ) : (
+                <><Mail className="h-3.5 w-3.5" /> Invia aggiornamento</>
+              )}
+            </Button>
+            {emailState === "err" && emailError && (
+              <p className="text-xs text-destructive">{emailError}</p>
+            )}
+          </CardContent>
+        </Card>
+      )}
 
       {/* WhatsApp */}
       <Card>

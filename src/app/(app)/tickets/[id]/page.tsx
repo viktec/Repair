@@ -216,6 +216,7 @@ export default async function TicketDetailPage({ params }: { params: Promise<{ i
             whatsappTemplate={whatsappTemplate}
             waLink={ticket.customerPhone ? waLink : null}
             printUrl={printUrl}
+            hasCustomerEmail={!!ticket.customerEmail}
           />
           <PhotoUpload ticketId={ticket.id} initialPhotos={displayPhotos} />
           <SignatureReadOnly signatureUrl={signatureUrl} />
