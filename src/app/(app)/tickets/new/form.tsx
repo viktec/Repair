@@ -1,14 +1,14 @@
 "use client";
 
-import { useActionState } from "react";
+import { useActionState, useState } from "react";
 import { createTicketAction } from "../actions";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Separator } from "@/components/ui/separator";
 import { Loader2 } from "lucide-react";
 import Link from "next/link";
+import { DEVICE_BRANDS, DEVICE_MODELS } from "@/lib/devices";
 
 type Props = {
   customers: { id: string; name: string; phone: string | null }[];
@@ -17,6 +17,12 @@ type Props = {
 
 export function NewTicketForm({ customers }: Props) {
   const [state, action, pending] = useActionState(createTicketAction, null);
+  const [selectedBrand, setSelectedBrand] = useState("");
+
+  const modelSuggestions =
+    selectedBrand && DEVICE_MODELS[selectedBrand]
+      ? DEVICE_MODELS[selectedBrand]
+      : Object.values(DEVICE_MODELS).flat();
 
   return (
     <form action={action} className="space-y-4">
@@ -59,14 +65,42 @@ export function NewTicketForm({ customers }: Props) {
           <CardTitle className="text-base">Dispositivo</CardTitle>
         </CardHeader>
         <CardContent className="space-y-3">
+          {/* datalist brand */}
+          <datalist id="brand-list">
+            {DEVICE_BRANDS.map((b) => (
+              <option key={b} value={b} />
+            ))}
+          </datalist>
+
+          {/* datalist modelli (filtrato per brand selezionato) */}
+          <datalist id="model-list">
+            {modelSuggestions.map((m) => (
+              <option key={m} value={m} />
+            ))}
+          </datalist>
+
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-1.5">
               <Label htmlFor="deviceBrand">Marca</Label>
-              <Input id="deviceBrand" name="deviceBrand" placeholder="Apple, Samsung..." />
+              <Input
+                id="deviceBrand"
+                name="deviceBrand"
+                placeholder="Apple, Samsung…"
+                list="brand-list"
+                autoComplete="off"
+                value={selectedBrand}
+                onChange={(e) => setSelectedBrand(e.target.value)}
+              />
             </div>
             <div className="space-y-1.5">
               <Label htmlFor="deviceModel">Modello</Label>
-              <Input id="deviceModel" name="deviceModel" placeholder="iPhone 14, Galaxy S23..." />
+              <Input
+                id="deviceModel"
+                name="deviceModel"
+                placeholder="iPhone 15, Galaxy S24…"
+                list="model-list"
+                autoComplete="off"
+              />
             </div>
           </div>
 
@@ -84,17 +118,25 @@ export function NewTicketForm({ customers }: Props) {
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-1.5">
               <Label htmlFor="devicePatternLock">PIN / Pattern sblocco</Label>
-              <Input id="devicePatternLock" name="devicePatternLock" placeholder="Solo se fornito dal cliente" />
+              <Input
+                id="devicePatternLock"
+                name="devicePatternLock"
+                placeholder="Solo se fornito dal cliente"
+              />
             </div>
             <div className="space-y-1.5">
               <Label htmlFor="accessories">Accessori consegnati</Label>
-              <Input id="accessories" name="accessories" placeholder="Cover, caricatore..." />
+              <Input id="accessories" name="accessories" placeholder="Cover, caricatore…" />
             </div>
           </div>
 
           <div className="space-y-1.5">
             <Label htmlFor="deviceCondition">Condizioni estetiche</Label>
-            <Input id="deviceCondition" name="deviceCondition" placeholder="Graffi, crepe, ammaccature..." />
+            <Input
+              id="deviceCondition"
+              name="deviceCondition"
+              placeholder="Graffi, crepe, ammaccature…"
+            />
           </div>
         </CardContent>
       </Card>
@@ -114,7 +156,7 @@ export function NewTicketForm({ customers }: Props) {
               name="faultDescription"
               rows={3}
               required
-              placeholder="Schermo rotto, non si accende, batteria scarica..."
+              placeholder="Schermo rotto, non si accende, batteria scarica…"
               className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring"
             />
             {state?.errors?.faultDescription && (
