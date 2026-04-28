@@ -9,7 +9,7 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
           <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-primary">
             <Wrench className="h-3.5 w-3.5 text-white" />
           </div>
-          <span className="font-bold text-foreground">Repair</span>
+          <span className="font-bold text-foreground">My-Repair</span>
         </Link>
       </header>
       <main className="flex flex-1 items-center justify-center py-12 px-4">

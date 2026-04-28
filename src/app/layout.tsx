@@ -5,7 +5,7 @@ import "./globals.css";
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: "Repair — Gestionale per centri di riparazione",
+  title: "My-Repair — Gestionale per centri di riparazione",
   description:
     "Ticket, foto pre/post, tracking cliente, magazzino ricambi. Tutto in un posto.",
   keywords: ["gestionale riparazioni", "software officina", "ticket riparazione", "IMEI tracking"],

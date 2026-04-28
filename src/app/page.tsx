@@ -116,7 +116,7 @@ export default function LandingPage() {
             <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary">
               <Wrench className="h-4 w-4 text-white" />
             </div>
-            <span className="text-lg font-bold text-foreground">Repair</span>
+            <span className="text-lg font-bold text-foreground">My-Repair</span>
           </Link>
           <div className="flex items-center gap-3">
             <Link href="/login">
@@ -300,10 +300,10 @@ export default function LandingPage() {
             <div className="flex h-6 w-6 items-center justify-center rounded bg-primary">
               <Wrench className="h-3 w-3 text-white" />
             </div>
-            <span className="text-sm font-semibold text-white">Repair</span>
+            <span className="text-sm font-semibold text-white">My-Repair</span>
           </div>
           <p className="text-xs">
-            © {new Date().getFullYear()} Repair. Fatto con cura per i riparatori italiani.
+            © {new Date().getFullYear()} My-Repair. Fatto con cura per i riparatori italiani.
           </p>
           <div className="flex gap-4 text-xs">
             <a href="#" className="hover:text-white transition-colors">Privacy</a>
