@@ -21,6 +21,7 @@ export async function updateOrganizationAction(formData: FormData) {
   const postalCode = formData.get("postalCode") as string;
   const vatNumber = formData.get("vatNumber") as string;
   const brandingPrimaryColor = formData.get("brandingPrimaryColor") as string;
+  const whatsappTemplate = formData.get("whatsappTemplate") as string;
 
   await db
     .update(organizations)
@@ -33,6 +34,7 @@ export async function updateOrganizationAction(formData: FormData) {
       postalCode: postalCode || null,
       vatNumber: vatNumber || null,
       brandingPrimaryColor: brandingPrimaryColor || undefined,
+      whatsappTemplate: whatsappTemplate || null,
       updatedAt: new Date(),
     })
     .where(eq(organizations.id, session.user.organizationId));

@@ -9,6 +9,10 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { Check, Loader2, Upload, X } from "lucide-react";
 
+const DEFAULT_WA_TEMPLATE = `Salve {{nome}}!
+Il suo {{dispositivo}} è ora in stato: *{{stato}}*.
+Può seguire l'avanzamento qui: {{link_tracking}}`;
+
 type Org = {
   name: string;
   phone: string | null;
@@ -19,6 +23,7 @@ type Org = {
   vatNumber: string | null;
   brandingPrimaryColor: string | null;
   brandingLogoUrl: string | null;
+  whatsappTemplate: string | null;
 };
 
 export function SettingsForm({ org }: { org: Org }) {
@@ -169,6 +174,27 @@ export function SettingsForm({ org }: { org: Org }) {
               </p>
             </div>
           </div>
+        </CardContent>
+      </Card>
+
+      {/* Template WhatsApp */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-base">Template messaggio WhatsApp</CardTitle>
+          <p className="text-sm text-muted-foreground">
+            Variabili disponibili: <code className="rounded bg-slate-100 px-1 text-xs">{"{{nome}}"}</code>{" "}
+            <code className="rounded bg-slate-100 px-1 text-xs">{"{{dispositivo}}"}</code>{" "}
+            <code className="rounded bg-slate-100 px-1 text-xs">{"{{stato}}"}</code>{" "}
+            <code className="rounded bg-slate-100 px-1 text-xs">{"{{link_tracking}}"}</code>
+          </p>
+        </CardHeader>
+        <CardContent>
+          <textarea
+            name="whatsappTemplate"
+            defaultValue={org.whatsappTemplate ?? DEFAULT_WA_TEMPLATE}
+            rows={5}
+            className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm font-mono placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring"
+          />
         </CardContent>
       </Card>
 

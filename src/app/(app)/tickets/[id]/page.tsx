@@ -63,7 +63,7 @@ export default async function TicketDetailPage({ params }: { params: Promise<{ i
     .orderBy(ticketStatuses.sortOrder);
 
   const [org] = await db
-    .select({ phone: organizations.phone })
+    .select({ phone: organizations.phone, whatsappTemplate: organizations.whatsappTemplate })
     .from(organizations)
     .where(eq(organizations.id, orgId))
     .limit(1);
@@ -87,16 +87,17 @@ export default async function TicketDetailPage({ params }: { params: Promise<{ i
   const signatureUrl = signaturePhoto?.url ?? null;
 
   const trackingUrl = `${process.env.TRACKING_URL ?? "https://t.my-repair.it"}/${ticket.qrToken}`;
-  const printUrl = `/tickets/${ticket.id}/print`;
+  const printUrl = `/print/tickets/${ticket.id}`;
 
-  const whatsappTemplate = [
-    `Salve${ticket.customerName ? ` ${ticket.customerName.split(" ")[0]}` : ""}!`,
-    `Il suo ${[ticket.deviceBrand, ticket.deviceModel].filter(Boolean).join(" ") || "dispositivo"} è ora in stato: *${ticket.statusName ?? "—"}*.`,
-    `Può seguire l'avanzamento qui: ${trackingUrl}`,
-    org?.phone ? `Per info: ${org.phone}` : "",
-  ]
-    .filter(Boolean)
-    .join("\n");
+  const DEFAULT_WA_TEMPLATE = `Salve {{nome}}!\nIl suo {{dispositivo}} è ora in stato: *{{stato}}*.\nPuò seguire l'avanzamento qui: {{link_tracking}}`;
+  const rawTemplate = org?.whatsappTemplate ?? DEFAULT_WA_TEMPLATE;
+  const firstName = ticket.customerName?.split(" ")[0] ?? "";
+  const device = [ticket.deviceBrand, ticket.deviceModel].filter(Boolean).join(" ") || "dispositivo";
+  const whatsappTemplate = rawTemplate
+    .replace(/\{\{nome\}\}/g, firstName || "cliente")
+    .replace(/\{\{dispositivo\}\}/g, device)
+    .replace(/\{\{stato\}\}/g, ticket.statusName ?? "—")
+    .replace(/\{\{link_tracking\}\}/g, trackingUrl);
 
   const waLink = `https://wa.me/${ticket.customerPhone?.replace(/\D/g, "")}?text=${encodeURIComponent(whatsappTemplate)}`;
 

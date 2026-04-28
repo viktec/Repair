@@ -11,6 +11,10 @@ import {
   Package,
   BarChart3,
   ChevronRight,
+  Smartphone,
+  ShoppingCart,
+  Truck,
+  BookOpen,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
@@ -19,7 +23,11 @@ const navItems = [
   { href: "/dashboard", icon: LayoutDashboard, label: "Dashboard", available: true },
   { href: "/tickets", icon: Ticket, label: "Ticket", available: true },
   { href: "/customers", icon: Users, label: "Clienti", available: true },
+  { href: "/imei", icon: Smartphone, label: "Storico IMEI", available: true },
   { href: "/inventory", icon: Package, label: "Magazzino", available: false, plan: "Pro" },
+  { href: "/pos", icon: ShoppingCart, label: "Cassa POS", available: false, plan: "Pro" },
+  { href: "/suppliers", icon: Truck, label: "Fornitori", available: false, plan: "Pro" },
+  { href: "/registry", icon: BookOpen, label: "Registro Usato", available: false, plan: "Business" },
   { href: "/reports", icon: BarChart3, label: "Report", available: false, plan: "Pro" },
   { href: "/settings", icon: Settings, label: "Impostazioni", available: true },
 ];

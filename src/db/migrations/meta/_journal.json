@@ -22,6 +22,13 @@
       "when": 1777389901052,
       "tag": "0002_broad_wrecker",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1777408985921,
+      "tag": "0003_legal_devos",
+      "breakpoints": true
     }
   ]
 }
