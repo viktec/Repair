@@ -4,7 +4,7 @@ import { useState, useTransition } from "react";
 import { updateTicketStatusAction, updateTicketNotesAction } from "../actions";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Check, Copy, ExternalLink, Loader2, QrCode } from "lucide-react";
+import { Check, Copy, ExternalLink, Loader2, Printer, QrCode } from "lucide-react";
 
 type Status = { id: string; name: string; color: string };
 
@@ -16,6 +16,7 @@ type Props = {
   trackingUrl: string;
   whatsappTemplate: string;
   waLink: string | null;
+  printUrl: string;
 };
 
 export function TicketActions({
@@ -26,6 +27,7 @@ export function TicketActions({
   trackingUrl,
   whatsappTemplate,
   waLink,
+  printUrl,
 }: Props) {
   const [isPending, startTransition] = useTransition();
   const [selectedStatus, setSelectedStatus] = useState(currentStatusId ?? "");
@@ -149,6 +151,14 @@ export function TicketActions({
           </div>
         </CardContent>
       </Card>
+
+      {/* Stampa ricevuta */}
+      <a href={printUrl} target="_blank" rel="noopener noreferrer" className="block">
+        <Button variant="outline" className="w-full gap-2">
+          <Printer className="h-4 w-4" />
+          Stampa ricevuta
+        </Button>
+      </a>
 
       {/* WhatsApp */}
       <Card>

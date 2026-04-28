@@ -87,6 +87,7 @@ export default async function TicketDetailPage({ params }: { params: Promise<{ i
   const signatureUrl = signaturePhoto?.url ?? null;
 
   const trackingUrl = `${process.env.TRACKING_URL ?? "https://t.my-repair.it"}/${ticket.qrToken}`;
+  const printUrl = `/tickets/${ticket.id}/print`;
 
   const whatsappTemplate = [
     `Salve${ticket.customerName ? ` ${ticket.customerName.split(" ")[0]}` : ""}!`,
@@ -214,6 +215,7 @@ export default async function TicketDetailPage({ params }: { params: Promise<{ i
             trackingUrl={trackingUrl}
             whatsappTemplate={whatsappTemplate}
             waLink={ticket.customerPhone ? waLink : null}
+            printUrl={printUrl}
           />
           <PhotoUpload ticketId={ticket.id} initialPhotos={displayPhotos} />
           <SignatureReadOnly signatureUrl={signatureUrl} />
