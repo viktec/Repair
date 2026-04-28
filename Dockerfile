@@ -24,11 +24,6 @@ RUN mkdir -p src/db/migrations && pnpm db:generate 2>/dev/null || true
 ENV NEXT_TELEMETRY_DISABLED=1
 RUN pnpm build
 
-# Bundla lo script di migrazione in un file JS autonomo
-RUN node_modules/.bin/esbuild src/db/migrate.ts \
-    --bundle --platform=node --format=cjs \
-    --outfile=dist/migrate.js
-
 # ---- Stage 3: runtime ----
 FROM node:20-alpine AS runner
 WORKDIR /app
@@ -43,12 +38,16 @@ COPY --from=builder /app/public ./public
 COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
 COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
 
-# Script di migrazione + cartella con i file SQL
-COPY --from=builder --chown=nextjs:nodejs /app/dist/migrate.js ./migrate.js
+# Script di migrazione plain JS (nessuna compilazione necessaria)
+COPY --from=builder --chown=nextjs:nodejs /app/src/db/migrate.mjs ./migrate.mjs
 COPY --from=builder --chown=nextjs:nodejs /app/src/db/migrations ./src/db/migrations
 
+# Pacchetti necessari per le migration (non tracciati da Next.js standalone)
+COPY --from=deps --chown=nextjs:nodejs /app/node_modules/drizzle-orm ./node_modules/drizzle-orm
+COPY --from=deps --chown=nextjs:nodejs /app/node_modules/postgres ./node_modules/postgres
+
 # Entrypoint: esegue le migration poi avvia il server
-COPY docker-entrypoint.sh ./docker-entrypoint.sh
+COPY --chown=nextjs:nodejs docker-entrypoint.sh ./docker-entrypoint.sh
 RUN chmod +x ./docker-entrypoint.sh
 
 USER nextjs
