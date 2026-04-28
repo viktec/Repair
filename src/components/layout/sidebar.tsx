@@ -17,7 +17,6 @@ import {
   BookOpen,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { Badge } from "@/components/ui/badge";
 
 const navItems = [
   { href: "/dashboard", icon: LayoutDashboard, label: "Dashboard", available: true },
@@ -62,14 +61,6 @@ export function Sidebar() {
             >
               <item.icon className="h-4 w-4 shrink-0" />
               <span className="flex-1">{item.label}</span>
-              {"soon" in item && (item as { soon?: boolean }).soon && (
-                <Badge variant="secondary" className="text-[10px] px-1.5 py-0">
-                  Presto
-                </Badge>
-              )}
-              {item.plan && (
-                <Badge className="text-[10px] px-1.5 py-0">{item.plan}</Badge>
-              )}
               {isActive && <ChevronRight className="h-3.5 w-3.5" />}
             </Link>
           );
