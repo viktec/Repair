@@ -12,7 +12,18 @@ export default async function SettingsPage() {
   const orgId = session.user.organizationId;
 
   const [org] = await db
-    .select()
+    .select({
+      name: organizations.name,
+      phone: organizations.phone,
+      whatsappPhone: organizations.whatsappPhone,
+      address: organizations.address,
+      city: organizations.city,
+      postalCode: organizations.postalCode,
+      vatNumber: organizations.vatNumber,
+      brandingPrimaryColor: organizations.brandingPrimaryColor,
+      brandingLogoUrl: organizations.brandingLogoUrl,
+      whatsappTemplate: organizations.whatsappTemplate,
+    })
     .from(organizations)
     .where(eq(organizations.id, orgId))
     .limit(1);

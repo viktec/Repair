@@ -24,11 +24,11 @@ const navItems = [
   { href: "/tickets", icon: Ticket, label: "Ticket", available: true },
   { href: "/customers", icon: Users, label: "Clienti", available: true },
   { href: "/imei", icon: Smartphone, label: "Storico IMEI", available: true },
-  { href: "/inventory", icon: Package, label: "Magazzino", available: false, plan: "Pro" },
-  { href: "/pos", icon: ShoppingCart, label: "Cassa POS", available: false, plan: "Pro" },
-  { href: "/suppliers", icon: Truck, label: "Fornitori", available: false, plan: "Pro" },
-  { href: "/registry", icon: BookOpen, label: "Registro Usato", available: false, plan: "Business" },
-  { href: "/reports", icon: BarChart3, label: "Report", available: false, plan: "Pro" },
+  { href: "/inventory", icon: Package, label: "Magazzino", available: true },
+  { href: "/suppliers", icon: Truck, label: "Fornitori", available: true },
+  { href: "/pos", icon: ShoppingCart, label: "Cassa POS", available: true },
+  { href: "/reports", icon: BarChart3, label: "Report", available: true },
+  { href: "/registry", icon: BookOpen, label: "Registro Usato", available: true },
   { href: "/settings", icon: Settings, label: "Impostazioni", available: true },
 ];
 
