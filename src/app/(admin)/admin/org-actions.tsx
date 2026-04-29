@@ -28,7 +28,7 @@ export function AdminOrgActions({
 
   function handleSave() {
     startTransition(async () => {
-      await updateOrgPlanAction(orgId, plan, status, notes);
+      await updateOrgPlanAction(orgId, plan, status, notes, null);
       setSaved(true);
       setTimeout(() => { setSaved(false); setOpen(false); }, 1500);
     });
