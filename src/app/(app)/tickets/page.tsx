@@ -1,10 +1,10 @@
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { tickets, customers, ticketStatuses } from "@/db/schema";
-import { eq, and, isNull, ilike, or } from "drizzle-orm";
+import { eq, and, isNull, ilike, or, sql } from "drizzle-orm";
 import { redirect } from "next/navigation";
 import Link from "next/link";
-import { Plus, Ticket as TicketIcon, Search } from "lucide-react";
+import { Plus, Ticket as TicketIcon, Search, Download } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
@@ -16,27 +16,34 @@ import { Suspense } from "react";
 export default async function TicketsPage({
   searchParams,
 }: {
-  searchParams: Promise<{ view?: string; q?: string; status?: string; imei?: string }>;
+  searchParams: Promise<{ view?: string; q?: string; status?: string; imei?: string; year?: string }>;
 }) {
-  const { view, q, status, imei } = await searchParams;
+  const { view, q, status, imei, year } = await searchParams;
   const isKanban = view === "kanban";
 
   const session = await auth();
   if (!session?.user?.organizationId) redirect("/login");
   const orgId = session.user.organizationId;
 
-  const [statuses] = await Promise.all([
+  const [statuses, yearsResult] = await Promise.all([
     db
       .select({ id: ticketStatuses.id, name: ticketStatuses.name, color: ticketStatuses.color })
       .from(ticketStatuses)
       .where(eq(ticketStatuses.organizationId, orgId))
       .orderBy(ticketStatuses.sortOrder),
+    db
+      .selectDistinct({ year: sql<number>`extract(year from ${tickets.createdAt})::integer` })
+      .from(tickets)
+      .where(and(eq(tickets.organizationId, orgId), isNull(tickets.deletedAt)))
+      .orderBy(sql`extract(year from ${tickets.createdAt}) desc`),
   ]);
+  const availableYears = yearsResult.map((r) => r.year);
 
   // Build where conditions
   const conditions = [eq(tickets.organizationId, orgId), isNull(tickets.deletedAt)];
   if (status) conditions.push(eq(tickets.statusId, status));
   if (imei) conditions.push(ilike(tickets.deviceImei, `%${imei}%`));
+  if (year) conditions.push(sql`extract(year from ${tickets.createdAt})::integer = ${parseInt(year, 10)}`);
   if (q) {
     conditions.push(
       or(
@@ -69,7 +76,18 @@ export default async function TicketsPage({
     .where(and(...conditions))
     .orderBy(tickets.ticketNumber);
 
-  const isFiltered = !!(q || status || imei);
+  const isFiltered = !!(q || status || imei || year);
+
+  function buildUrl(params: { view?: string; q?: string; status?: string; imei?: string; year?: string }) {
+    const p = new URLSearchParams();
+    if (params.view) p.set("view", params.view);
+    if (params.q) p.set("q", params.q);
+    if (params.status) p.set("status", params.status);
+    if (params.imei) p.set("imei", params.imei);
+    if (params.year) p.set("year", params.year);
+    const s = p.toString();
+    return s ? `/tickets?${s}` : "/tickets";
+  }
 
   return (
     <div className="space-y-4">
@@ -80,10 +98,16 @@ export default async function TicketsPage({
             {rows.length} {isFiltered ? "risultati" : "ticket totali"}
           </p>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 flex-wrap">
           <Suspense>
             <ViewToggle current={isKanban ? "kanban" : "list"} />
           </Suspense>
+          <a href={`/api/tickets/export${year ? `?year=${year}` : ""}`} download>
+            <Button variant="outline" className="gap-1.5">
+              <Download className="h-4 w-4" />
+              <span className="hidden sm:inline">Esporta ZIP</span>
+            </Button>
+          </a>
           <Link href="/tickets/new">
             <Button className="gap-2">
               <Plus className="h-4 w-4" />
@@ -94,9 +118,28 @@ export default async function TicketsPage({
         </div>
       </div>
 
+      {/* Filtro anno */}
+      {availableYears.length > 1 && (
+        <div className="flex flex-wrap gap-1.5">
+          <Link href={buildUrl({ view, q, status, imei, year: undefined })}>
+            <span className={`rounded-full px-3 py-1 text-xs font-medium transition-colors cursor-pointer ${!year ? "bg-primary text-white" : "bg-slate-100 text-slate-600 hover:bg-slate-200"}`}>
+              Tutti
+            </span>
+          </Link>
+          {availableYears.map((y) => (
+            <Link key={y} href={buildUrl({ view, q, status, imei, year: String(y) })}>
+              <span className={`rounded-full px-3 py-1 text-xs font-medium transition-colors cursor-pointer ${year === String(y) ? "bg-primary text-white" : "bg-slate-100 text-slate-600 hover:bg-slate-200"}`}>
+                {y}
+              </span>
+            </Link>
+          ))}
+        </div>
+      )}
+
       {/* Filtri */}
       <form method="GET" className="flex flex-col gap-2 sm:flex-row sm:flex-wrap">
         {view && <input type="hidden" name="view" value={view} />}
+        {year && <input type="hidden" name="year" value={year} />}
         <div className="relative flex-1 sm:min-w-48">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
           <input
