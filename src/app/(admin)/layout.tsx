@@ -4,7 +4,8 @@ import { users } from "@/db/schema";
 import { eq } from "drizzle-orm";
 import { redirect } from "next/navigation";
 import Link from "next/link";
-import { Shield, Users, Building2, LogOut } from "lucide-react";
+import { Shield, Users, Building2, LogOut, UserCog } from "lucide-react";
+import { signOut } from "@/lib/auth";
 
 export default async function AdminLayout({ children }: { children: React.ReactNode }) {
   const session = await auth();
@@ -34,12 +35,18 @@ export default async function AdminLayout({ children }: { children: React.ReactN
             <Users className="h-4 w-4" />
             Utenti
           </Link>
+          <Link href="/admin/profile" className="flex items-center gap-2 rounded-md px-3 py-2 text-sm text-slate-300 hover:bg-slate-800 hover:text-white transition-colors">
+            <UserCog className="h-4 w-4" />
+            Profilo
+          </Link>
         </nav>
         <div className="border-t border-slate-700 p-3">
-          <Link href="/dashboard" className="flex items-center gap-2 rounded-md px-3 py-2 text-sm text-slate-400 hover:bg-slate-800 hover:text-white transition-colors">
-            <LogOut className="h-4 w-4" />
-            Torna all&apos;app
-          </Link>
+          <form action={async () => { "use server"; await signOut({ redirectTo: "/login" }); }}>
+            <button type="submit" className="flex w-full items-center gap-2 rounded-md px-3 py-2 text-sm text-slate-400 hover:bg-slate-800 hover:text-white transition-colors">
+              <LogOut className="h-4 w-4" />
+              Esci
+            </button>
+          </form>
         </div>
       </aside>
       <div className="flex flex-1 flex-col overflow-hidden">

@@ -35,9 +35,15 @@ export default auth((req) => {
     pathname.startsWith("/api/auth") ||
     (!isAppHost && pathname === "/"); // landing pubblica solo in dev
 
+  const isSuperAdmin = (req.auth?.user as { isSuperAdmin?: boolean })?.isSuperAdmin;
+
   if (isLoggedIn && (pathname === "/" || pathname === "/login" || pathname === "/register")) {
-    const isSuperAdmin = (req.auth?.user as { isSuperAdmin?: boolean })?.isSuperAdmin;
     return NextResponse.redirect(new URL(isSuperAdmin ? "/admin" : "/dashboard", req.url));
+  }
+
+  // Super admin non ha un'org: blocca fuori dal pannello admin
+  if (isLoggedIn && isSuperAdmin && !pathname.startsWith("/admin") && !pathname.startsWith("/api/auth")) {
+    return NextResponse.redirect(new URL("/admin", req.url));
   }
 
   if (!isLoggedIn && !isPublicPath) {
