@@ -4,7 +4,7 @@ import { users } from "@/db/schema";
 import { eq } from "drizzle-orm";
 import { redirect } from "next/navigation";
 import Link from "next/link";
-import { Shield, Users, Building2, LogOut, UserCog } from "lucide-react";
+import { Shield, Users, Building2, LogOut, UserCog, LayoutDashboard } from "lucide-react";
 import { signOut } from "@/lib/auth";
 
 export default async function AdminLayout({ children }: { children: React.ReactNode }) {
@@ -28,6 +28,10 @@ export default async function AdminLayout({ children }: { children: React.ReactN
         </div>
         <nav className="flex flex-col gap-1 p-3 flex-1">
           <Link href="/admin" className="flex items-center gap-2 rounded-md px-3 py-2 text-sm text-slate-300 hover:bg-slate-800 hover:text-white transition-colors">
+            <LayoutDashboard className="h-4 w-4" />
+            Dashboard
+          </Link>
+          <Link href="/admin/orgs" className="flex items-center gap-2 rounded-md px-3 py-2 text-sm text-slate-300 hover:bg-slate-800 hover:text-white transition-colors">
             <Building2 className="h-4 w-4" />
             Organizzazioni
           </Link>

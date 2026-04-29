@@ -23,11 +23,19 @@ export async function updateOrgPlanAction(
   plan: "solo" | "pro" | "business",
   subscriptionStatus: "trial" | "active" | "past_due" | "canceled",
   adminNotes: string,
+  trialEndsAt: string | null,
 ) {
   await assertSuperAdmin();
   await db
     .update(organizations)
-    .set({ plan, subscriptionStatus, adminNotes: adminNotes || null, updatedAt: new Date() })
+    .set({
+      plan,
+      subscriptionStatus,
+      adminNotes: adminNotes || null,
+      trialEndsAt: trialEndsAt ? new Date(trialEndsAt) : null,
+      updatedAt: new Date(),
+    })
     .where(eq(organizations.id, orgId));
   revalidatePath("/admin");
+  revalidatePath(`/admin/orgs/${orgId}`);
 }
