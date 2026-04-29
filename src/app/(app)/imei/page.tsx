@@ -91,8 +91,8 @@ export default async function ImeiSearchPage({
             {rows.length} {rows.length === 1 ? "riparazione trovata" : "riparazioni trovate"} per IMEI{" "}
             <span className="font-mono font-medium text-foreground">{imei}</span>
           </p>
-          <div className="rounded-lg border bg-white">
-            <table className="w-full text-sm">
+          <div className="overflow-x-auto rounded-lg border bg-white">
+            <table className="w-full text-sm min-w-[680px]">
               <thead>
                 <tr className="border-b bg-slate-50 text-left text-xs font-medium uppercase tracking-wide text-muted-foreground">
                   <th className="px-4 py-3">#</th>

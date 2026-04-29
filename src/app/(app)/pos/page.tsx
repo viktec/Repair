@@ -51,13 +51,13 @@ export default async function PosPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h1 className="text-2xl font-bold">Cassa POS</h1>
           <p className="mt-1 text-sm text-muted-foreground">Gestione incassi e transazioni</p>
         </div>
         <Link href="/pos/new">
-          <Button className="gap-2"><Plus className="h-4 w-4" />Nuova vendita</Button>
+          <Button className="gap-2 w-full sm:w-auto"><Plus className="h-4 w-4" />Nuova vendita</Button>
         </Link>
       </div>
 
@@ -88,7 +88,8 @@ export default async function PosPage() {
               <p className="text-sm text-muted-foreground mt-1">Registra la prima vendita con il pulsante "Nuova vendita".</p>
             </div>
           ) : (
-            <table className="w-full text-sm">
+            <div className="overflow-x-auto -mx-6">
+            <table className="w-full text-sm min-w-[480px] px-6">
               <thead>
                 <tr className="border-b text-left text-xs font-medium uppercase tracking-wide text-muted-foreground">
                   <th className="pb-2">Scontrino</th>
@@ -112,6 +113,7 @@ export default async function PosPage() {
                 ))}
               </tbody>
             </table>
+            </div>
           )}
         </CardContent>
       </Card>

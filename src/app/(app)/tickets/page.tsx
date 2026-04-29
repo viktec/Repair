@@ -73,7 +73,7 @@ export default async function TicketsPage({
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h1 className="text-2xl font-bold text-foreground">Ticket</h1>
           <p className="mt-1 text-sm text-muted-foreground">
@@ -87,16 +87,17 @@ export default async function TicketsPage({
           <Link href="/tickets/new">
             <Button className="gap-2">
               <Plus className="h-4 w-4" />
-              Nuovo ticket
+              <span className="hidden xs:inline">Nuovo ticket</span>
+              <span className="xs:hidden">Nuovo</span>
             </Button>
           </Link>
         </div>
       </div>
 
       {/* Filtri */}
-      <form method="GET" className="flex flex-wrap gap-2">
+      <form method="GET" className="flex flex-col gap-2 sm:flex-row sm:flex-wrap">
         {view && <input type="hidden" name="view" value={view} />}
-        <div className="relative flex-1 min-w-48">
+        <div className="relative flex-1 sm:min-w-48">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
           <input
             name="q"
@@ -105,22 +106,24 @@ export default async function TicketsPage({
             className="w-full rounded-md border border-input bg-white pl-9 pr-3 py-2 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring"
           />
         </div>
-        <select
-          name="status"
-          defaultValue={status ?? ""}
-          className="rounded-md border border-input bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
-        >
-          <option value="">Tutti gli stati</option>
-          {statuses.map((s) => (
-            <option key={s.id} value={s.id}>{s.name}</option>
-          ))}
-        </select>
-        <Button type="submit" variant="outline" size="sm">Filtra</Button>
-        {isFiltered && (
-          <Link href="/tickets">
-            <Button type="button" variant="ghost" size="sm">Azzera</Button>
-          </Link>
-        )}
+        <div className="flex gap-2">
+          <select
+            name="status"
+            defaultValue={status ?? ""}
+            className="flex-1 rounded-md border border-input bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+          >
+            <option value="">Tutti gli stati</option>
+            {statuses.map((s) => (
+              <option key={s.id} value={s.id}>{s.name}</option>
+            ))}
+          </select>
+          <Button type="submit" variant="outline" size="sm">Filtra</Button>
+          {isFiltered && (
+            <Link href="/tickets">
+              <Button type="button" variant="ghost" size="sm">Azzera</Button>
+            </Link>
+          )}
+        </div>
       </form>
 
       {rows.length === 0 ? (
@@ -148,38 +151,17 @@ export default async function TicketsPage({
       ) : isKanban ? (
         <KanbanBoard tickets={rows} statuses={statuses} />
       ) : (
-        <div className="rounded-lg border bg-white">
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="border-b bg-slate-50 text-left text-xs font-medium uppercase tracking-wide text-muted-foreground">
-                <th className="px-4 py-3">#</th>
-                <th className="px-4 py-3">Cliente</th>
-                <th className="px-4 py-3">Dispositivo</th>
-                <th className="px-4 py-3">Guasto</th>
-                <th className="px-4 py-3">Stato</th>
-                <th className="px-4 py-3">Data</th>
-                <th className="px-4 py-3" />
-              </tr>
-            </thead>
-            <tbody>
-              {rows.map((t) => (
-                <tr key={t.id} className="border-b last:border-0 hover:bg-slate-50/50">
-                  <td className="px-4 py-3 font-mono font-medium text-foreground">
-                    #{String(t.ticketNumber).padStart(4, "0")}
-                  </td>
-                  <td className="px-4 py-3 text-muted-foreground">
-                    {t.customerName ?? <span className="italic text-muted-foreground/50">—</span>}
-                  </td>
-                  <td className="px-4 py-3 font-medium text-foreground">
-                    {[t.deviceBrand, t.deviceModel].filter(Boolean).join(" ") || (
-                      <span className="italic text-muted-foreground/50">—</span>
-                    )}
-                  </td>
-                  <td className="max-w-[200px] px-4 py-3 text-muted-foreground">
-                    <span className="line-clamp-1">{t.faultDescription}</span>
-                  </td>
-                  <td className="px-4 py-3">
-                    {t.statusName ? (
+        <>
+          {/* Mobile card view */}
+          <div className="sm:hidden space-y-2">
+            {rows.map((t) => (
+              <Link key={t.id} href={`/tickets/${t.id}`}>
+                <div className="rounded-lg border bg-white p-4 hover:bg-slate-50/50 active:bg-slate-100">
+                  <div className="flex items-start justify-between gap-2">
+                    <span className="font-mono font-bold text-sm text-foreground">
+                      #{String(t.ticketNumber).padStart(4, "0")}
+                    </span>
+                    {t.statusName && (
                       <Badge
                         style={t.statusColor ? {
                           backgroundColor: t.statusColor + "20",
@@ -187,27 +169,87 @@ export default async function TicketsPage({
                           borderColor: t.statusColor + "40",
                         } : undefined}
                         variant="outline"
-                        className="text-xs font-medium"
+                        className="text-xs font-medium shrink-0"
                       >
                         {t.statusName}
                       </Badge>
-                    ) : (
-                      <span className="text-muted-foreground/50">—</span>
                     )}
-                  </td>
-                  <td className="px-4 py-3 text-muted-foreground">
-                    {formatDate(t.createdAt)}
-                  </td>
-                  <td className="px-4 py-3 text-right">
-                    <Link href={`/tickets/${t.id}`}>
-                      <Button variant="outline" size="sm">Apri</Button>
-                    </Link>
-                  </td>
+                  </div>
+                  <p className="mt-1 font-medium text-foreground">
+                    {[t.deviceBrand, t.deviceModel].filter(Boolean).join(" ") || "—"}
+                  </p>
+                  <p className="text-sm text-muted-foreground">{t.customerName ?? "—"}</p>
+                  {t.faultDescription && (
+                    <p className="mt-1 text-xs text-muted-foreground line-clamp-1">{t.faultDescription}</p>
+                  )}
+                  <p className="mt-1 text-xs text-muted-foreground">{formatDate(t.createdAt)}</p>
+                </div>
+              </Link>
+            ))}
+          </div>
+
+          {/* Desktop table view */}
+          <div className="hidden sm:block overflow-x-auto rounded-lg border bg-white">
+            <table className="w-full text-sm min-w-[640px]">
+              <thead>
+                <tr className="border-b bg-slate-50 text-left text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                  <th className="px-4 py-3">#</th>
+                  <th className="px-4 py-3">Cliente</th>
+                  <th className="px-4 py-3">Dispositivo</th>
+                  <th className="px-4 py-3">Guasto</th>
+                  <th className="px-4 py-3">Stato</th>
+                  <th className="px-4 py-3">Data</th>
+                  <th className="px-4 py-3" />
                 </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+              </thead>
+              <tbody>
+                {rows.map((t) => (
+                  <tr key={t.id} className="border-b last:border-0 hover:bg-slate-50/50">
+                    <td className="px-4 py-3 font-mono font-medium text-foreground">
+                      #{String(t.ticketNumber).padStart(4, "0")}
+                    </td>
+                    <td className="px-4 py-3 text-muted-foreground">
+                      {t.customerName ?? <span className="italic text-muted-foreground/50">—</span>}
+                    </td>
+                    <td className="px-4 py-3 font-medium text-foreground">
+                      {[t.deviceBrand, t.deviceModel].filter(Boolean).join(" ") || (
+                        <span className="italic text-muted-foreground/50">—</span>
+                      )}
+                    </td>
+                    <td className="max-w-[200px] px-4 py-3 text-muted-foreground">
+                      <span className="line-clamp-1">{t.faultDescription}</span>
+                    </td>
+                    <td className="px-4 py-3">
+                      {t.statusName ? (
+                        <Badge
+                          style={t.statusColor ? {
+                            backgroundColor: t.statusColor + "20",
+                            color: t.statusColor,
+                            borderColor: t.statusColor + "40",
+                          } : undefined}
+                          variant="outline"
+                          className="text-xs font-medium"
+                        >
+                          {t.statusName}
+                        </Badge>
+                      ) : (
+                        <span className="text-muted-foreground/50">—</span>
+                      )}
+                    </td>
+                    <td className="px-4 py-3 text-muted-foreground">
+                      {formatDate(t.createdAt)}
+                    </td>
+                    <td className="px-4 py-3 text-right">
+                      <Link href={`/tickets/${t.id}`}>
+                        <Button variant="outline" size="sm">Apri</Button>
+                      </Link>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </>
       )}
     </div>
   );

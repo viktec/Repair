@@ -55,7 +55,7 @@ export default async function InventoryPage({
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h1 className="text-2xl font-bold text-foreground">Magazzino</h1>
           <p className="mt-1 text-sm text-muted-foreground">
@@ -65,14 +65,12 @@ export default async function InventoryPage({
             )}
           </p>
         </div>
-        <div className="flex items-center gap-2">
-          <Link href="/inventory/new">
-            <Button className="gap-2">
-              <Plus className="h-4 w-4" />
-              Nuovo ricambio
-            </Button>
-          </Link>
-        </div>
+        <Link href="/inventory/new">
+          <Button className="gap-2 w-full sm:w-auto">
+            <Plus className="h-4 w-4" />
+            Nuovo ricambio
+          </Button>
+        </Link>
       </div>
 
       <form method="GET" className="flex gap-2 flex-wrap">
@@ -109,8 +107,8 @@ export default async function InventoryPage({
           </CardContent>
         </Card>
       ) : (
-        <div className="rounded-lg border bg-white overflow-hidden">
-          <table className="w-full text-sm">
+        <div className="overflow-x-auto rounded-lg border bg-white">
+          <table className="w-full text-sm min-w-[700px]">
             <thead>
               <tr className="border-b bg-slate-50 text-left text-xs font-medium uppercase tracking-wide text-muted-foreground">
                 <th className="px-4 py-3">Articolo</th>

@@ -28,8 +28,8 @@ export default async function AdminUsersPage() {
         <p className="mt-1 text-sm text-muted-foreground">{rows.length} utenti totali</p>
       </div>
 
-      <div className="rounded-lg border bg-white overflow-hidden">
-        <table className="w-full text-sm">
+      <div className="overflow-x-auto rounded-lg border bg-white">
+        <table className="w-full text-sm min-w-[500px]">
           <thead>
             <tr className="border-b bg-slate-50 text-left text-xs font-medium uppercase tracking-wide text-muted-foreground">
               <th className="px-4 py-3">Utente</th>
