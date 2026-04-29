@@ -3,7 +3,7 @@ import { db } from "@/lib/db";
 import {
   organizations, tickets, customers, ticketStatuses, inventoryItems,
 } from "@/db/schema";
-import { eq, and, isNull, count, sum, avg, sql, lte } from "drizzle-orm";
+import { eq, and, isNull, count, sum, avg, sql, lte, gte, lt, gt } from "drizzle-orm";
 import { redirect } from "next/navigation";
 import Link from "next/link";
 import {
@@ -57,13 +57,13 @@ export default async function DashboardPage() {
         eq(tickets.organizationId, orgId),
         isNull(tickets.deletedAt),
         eq(ticketStatuses.isFinal, true),
-        sql`${tickets.updatedAt} >= ${startOfMonth}`,
+        gte(tickets.updatedAt, startOfMonth),
       ))
       .then((r) => r[0].c),
 
     // Nuovi clienti questo mese
     db.select({ c: count() }).from(customers)
-      .where(and(eq(customers.organizationId, orgId), sql`${customers.createdAt} >= ${startOfMonth}`))
+      .where(and(eq(customers.organizationId, orgId), gte(customers.createdAt, startOfMonth)))
       .then((r) => r[0].c),
 
     // Fatturato mese corrente
@@ -73,7 +73,7 @@ export default async function DashboardPage() {
         eq(tickets.organizationId, orgId),
         isNull(tickets.deletedAt),
         eq(ticketStatuses.isFinal, true),
-        sql`${tickets.updatedAt} >= ${startOfMonth}`,
+        gte(tickets.updatedAt, startOfMonth),
       ))
       .then((r) => Number(r[0].total ?? 0)),
 
@@ -84,14 +84,14 @@ export default async function DashboardPage() {
         eq(tickets.organizationId, orgId),
         isNull(tickets.deletedAt),
         eq(ticketStatuses.isFinal, true),
-        sql`${tickets.updatedAt} >= ${startOfLastMonth}`,
-        sql`${tickets.updatedAt} < ${startOfMonth}`,
+        gte(tickets.updatedAt, startOfLastMonth),
+        lt(tickets.updatedAt, startOfMonth),
       ))
       .then((r) => Number(r[0].total ?? 0)),
 
     // Valore medio ticket (con finalCost)
     db.select({ avg: avg(tickets.finalCost) }).from(tickets)
-      .where(and(eq(tickets.organizationId, orgId), isNull(tickets.deletedAt), sql`${tickets.finalCost} > 0`))
+      .where(and(eq(tickets.organizationId, orgId), isNull(tickets.deletedAt), gt(tickets.finalCost, 0)))
       .then((r) => Number(r[0].avg ?? 0)),
 
     // Prodotti sotto scorta minima
