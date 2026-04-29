@@ -12,7 +12,7 @@ import { formatDate } from "@/lib/utils";
 
 export default async function SuppliersPage() {
   const session = await auth();
-  if (!session?.user.organizationId) redirect("/login");
+  if (!session?.user?.organizationId) redirect("/login");
   if (!can.accessSuppliers(session.user.role)) redirect("/dashboard");
   const orgId = session.user.organizationId;
 

@@ -31,7 +31,7 @@ export async function createTicketAction(
   formData: FormData,
 ): Promise<TicketState> {
   const session = await auth();
-  if (!session?.user.organizationId) redirect("/login");
+  if (!session?.user?.organizationId) redirect("/login");
   const orgId = session.user.organizationId;
 
   const parsed = ticketSchema.safeParse(Object.fromEntries(formData));
@@ -104,7 +104,7 @@ export async function createTicketAction(
 
 export async function updateTicketStatusAction(ticketId: string, statusId: string) {
   const session = await auth();
-  if (!session?.user.organizationId) redirect("/login");
+  if (!session?.user?.organizationId) redirect("/login");
 
   await db
     .update(tickets)
@@ -122,7 +122,7 @@ export async function updateTicketStatusAction(ticketId: string, statusId: strin
 
 export async function sendStatusEmailAction(ticketId: string): Promise<{ ok: boolean; error?: string }> {
   const session = await auth();
-  if (!session?.user.organizationId) redirect("/login");
+  if (!session?.user?.organizationId) redirect("/login");
   const orgId = session.user.organizationId;
 
   const [row] = await db
@@ -167,7 +167,7 @@ export async function sendStatusEmailAction(ticketId: string): Promise<{ ok: boo
 
 export async function updateTicketNotesAction(ticketId: string, notes: string) {
   const session = await auth();
-  if (!session?.user.organizationId) redirect("/login");
+  if (!session?.user?.organizationId) redirect("/login");
 
   await db
     .update(tickets)

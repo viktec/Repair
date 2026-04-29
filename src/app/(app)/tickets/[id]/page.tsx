@@ -18,7 +18,7 @@ import { ensureDefaultStatuses } from "@/lib/seed-statuses";
 export default async function TicketDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   const session = await auth();
-  if (!session?.user.organizationId) redirect("/login");
+  if (!session?.user?.organizationId) redirect("/login");
   const orgId = session.user.organizationId;
 
   await ensureDefaultStatuses(orgId);

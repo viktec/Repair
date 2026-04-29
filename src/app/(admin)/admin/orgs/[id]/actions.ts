@@ -10,7 +10,7 @@ import { sendApprovalEmail, sendRejectionEmail } from "@/lib/email";
 
 async function requireSuperAdmin() {
   const session = await auth();
-  if (!session?.user.isSuperAdmin) redirect("/dashboard");
+  if (!session?.user?.isSuperAdmin) redirect("/dashboard");
 }
 
 export async function approveOrgAction(orgId: string) {

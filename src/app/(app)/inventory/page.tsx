@@ -18,7 +18,7 @@ export default async function InventoryPage({
 }) {
   const { q, low } = await searchParams;
   const session = await auth();
-  if (!session?.user.organizationId) redirect("/login");
+  if (!session?.user?.organizationId) redirect("/login");
   if (!can.accessInventory(session.user.role)) redirect("/dashboard");
   const orgId = session.user.organizationId;
 

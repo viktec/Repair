@@ -12,7 +12,7 @@ import { formatCurrency } from "@/lib/utils";
 
 export default async function RegistryPage() {
   const session = await auth();
-  if (!session?.user.organizationId) redirect("/login");
+  if (!session?.user?.organizationId) redirect("/login");
   if (!can.accessRegistry(session.user.role)) redirect("/dashboard");
   const orgId = session.user.organizationId;
 

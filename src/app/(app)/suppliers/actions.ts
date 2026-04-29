@@ -9,7 +9,7 @@ import { revalidatePath } from "next/cache";
 
 export async function createSupplierAction(_prev: unknown, formData: FormData) {
   const session = await auth();
-  if (!session?.user.organizationId) redirect("/login");
+  if (!session?.user?.organizationId) redirect("/login");
 
   const name = formData.get("name") as string;
   if (!name?.trim()) return { errors: { name: ["Nome obbligatorio"] } };
@@ -30,7 +30,7 @@ export async function createSupplierAction(_prev: unknown, formData: FormData) {
 
 export async function updateSupplierAction(id: string, _prev: unknown, formData: FormData) {
   const session = await auth();
-  if (!session?.user.organizationId) redirect("/login");
+  if (!session?.user?.organizationId) redirect("/login");
 
   await db
     .update(suppliers)
@@ -51,7 +51,7 @@ export async function updateSupplierAction(id: string, _prev: unknown, formData:
 
 export async function deleteSupplierAction(id: string) {
   const session = await auth();
-  if (!session?.user.organizationId) redirect("/login");
+  if (!session?.user?.organizationId) redirect("/login");
 
   await db
     .update(suppliers)

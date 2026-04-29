@@ -11,7 +11,7 @@ import { NewTicketForm } from "./form";
 
 export default async function NewTicketPage() {
   const session = await auth();
-  if (!session?.user.organizationId) redirect("/login");
+  if (!session?.user?.organizationId) redirect("/login");
   const orgId = session.user.organizationId;
 
   const [customerList, statusList] = await Promise.all([

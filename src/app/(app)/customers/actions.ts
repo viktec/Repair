@@ -26,7 +26,7 @@ export async function createCustomerAction(
   formData: FormData,
 ): Promise<CustomerState> {
   const session = await auth();
-  if (!session?.user.organizationId) redirect("/login");
+  if (!session?.user?.organizationId) redirect("/login");
 
   const parsed = customerSchema.safeParse(Object.fromEntries(formData));
   if (!parsed.success) {
@@ -55,7 +55,7 @@ export async function createCustomerInlineAction(data: {
   gdprConsent: boolean;
 }): Promise<{ id: string; name: string; phone: string | null } | { error: string }> {
   const session = await auth();
-  if (!session?.user.organizationId) return { error: "Non autenticato" };
+  if (!session?.user?.organizationId) return { error: "Non autenticato" };
 
   if (!data.name.trim()) return { error: "Il nome è obbligatorio" };
 
@@ -77,7 +77,7 @@ export async function createCustomerInlineAction(data: {
 
 export async function deleteCustomerAction(customerId: string) {
   const session = await auth();
-  if (!session?.user.organizationId) redirect("/login");
+  if (!session?.user?.organizationId) redirect("/login");
   if (!can.delete(session.user.role)) throw new Error("Non autorizzato");
 
   await db

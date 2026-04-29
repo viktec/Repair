@@ -11,7 +11,7 @@ import { TeamMemberRow } from "./team-member-row";
 
 export default async function TeamPage() {
   const session = await auth();
-  if (!session?.user.organizationId) redirect("/login");
+  if (!session?.user?.organizationId) redirect("/login");
   if (!can.manageTeam(session.user.role)) redirect("/settings");
   const orgId = session.user.organizationId;
 

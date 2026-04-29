@@ -12,7 +12,7 @@ import { formatCurrency } from "@/lib/utils";
 export default async function SupplierDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   const session = await auth();
-  if (!session?.user.organizationId) redirect("/login");
+  if (!session?.user?.organizationId) redirect("/login");
   const orgId = session.user.organizationId;
 
   const [supplier] = await db

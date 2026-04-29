@@ -148,7 +148,7 @@ export async function logoutAction() {
 export async function completeOnboardingAction(formData: FormData) {
   const { auth } = await import("@/lib/auth");
   const session = await auth();
-  if (!session?.user.organizationId) redirect("/login");
+  if (!session?.user?.organizationId) redirect("/login");
 
   const shopName = formData.get("shopName") as string;
   const phone = formData.get("phone") as string;

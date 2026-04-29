@@ -31,7 +31,7 @@ export default async function PrintPage({
     : "ricevuta";
 
   const session = await auth();
-  if (!session?.user.organizationId) redirect("/login");
+  if (!session?.user?.organizationId) redirect("/login");
   const orgId = session.user.organizationId;
 
   const [ticket] = await db

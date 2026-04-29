@@ -14,7 +14,7 @@ function assertOwner(role: string | null | undefined) {
 
 export async function updateMemberRoleAction(userId: string, newRole: Role) {
   const session = await auth();
-  if (!session?.user.organizationId) redirect("/login");
+  if (!session?.user?.organizationId) redirect("/login");
   assertOwner(session.user.role);
 
   if (userId === session.user.id) throw new Error("Non puoi cambiare il tuo stesso ruolo.");
@@ -37,7 +37,7 @@ export async function updateMemberRoleAction(userId: string, newRole: Role) {
 
 export async function removeMemberAction(userId: string) {
   const session = await auth();
-  if (!session?.user.organizationId) redirect("/login");
+  if (!session?.user?.organizationId) redirect("/login");
   assertOwner(session.user.role);
 
   if (userId === session.user.id) throw new Error("Non puoi rimuovere te stesso.");

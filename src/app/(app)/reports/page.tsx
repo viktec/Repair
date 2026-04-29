@@ -9,7 +9,7 @@ import { can } from "@/lib/permissions";
 
 export default async function ReportsPage() {
   const session = await auth();
-  if (!session?.user.organizationId) redirect("/login");
+  if (!session?.user?.organizationId) redirect("/login");
   if (!can.accessReports(session.user.role)) redirect("/dashboard");
   const orgId = session.user.organizationId;
 

@@ -12,7 +12,7 @@ import { can } from "@/lib/permissions";
 
 export default async function SettingsPage() {
   const session = await auth();
-  if (!session?.user.organizationId) redirect("/login");
+  if (!session?.user?.organizationId) redirect("/login");
   const orgId = session.user.organizationId;
   const role = session.user.role;
   const isOwner = can.editOrgSettings(role);

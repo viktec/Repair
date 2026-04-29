@@ -22,7 +22,7 @@ export default async function TicketsPage({
   const isKanban = view === "kanban";
 
   const session = await auth();
-  if (!session?.user.organizationId) redirect("/login");
+  if (!session?.user?.organizationId) redirect("/login");
   const orgId = session.user.organizationId;
 
   const [statuses] = await Promise.all([

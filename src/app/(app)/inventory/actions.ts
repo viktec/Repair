@@ -27,7 +27,7 @@ const itemSchema = z.object({
 
 export async function createInventoryItemAction(_prev: unknown, formData: FormData) {
   const session = await auth();
-  if (!session?.user.organizationId) redirect("/login");
+  if (!session?.user?.organizationId) redirect("/login");
   const orgId = session.user.organizationId;
 
   const parsed = itemSchema.safeParse(Object.fromEntries(formData));
@@ -60,7 +60,7 @@ export async function createInventoryItemAction(_prev: unknown, formData: FormDa
 
 export async function updateInventoryItemAction(id: string, _prev: unknown, formData: FormData) {
   const session = await auth();
-  if (!session?.user.organizationId) redirect("/login");
+  if (!session?.user?.organizationId) redirect("/login");
   const orgId = session.user.organizationId;
 
   const parsed = itemSchema.safeParse(Object.fromEntries(formData));
@@ -96,7 +96,7 @@ export async function updateInventoryItemAction(id: string, _prev: unknown, form
 
 export async function addMovementAction(itemId: string, type: string, qty: number, notes: string) {
   const session = await auth();
-  if (!session?.user.organizationId) redirect("/login");
+  if (!session?.user?.organizationId) redirect("/login");
   const orgId = session.user.organizationId;
 
   const [item] = await db
@@ -129,7 +129,7 @@ export async function addMovementAction(itemId: string, type: string, qty: numbe
 
 export async function deleteInventoryItemAction(id: string) {
   const session = await auth();
-  if (!session?.user.organizationId) redirect("/login");
+  if (!session?.user?.organizationId) redirect("/login");
   if (!can.delete(session.user.role)) throw new Error("Non autorizzato");
 
   await db

@@ -17,7 +17,7 @@ export async function getUploadUrl(
   isPublic: boolean,
 ) {
   const session = await auth();
-  if (!session?.user.organizationId) redirect("/login");
+  if (!session?.user?.organizationId) redirect("/login");
 
   const [ticket] = await db
     .select({ id: tickets.id })
@@ -41,7 +41,7 @@ export async function savePhoto(
   isPublic: boolean,
 ) {
   const session = await auth();
-  if (!session?.user.organizationId) redirect("/login");
+  if (!session?.user?.organizationId) redirect("/login");
 
   await db.insert(ticketPhotos).values({
     ticketId,
@@ -55,7 +55,7 @@ export async function savePhoto(
 
 export async function deletePhoto(ticketId: string, photoId: string) {
   const session = await auth();
-  if (!session?.user.organizationId) redirect("/login");
+  if (!session?.user?.organizationId) redirect("/login");
 
   await db
     .delete(ticketPhotos)

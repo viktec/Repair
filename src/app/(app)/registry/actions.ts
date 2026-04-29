@@ -9,7 +9,7 @@ import { revalidatePath } from "next/cache";
 
 export async function createRegistryEntryAction(_prev: unknown, formData: FormData) {
   const session = await auth();
-  if (!session?.user.organizationId) redirect("/login");
+  if (!session?.user?.organizationId) redirect("/login");
   const orgId = session.user.organizationId;
 
   const [maxRow] = await db

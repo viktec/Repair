@@ -11,7 +11,7 @@ import { formatDate } from "@/lib/utils";
 
 export default async function CustomersPage() {
   const session = await auth();
-  if (!session?.user.organizationId) redirect("/login");
+  if (!session?.user?.organizationId) redirect("/login");
 
   const rows = await db
     .select({

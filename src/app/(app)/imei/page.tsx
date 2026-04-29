@@ -16,7 +16,7 @@ export default async function ImeiSearchPage({
 }) {
   const { imei } = await searchParams;
   const session = await auth();
-  if (!session?.user.organizationId) redirect("/login");
+  if (!session?.user?.organizationId) redirect("/login");
   const orgId = session.user.organizationId;
 
   const rows = imei
