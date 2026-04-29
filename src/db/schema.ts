@@ -62,6 +62,8 @@ export const organizations = pgTable("organizations", {
   googleReviewUrl: text("google_review_url"),
   termsAndConditions: text("terms_and_conditions"),
   vatRate: integer("vat_rate").notNull().default(22),
+  telegramBotToken: text("telegram_bot_token"),
+  telegramChatId: varchar("telegram_chat_id", { length: 100 }),
   adminNotes: text("admin_notes"),
   registrationStatus: registrationStatusEnum("registration_status").notNull().default("pending"),
   rejectionReason: text("rejection_reason"),

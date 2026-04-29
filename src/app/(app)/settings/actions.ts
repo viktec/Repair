@@ -28,6 +28,8 @@ export async function updateOrganizationAction(formData: FormData) {
   const googleReviewUrl = formData.get("googleReviewUrl") as string;
   const termsAndConditions = formData.get("termsAndConditions") as string;
   const vatRateRaw = parseInt(formData.get("vatRate") as string, 10);
+  const telegramBotToken = formData.get("telegramBotToken") as string;
+  const telegramChatId = formData.get("telegramChatId") as string;
 
   await db
     .update(organizations)
@@ -44,6 +46,8 @@ export async function updateOrganizationAction(formData: FormData) {
       googleReviewUrl: googleReviewUrl || null,
       termsAndConditions: termsAndConditions || null,
       vatRate: !isNaN(vatRateRaw) && vatRateRaw >= 0 ? vatRateRaw : undefined,
+      telegramBotToken: telegramBotToken || null,
+      telegramChatId: telegramChatId || null,
       updatedAt: new Date(),
     })
     .where(eq(organizations.id, session.user.organizationId));

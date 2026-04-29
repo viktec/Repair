@@ -69,6 +69,9 @@ export default async function TicketsPage({
       statusName: ticketStatuses.name,
       statusColor: ticketStatuses.color,
       statusId: tickets.statusId,
+      quoteAcceptedAt: tickets.quoteAcceptedAt,
+      quoteRejectedAt: tickets.quoteRejectedAt,
+      estimatedCost: tickets.estimatedCost,
     })
     .from(tickets)
     .leftJoin(customers, eq(customers.id, tickets.customerId))
@@ -226,6 +229,15 @@ export default async function TicketsPage({
                     <p className="mt-1 text-xs text-muted-foreground line-clamp-1">{t.faultDescription}</p>
                   )}
                   <p className="mt-1 text-xs text-muted-foreground">{formatDate(t.createdAt)}</p>
+                  {t.quoteAcceptedAt && (
+                    <span className="mt-1 inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2 py-0.5 text-xs font-medium text-emerald-700">✅ Preventivo accettato</span>
+                  )}
+                  {t.quoteRejectedAt && (
+                    <span className="mt-1 inline-flex items-center gap-1 rounded-full bg-red-50 px-2 py-0.5 text-xs font-medium text-red-700">❌ Preventivo rifiutato</span>
+                  )}
+                  {t.estimatedCost != null && !t.quoteAcceptedAt && !t.quoteRejectedAt && (
+                    <span className="mt-1 inline-flex items-center gap-1 rounded-full bg-amber-50 px-2 py-0.5 text-xs font-medium text-amber-700">⏳ In attesa risposta</span>
+                  )}
                 </div>
               </Link>
             ))}
@@ -263,21 +275,32 @@ export default async function TicketsPage({
                       <span className="line-clamp-1">{t.faultDescription}</span>
                     </td>
                     <td className="px-4 py-3">
-                      {t.statusName ? (
-                        <Badge
-                          style={t.statusColor ? {
-                            backgroundColor: t.statusColor + "20",
-                            color: t.statusColor,
-                            borderColor: t.statusColor + "40",
-                          } : undefined}
-                          variant="outline"
-                          className="text-xs font-medium"
-                        >
-                          {t.statusName}
-                        </Badge>
-                      ) : (
-                        <span className="text-muted-foreground/50">—</span>
-                      )}
+                      <div className="flex flex-col gap-1 items-start">
+                        {t.statusName ? (
+                          <Badge
+                            style={t.statusColor ? {
+                              backgroundColor: t.statusColor + "20",
+                              color: t.statusColor,
+                              borderColor: t.statusColor + "40",
+                            } : undefined}
+                            variant="outline"
+                            className="text-xs font-medium"
+                          >
+                            {t.statusName}
+                          </Badge>
+                        ) : (
+                          <span className="text-muted-foreground/50">—</span>
+                        )}
+                        {t.quoteAcceptedAt && (
+                          <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-1.5 py-0.5 text-xs font-medium text-emerald-700">✅ Accettato</span>
+                        )}
+                        {t.quoteRejectedAt && (
+                          <span className="inline-flex items-center gap-1 rounded-full bg-red-50 px-1.5 py-0.5 text-xs font-medium text-red-700">❌ Rifiutato</span>
+                        )}
+                        {t.estimatedCost != null && !t.quoteAcceptedAt && !t.quoteRejectedAt && (
+                          <span className="inline-flex items-center gap-1 rounded-full bg-amber-50 px-1.5 py-0.5 text-xs font-medium text-amber-700">⏳ In attesa</span>
+                        )}
+                      </div>
                     </td>
                     <td className="px-4 py-3 text-muted-foreground">
                       {formatDate(t.createdAt)}

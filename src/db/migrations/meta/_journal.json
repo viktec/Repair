@@ -64,6 +64,13 @@
       "when": 1777487920993,
       "tag": "0008_jazzy_tattoo",
       "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "7",
+      "when": 1777503161207,
+      "tag": "0009_even_dazzler",
+      "breakpoints": true
     }
   ]
 }

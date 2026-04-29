@@ -32,6 +32,8 @@ export default async function SettingsPage() {
       googleReviewUrl: organizations.googleReviewUrl,
       termsAndConditions: organizations.termsAndConditions,
       vatRate: organizations.vatRate,
+      telegramBotToken: organizations.telegramBotToken,
+      telegramChatId: organizations.telegramChatId,
     })
     .from(organizations)
     .where(eq(organizations.id, orgId))

@@ -29,6 +29,8 @@ type Org = {
   googleReviewUrl: string | null;
   termsAndConditions: string | null;
   vatRate: number;
+  telegramBotToken: string | null;
+  telegramChatId: string | null;
 };
 
 export function SettingsForm({ org }: { org: Org }) {
@@ -223,6 +225,45 @@ export function SettingsForm({ org }: { org: Org }) {
               rows={5}
               className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm font-mono placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring"
             />
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Notifiche Telegram */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-base">Notifiche Telegram</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <p className="text-xs text-muted-foreground">
+            Ricevi un messaggio Telegram quando un cliente accetta o rifiuta un preventivo.{" "}
+            <strong>Come configurare:</strong>{" "}
+            1) Cerca <code className="rounded bg-slate-100 px-1">@BotFather</code> su Telegram e crea un bot (ottieni il token).{" "}
+            2) Avvia il bot, poi vai su{" "}
+            <code className="rounded bg-slate-100 px-1">api.telegram.org/bot&#123;TOKEN&#125;/getUpdates</code>{" "}
+            per trovare il tuo <code className="rounded bg-slate-100 px-1">chat_id</code>.
+          </p>
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+            <div className="space-y-1.5">
+              <Label htmlFor="telegramBotToken">Bot Token</Label>
+              <Input
+                id="telegramBotToken"
+                name="telegramBotToken"
+                type="password"
+                defaultValue={org.telegramBotToken ?? ""}
+                placeholder="123456789:AAF..."
+                autoComplete="off"
+              />
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="telegramChatId">Chat ID</Label>
+              <Input
+                id="telegramChatId"
+                name="telegramChatId"
+                defaultValue={org.telegramChatId ?? ""}
+                placeholder="-100123456789"
+              />
+            </div>
           </div>
         </CardContent>
       </Card>
