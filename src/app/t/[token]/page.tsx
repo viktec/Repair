@@ -5,6 +5,7 @@ import { notFound } from "next/navigation";
 import { CheckCircle2, Clock, Wrench, Phone, MapPin, PenLine } from "lucide-react";
 import { getPublicUrl } from "@/lib/storage";
 import { PublicPhotoGallery } from "./public-photo-gallery";
+import { QuoteSection } from "./quote-section";
 
 export default async function TrackingPage({ params }: { params: Promise<{ token: string }> }) {
   const { token } = await params;
@@ -20,6 +21,8 @@ export default async function TrackingPage({ params }: { params: Promise<{ token
       deviceCondition: tickets.deviceCondition,
       faultDescription: tickets.faultDescription,
       estimatedCost: tickets.estimatedCost,
+      quoteAcceptedAt: tickets.quoteAcceptedAt,
+      quoteRejectedAt: tickets.quoteRejectedAt,
       createdAt: tickets.createdAt,
       updatedAt: tickets.updatedAt,
       customerName: customers.name,
@@ -140,6 +143,17 @@ export default async function TrackingPage({ params }: { params: Promise<{ token
           )}
         </div>
 
+        {/* Sezione preventivo — visibile solo se estimatedCost è impostato */}
+        {ticket.estimatedCost != null && (
+          <QuoteSection
+            token={token}
+            estimatedCost={ticket.estimatedCost}
+            accepted={ticket.quoteAcceptedAt != null}
+            rejected={ticket.quoteRejectedAt != null}
+            primaryColor={primaryColor}
+          />
+        )}
+
         {/* Riepilogo dispositivo */}
         <div className="rounded-2xl bg-white p-5 shadow-sm">
           <p className="mb-3 text-sm font-semibold text-foreground">Riepilogo riparazione</p>
@@ -149,12 +163,6 @@ export default async function TrackingPage({ params }: { params: Promise<{ token
             <Row label="Problema segnalato" value={ticket.faultDescription} />
             {ticket.accessories && <Row label="Accessori consegnati" value={ticket.accessories} />}
             {ticket.deviceCondition && <Row label="Condizioni estetiche" value={ticket.deviceCondition} />}
-            {ticket.estimatedCost != null && (
-              <Row
-                label="Preventivo"
-                value={new Intl.NumberFormat("it-IT", { style: "currency", currency: "EUR" }).format(ticket.estimatedCost / 100)}
-              />
-            )}
           </dl>
         </div>
 

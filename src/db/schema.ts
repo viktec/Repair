@@ -155,6 +155,8 @@ export const tickets = pgTable("tickets", {
 
   acceptedAt: timestamp("accepted_at"),
   deliveredAt: timestamp("delivered_at"),
+  quoteAcceptedAt: timestamp("quote_accepted_at"),
+  quoteRejectedAt: timestamp("quote_rejected_at"),
   createdAt: timestamp("created_at").notNull().defaultNow(),
   updatedAt: timestamp("updated_at").notNull().defaultNow(),
   deletedAt: timestamp("deleted_at"),
