@@ -13,7 +13,7 @@ export async function getUploadUrl(
   ticketId: string,
   fileName: string,
   contentType: string,
-  photoType: "pre" | "post" | "signature",
+  photoType: "pre" | "during" | "post" | "signature",
   isPublic: boolean,
 ) {
   const session = await auth();
@@ -37,7 +37,7 @@ export async function getUploadUrl(
 export async function savePhoto(
   ticketId: string,
   key: string,
-  photoType: "pre" | "post" | "signature",
+  photoType: "pre" | "during" | "post" | "signature",
   isPublic: boolean,
 ) {
   const session = await auth();

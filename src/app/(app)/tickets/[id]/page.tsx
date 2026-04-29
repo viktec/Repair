@@ -89,17 +89,45 @@ export default async function TicketDetailPage({ params }: { params: Promise<{ i
   const trackingUrl = `${process.env.TRACKING_URL ?? "https://t.my-repair.it"}/${ticket.qrToken}`;
   const printUrl = `/print/tickets/${ticket.id}`;
 
-  const DEFAULT_WA_TEMPLATE = `Salve {{nome}}!\nIl suo {{dispositivo}} è ora in stato: *{{stato}}*.\nPuò seguire l'avanzamento qui: {{link_tracking}}`;
-  const rawTemplate = org?.whatsappTemplate ?? DEFAULT_WA_TEMPLATE;
-  const firstName = ticket.customerName?.split(" ")[0] ?? "";
+  const firstName = ticket.customerName?.split(" ")[0] ?? "cliente";
   const device = [ticket.deviceBrand, ticket.deviceModel].filter(Boolean).join(" ") || "dispositivo";
-  const whatsappTemplate = rawTemplate
-    .replace(/\{\{nome\}\}/g, firstName || "cliente")
-    .replace(/\{\{dispositivo\}\}/g, device)
-    .replace(/\{\{stato\}\}/g, ticket.statusName ?? "—")
-    .replace(/\{\{link_tracking\}\}/g, trackingUrl);
+  const num = String(ticket.ticketNumber).padStart(4, "0");
+  const estimatedStr = ticket.estimatedCost != null
+    ? new Intl.NumberFormat("it-IT", { style: "currency", currency: "EUR" }).format(ticket.estimatedCost / 100)
+    : "";
 
-  const waLink = `https://wa.me/${ticket.customerPhone?.replace(/\D/g, "")}?text=${encodeURIComponent(whatsappTemplate)}`;
+  function fillTemplate(tpl: string) {
+    return tpl
+      .replace(/\{\{nome\}\}/g, firstName)
+      .replace(/\{\{dispositivo\}\}/g, device)
+      .replace(/\{\{stato\}\}/g, ticket.statusName ?? "—")
+      .replace(/\{\{link_tracking\}\}/g, trackingUrl)
+      .replace(/\{\{numero_ticket\}\}/g, num)
+      .replace(/\{\{preventivo\}\}/g, estimatedStr);
+  }
+
+  const waTemplates = [
+    {
+      label: "Aggiornamento stato",
+      text: fillTemplate(org?.whatsappTemplate ??
+        `Salve {{nome}}!\nIl suo {{dispositivo}} (ticket #{{numero_ticket}}) è ora in stato: *{{stato}}*.\nSegua l'avanzamento qui: {{link_tracking}}`),
+    },
+    {
+      label: "Preventivo",
+      text: fillTemplate(
+        `Salve {{nome}}, abbiamo completato la diagnosi del suo {{dispositivo}}.\n\n*Preventivo: {{preventivo}}*\n\nCi confermi se procedere con la riparazione.\nInfo sul ticket: {{link_tracking}}`),
+    },
+    {
+      label: "Pronto per ritiro",
+      text: fillTemplate(
+        `Buone notizie {{nome}}! Il suo {{dispositivo}} è *pronto per il ritiro*. ✅\n\nPuò passare quando preferisce.\nDettagli: {{link_tracking}}`),
+    },
+    {
+      label: "Richiedere recensione",
+      text: fillTemplate(
+        `Salve {{nome}}, speriamo sia soddisfatto della riparazione del suo {{dispositivo}}! 😊\nSe ha un momento, ci farebbe un grande favore lasciando una recensione su Google. Grazie mille!`),
+    },
+  ];
 
   return (
     <div className="space-y-6">
@@ -214,8 +242,8 @@ export default async function TicketDetailPage({ params }: { params: Promise<{ i
             statuses={allStatuses}
             internalNotes={ticket.internalNotes ?? ""}
             trackingUrl={trackingUrl}
-            whatsappTemplate={whatsappTemplate}
-            waLink={ticket.customerPhone ? waLink : null}
+            waTemplates={waTemplates}
+            customerPhone={ticket.customerPhone ?? null}
             printUrl={printUrl}
             hasCustomerEmail={!!ticket.customerEmail}
           />

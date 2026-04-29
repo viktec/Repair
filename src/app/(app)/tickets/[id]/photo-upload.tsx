@@ -31,7 +31,7 @@ export function PhotoUpload({ ticketId, initialPhotos }: Props) {
   const [isPending, startTransition] = useTransition();
   const [lightbox, setLightbox] = useState<LightboxState>(null);
 
-  async function handleFiles(files: FileList | null, photoType: "pre" | "post") {
+  async function handleFiles(files: FileList | null, photoType: "pre" | "during" | "post") {
     if (!files || files.length === 0) return;
     setUploading(true);
 
@@ -74,15 +74,17 @@ export function PhotoUpload({ ticketId, initialPhotos }: Props) {
   }
 
   function openLightbox(sectionPhotos: Photo[], clickedId: string) {
+    const labels: Record<string, string> = { pre: "Prima", during: "Durante", post: "Dopo" };
     const lbPhotos: LightboxPhoto[] = sectionPhotos.map((p) => ({
       url: p.url,
-      label: p.photoType === "pre" ? "Prima" : "Dopo",
+      label: labels[p.photoType] ?? p.photoType,
     }));
     const idx = sectionPhotos.findIndex((p) => p.id === clickedId);
     setLightbox({ photos: lbPhotos, index: idx >= 0 ? idx : 0 });
   }
 
   const prePhotos = photos.filter((p) => p.photoType === "pre");
+  const duringPhotos = photos.filter((p) => p.photoType === "during");
   const postPhotos = photos.filter((p) => p.photoType === "post");
 
   return (
@@ -97,13 +99,22 @@ export function PhotoUpload({ ticketId, initialPhotos }: Props) {
           </div>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-3 gap-3">
             <PhotoSection
               label="Prima"
               photos={prePhotos}
               onAdd={(files) => handleFiles(files, "pre")}
               onDelete={handleDelete}
               onView={(id) => openLightbox(prePhotos, id)}
+              uploading={uploading}
+              deleting={isPending}
+            />
+            <PhotoSection
+              label="Durante"
+              photos={duringPhotos}
+              onAdd={(files) => handleFiles(files, "during")}
+              onDelete={handleDelete}
+              onView={(id) => openLightbox(duringPhotos, id)}
               uploading={uploading}
               deleting={isPending}
             />
