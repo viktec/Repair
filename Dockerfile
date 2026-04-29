@@ -41,6 +41,7 @@ COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
 COPY --from=builder --chown=nextjs:nodejs /app/src/db/migrate.mjs ./migrate.mjs
 COPY --from=builder --chown=nextjs:nodejs /app/src/db/seed.mjs ./seed.mjs
 COPY --from=builder --chown=nextjs:nodejs /app/src/db/migrations ./src/db/migrations
+COPY --from=builder --chown=nextjs:nodejs /app/scripts ./scripts
 
 # Pacchetti necessari per migration e seed (non sempre tracciati da Next.js standalone)
 COPY --from=deps --chown=nextjs:nodejs /app/node_modules/drizzle-orm ./node_modules/drizzle-orm
