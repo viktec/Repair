@@ -2,12 +2,13 @@
 
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
-import { organizations, customDeviceModels } from "@/db/schema";
+import { organizations, customDeviceModels, users } from "@/db/schema";
 import { eq, and } from "drizzle-orm";
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { getPresignedUploadUrl } from "@/lib/storage";
 import { randomUUID } from "crypto";
+import bcrypt from "bcryptjs";
 
 export async function updateOrganizationAction(formData: FormData) {
   const session = await auth();
@@ -64,6 +65,47 @@ export async function saveLogoUrl(storageKey: string) {
     .where(eq(organizations.id, session.user.organizationId));
 
   revalidatePath("/settings");
+}
+
+export async function changePasswordAction(
+  _prev: { error?: string; ok?: boolean } | null,
+  formData: FormData,
+): Promise<{ error?: string; ok?: boolean }> {
+  const session = await auth();
+  if (!session?.user?.id) redirect("/login");
+
+  const currentPassword = formData.get("currentPassword") as string;
+  const newPassword = formData.get("newPassword") as string;
+  const confirmPassword = formData.get("confirmPassword") as string;
+
+  if (!currentPassword || !newPassword || !confirmPassword) {
+    return { error: "Tutti i campi sono obbligatori." };
+  }
+  if (newPassword.length < 8) {
+    return { error: "La nuova password deve essere di almeno 8 caratteri." };
+  }
+  if (newPassword !== confirmPassword) {
+    return { error: "Le password non coincidono." };
+  }
+
+  const [user] = await db
+    .select({ passwordHash: users.passwordHash })
+    .from(users)
+    .where(eq(users.id, session.user.id))
+    .limit(1);
+
+  if (!user?.passwordHash) return { error: "Utente non trovato." };
+
+  const valid = await bcrypt.compare(currentPassword, user.passwordHash);
+  if (!valid) return { error: "Password attuale non corretta." };
+
+  const newHash = await bcrypt.hash(newPassword, 12);
+  await db
+    .update(users)
+    .set({ passwordHash: newHash, updatedAt: new Date() })
+    .where(eq(users.id, session.user.id));
+
+  return { ok: true };
 }
 
 export async function deleteCustomModelAction(modelId: string) {

@@ -5,6 +5,7 @@ import { eq } from "drizzle-orm";
 import { redirect } from "next/navigation";
 import { SettingsForm } from "./settings-form";
 import { CustomModelsTable } from "./custom-models-table";
+import { ChangePasswordForm } from "./change-password-form";
 
 export default async function SettingsPage() {
   const session = await auth();
@@ -50,6 +51,8 @@ export default async function SettingsPage() {
       {customModels.length > 0 && (
         <CustomModelsTable models={customModels} />
       )}
+
+      <ChangePasswordForm />
     </div>
   );
 }
