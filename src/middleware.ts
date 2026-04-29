@@ -31,6 +31,7 @@ export default auth((req) => {
   const isPublicPath =
     pathname.startsWith("/login") ||
     pathname.startsWith("/register") ||
+    pathname.startsWith("/pending") ||
     pathname.startsWith("/t/") ||
     pathname.startsWith("/api/auth") ||
     (!isAppHost && pathname === "/"); // landing pubblica solo in dev

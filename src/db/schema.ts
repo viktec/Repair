@@ -20,6 +20,11 @@ export const subscriptionStatusEnum = pgEnum("subscription_status", [
   "past_due",
   "canceled",
 ]);
+export const registrationStatusEnum = pgEnum("registration_status", [
+  "pending",
+  "approved",
+  "rejected",
+]);
 export const roleEnum = pgEnum("role", [
   "owner",
   "admin",
@@ -55,6 +60,8 @@ export const organizations = pgTable("organizations", {
   vatNumber: varchar("vat_number", { length: 20 }),
   whatsappTemplate: text("whatsapp_template"),
   adminNotes: text("admin_notes"),
+  registrationStatus: registrationStatusEnum("registration_status").notNull().default("pending"),
+  rejectionReason: text("rejection_reason"),
   subscriptionStatus: subscriptionStatusEnum("subscription_status").notNull().default("trial"),
   trialEndsAt: timestamp("trial_ends_at"),
   onboardingCompletedAt: timestamp("onboarding_completed_at"),

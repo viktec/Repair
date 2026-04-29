@@ -9,6 +9,7 @@ import { z } from "zod";
 import { generateSlug } from "@/lib/utils";
 import { AuthError } from "next-auth";
 import { redirect } from "next/navigation";
+import { sendNewRegistrationEmail } from "@/lib/email";
 
 const registerSchema = z.object({
   name: z.string().min(2, "Il nome deve avere almeno 2 caratteri"),
@@ -55,6 +56,7 @@ export async function registerAction(_prev: RegisterState, formData: FormData): 
           name: shopName,
           slug,
           plan: "solo",
+          registrationStatus: "pending",
           subscriptionStatus: "trial",
           trialEndsAt: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000),
         })
@@ -87,7 +89,27 @@ export async function registerAction(_prev: RegisterState, formData: FormData): 
     return { errors: { _form: ["Errore durante la registrazione. Riprova."] } };
   }
 
-  await signIn("credentials", { email, password, redirectTo: "/onboarding" });
+  // Fire-and-forget: non blocca il signup se SMTP non è configurato
+  const [newUser] = await db
+    .select({ id: users.id })
+    .from(users)
+    .where(eq(users.email, email))
+    .limit(1);
+  const [newOrg] = await db
+    .select({ id: organizations.id })
+    .from(organizations)
+    .innerJoin(memberships, eq(memberships.organizationId, organizations.id))
+    .where(eq(memberships.userId, newUser.id))
+    .limit(1);
+
+  sendNewRegistrationEmail({
+    shopName,
+    ownerName: name,
+    ownerEmail: email,
+    orgId: newOrg.id,
+  }).catch(() => {});
+
+  await signIn("credentials", { email, password, redirectTo: "/pending" });
   return null;
 }
 

@@ -29,6 +29,13 @@
       "when": 1777408985921,
       "tag": "0003_legal_devos",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1777452551442,
+      "tag": "0004_long_black_tarantula",
+      "breakpoints": true
     }
   ]
 }

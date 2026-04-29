@@ -14,6 +14,31 @@ function getTransport() {
   });
 }
 
+const BASE_HEADER = (title: string) => `
+<!DOCTYPE html>
+<html lang="it">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head>
+<body style="margin:0;padding:0;background:#f1f5f9;font-family:system-ui,sans-serif">
+  <table width="100%" cellpadding="0" cellspacing="0" style="padding:32px 16px">
+    <tr><td align="center">
+      <table width="100%" style="max-width:520px;background:#fff;border-radius:12px;overflow:hidden;box-shadow:0 1px 3px rgba(0,0,0,.1)">
+        <tr><td style="background:#0D8F7A;padding:24px 28px">
+          <p style="margin:0;color:#fff;font-size:18px;font-weight:700">My-Repair</p>
+          <p style="margin:4px 0 0;color:rgba(255,255,255,.75);font-size:13px">${title}</p>
+        </td></tr>
+        <tr><td style="padding:28px">`;
+
+const BASE_FOOTER = `
+        </td></tr>
+        <tr><td style="padding:16px 28px;border-top:1px solid #f1f5f9;text-align:center">
+          <p style="margin:0;font-size:11px;color:#cbd5e1">my-repair.it — Gestionale per centri riparazione</p>
+        </td></tr>
+      </table>
+    </td></tr>
+  </table>
+</body>
+</html>`;
+
 export async function sendStatusEmail({
   to,
   customerName,
@@ -47,12 +72,10 @@ export async function sendStatusEmail({
   <table width="100%" cellpadding="0" cellspacing="0" style="padding:32px 16px">
     <tr><td align="center">
       <table width="100%" style="max-width:520px;background:#fff;border-radius:12px;overflow:hidden;box-shadow:0 1px 3px rgba(0,0,0,.1)">
-        <!-- header -->
         <tr><td style="background:#0D8F7A;padding:24px 28px">
           <p style="margin:0;color:#fff;font-size:18px;font-weight:700">${orgName}</p>
           <p style="margin:4px 0 0;color:rgba(255,255,255,.75);font-size:13px">Aggiornamento riparazione</p>
         </td></tr>
-        <!-- body -->
         <tr><td style="padding:28px">
           <p style="margin:0 0 16px;font-size:15px;color:#1e293b">Salve <strong>${firstName}</strong>,</p>
           <p style="margin:0 0 20px;font-size:14px;color:#475569">
@@ -66,7 +89,6 @@ export async function sendStatusEmail({
           </a>
           ${orgPhone ? `<p style="margin:24px 0 0;font-size:13px;color:#94a3b8">Per informazioni: ${orgPhone}</p>` : ""}
         </td></tr>
-        <!-- footer -->
         <tr><td style="padding:16px 28px;border-top:1px solid #f1f5f9;text-align:center">
           <p style="margin:0;font-size:11px;color:#cbd5e1">Gestito con my-repair.it</p>
         </td></tr>
@@ -81,6 +103,136 @@ export async function sendStatusEmail({
       from: process.env.EMAIL_FROM ?? `"${orgName}" <noreply@my-repair.it>`,
       to,
       subject: `Aggiornamento riparazione #${num} — ${statusName}`,
+      html,
+    });
+    return { ok: true };
+  } catch (err) {
+    console.error("[email]", err);
+    return { ok: false, error: String(err) };
+  }
+}
+
+export async function sendNewRegistrationEmail({
+  shopName,
+  ownerName,
+  ownerEmail,
+  orgId,
+}: {
+  shopName: string;
+  ownerName: string;
+  ownerEmail: string;
+  orgId: string;
+}) {
+  const transport = getTransport();
+  const adminEmail = process.env.ADMIN_EMAIL;
+  if (!transport || !adminEmail) return { ok: false, error: "SMTP o ADMIN_EMAIL non configurati" };
+
+  const appUrl = process.env.APP_URL ?? "https://app.my-repair.it";
+  const orgUrl = `${appUrl}/admin/orgs/${orgId}`;
+
+  const html = `${BASE_HEADER("Nuova richiesta di iscrizione")}
+    <p style="margin:0 0 16px;font-size:15px;color:#1e293b">Nuova registrazione in attesa di approvazione:</p>
+    <table style="width:100%;border-collapse:collapse;margin:0 0 24px;font-size:14px">
+      <tr><td style="padding:8px 12px;background:#f8fafc;font-weight:600;color:#475569;border-radius:6px 0 0 0;width:140px">Negozio</td>
+          <td style="padding:8px 12px;color:#1e293b">${shopName}</td></tr>
+      <tr><td style="padding:8px 12px;background:#f8fafc;font-weight:600;color:#475569">Nome</td>
+          <td style="padding:8px 12px;color:#1e293b">${ownerName}</td></tr>
+      <tr><td style="padding:8px 12px;background:#f8fafc;font-weight:600;color:#475569;border-radius:0 0 0 6px">Email</td>
+          <td style="padding:8px 12px;color:#1e293b">${ownerEmail}</td></tr>
+    </table>
+    <a href="${orgUrl}" style="display:inline-block;background:#0D8F7A;color:#fff;text-decoration:none;font-weight:600;font-size:14px;padding:12px 24px;border-radius:8px">
+      Gestisci iscrizione →
+    </a>
+  ${BASE_FOOTER}`;
+
+  try {
+    await transport.sendMail({
+      from: process.env.EMAIL_FROM ?? "My-Repair <noreply@my-repair.it>",
+      to: adminEmail,
+      subject: `Nuova iscrizione: ${shopName} (${ownerEmail})`,
+      html,
+    });
+    return { ok: true };
+  } catch (err) {
+    console.error("[email]", err);
+    return { ok: false, error: String(err) };
+  }
+}
+
+export async function sendApprovalEmail({
+  to,
+  name,
+}: {
+  to: string;
+  name: string;
+}) {
+  const transport = getTransport();
+  if (!transport) return { ok: false, error: "SMTP non configurato" };
+
+  const appUrl = process.env.APP_URL ?? "https://app.my-repair.it";
+  const firstName = name.split(" ")[0];
+
+  const html = `${BASE_HEADER("Account approvato")}
+    <p style="margin:0 0 16px;font-size:15px;color:#1e293b">Ciao <strong>${firstName}</strong>,</p>
+    <p style="margin:0 0 20px;font-size:14px;color:#475569">
+      Il tuo account su My-Repair è stato <strong>approvato</strong>. Puoi accedere e iniziare a configurare il tuo spazio di lavoro.
+    </p>
+    <div style="background:#f0fdf9;border:1px solid #6ee7b7;border-radius:8px;padding:14px 18px;margin:0 0 24px">
+      <p style="margin:0;font-size:14px;color:#0D8F7A;font-weight:600">✓ Account attivo</p>
+    </div>
+    <a href="${appUrl}/login" style="display:inline-block;background:#0D8F7A;color:#fff;text-decoration:none;font-weight:600;font-size:14px;padding:12px 24px;border-radius:8px">
+      Accedi ora →
+    </a>
+  ${BASE_FOOTER}`;
+
+  try {
+    await transport.sendMail({
+      from: process.env.EMAIL_FROM ?? "My-Repair <noreply@my-repair.it>",
+      to,
+      subject: "Account My-Repair approvato — puoi accedere",
+      html,
+    });
+    return { ok: true };
+  } catch (err) {
+    console.error("[email]", err);
+    return { ok: false, error: String(err) };
+  }
+}
+
+export async function sendRejectionEmail({
+  to,
+  name,
+  reason,
+}: {
+  to: string;
+  name: string;
+  reason?: string | null;
+}) {
+  const transport = getTransport();
+  if (!transport) return { ok: false, error: "SMTP non configurato" };
+
+  const firstName = name.split(" ")[0];
+
+  const html = `${BASE_HEADER("Esito richiesta di iscrizione")}
+    <p style="margin:0 0 16px;font-size:15px;color:#1e293b">Ciao <strong>${firstName}</strong>,</p>
+    <p style="margin:0 0 20px;font-size:14px;color:#475569">
+      Siamo spiacenti di comunicarti che la tua richiesta di iscrizione a My-Repair non è stata approvata.
+    </p>
+    ${reason ? `
+    <div style="background:#fef2f2;border:1px solid #fecaca;border-radius:8px;padding:14px 18px;margin:0 0 24px">
+      <p style="margin:0 0 4px;font-size:12px;font-weight:600;color:#ef4444;text-transform:uppercase;letter-spacing:.05em">Motivazione</p>
+      <p style="margin:0;font-size:14px;color:#7f1d1d">${reason}</p>
+    </div>` : ""}
+    <p style="margin:0;font-size:13px;color:#94a3b8">
+      Per ulteriori informazioni puoi rispondere a questa email.
+    </p>
+  ${BASE_FOOTER}`;
+
+  try {
+    await transport.sendMail({
+      from: process.env.EMAIL_FROM ?? "My-Repair <noreply@my-repair.it>",
+      to,
+      subject: "Esito richiesta di iscrizione My-Repair",
       html,
     });
     return { ok: true };

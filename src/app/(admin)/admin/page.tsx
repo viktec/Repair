@@ -2,18 +2,23 @@ import { db } from "@/lib/db";
 import { organizations, users, tickets } from "@/db/schema";
 import { count, isNull, eq } from "drizzle-orm";
 import Link from "next/link";
-import { Building2, Users, Ticket, TrendingUp } from "lucide-react";
+import { Building2, Users, Ticket, Clock } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { formatDate } from "@/lib/utils";
 
 export default async function AdminDashboardPage() {
-  const [orgCount, userCount, ticketCount] = await Promise.all([
+  const [orgCount, userCount, ticketCount, pendingCount] = await Promise.all([
     db.select({ total: count() }).from(organizations).then((r) => r[0].total),
     db.select({ total: count() }).from(users).then((r) => r[0].total),
     db
       .select({ total: count() })
       .from(tickets)
       .where(isNull(tickets.deletedAt))
+      .then((r) => r[0].total),
+    db
+      .select({ total: count() })
+      .from(organizations)
+      .where(eq(organizations.registrationStatus, "pending"))
       .then((r) => r[0].total),
   ]);
 
@@ -58,6 +63,19 @@ export default async function AdminDashboardPage() {
         <h1 className="text-2xl font-bold">Dashboard</h1>
         <p className="mt-1 text-sm text-muted-foreground">Panoramica di tutti i tenant</p>
       </div>
+
+      {/* Alert iscrizioni in attesa */}
+      {pendingCount > 0 && (
+        <Link href="/admin/orgs" className="flex items-center gap-3 rounded-xl border border-amber-200 bg-amber-50 px-5 py-4 hover:bg-amber-100 transition-colors">
+          <Clock className="h-5 w-5 text-amber-600 shrink-0" />
+          <div>
+            <p className="font-semibold text-amber-800">
+              {pendingCount} {pendingCount === 1 ? "nuova iscrizione in attesa" : "nuove iscrizioni in attesa"}
+            </p>
+            <p className="text-sm text-amber-600">Clicca per gestire le richieste di accesso →</p>
+          </div>
+        </Link>
+      )}
 
       {/* KPI */}
       <div className="grid gap-4 sm:grid-cols-3">
