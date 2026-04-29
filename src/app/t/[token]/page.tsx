@@ -2,10 +2,12 @@ import { db } from "@/lib/db";
 import { tickets, customers, ticketStatuses, organizations, ticketPhotos } from "@/db/schema";
 import { eq } from "drizzle-orm";
 import { notFound } from "next/navigation";
-import { CheckCircle2, Clock, Wrench, Phone, MapPin, PenLine } from "lucide-react";
+import { CheckCircle2, Clock, Wrench, Phone, MapPin, PenLine, FileText } from "lucide-react";
 import { getPublicUrl } from "@/lib/storage";
 import { PublicPhotoGallery } from "./public-photo-gallery";
 import { QuoteSection } from "./quote-section";
+
+const EXPIRY_MS = 24 * 60 * 60 * 1000;
 
 export default async function TrackingPage({ params }: { params: Promise<{ token: string }> }) {
   const { token } = await params;
@@ -40,6 +42,8 @@ export default async function TrackingPage({ params }: { params: Promise<{ token
 
   if (!ticket) notFound();
 
+  const isExpired = !!ticket.isFinal && Date.now() - new Date(ticket.updatedAt).getTime() > EXPIRY_MS;
+
   const [org] = await db
     .select({
       name: organizations.name,
@@ -53,6 +57,38 @@ export default async function TrackingPage({ params }: { params: Promise<{ token
     .from(organizations)
     .where(eq(organizations.id, ticket.orgId))
     .limit(1);
+
+  if (isExpired) {
+    return (
+      <div className="min-h-screen bg-slate-100 flex items-center justify-center p-4">
+        <div className="rounded-2xl bg-white p-8 shadow-sm text-center max-w-sm w-full">
+          <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-slate-100">
+            <Clock className="h-7 w-7 text-slate-400" />
+          </div>
+          <h1 className="text-xl font-bold text-foreground">Link scaduto</h1>
+          <p className="mt-2 text-sm text-muted-foreground">
+            Questo link di tracciamento non è più attivo. La riparazione è stata completata e il link è scaduto 24 ore dopo la consegna.
+          </p>
+          <p className="mt-4 text-sm text-muted-foreground">
+            Per assistenza contatta direttamente il centro riparazioni.
+          </p>
+          {org?.phone && (
+            <a
+              href={`tel:${org.phone}`}
+              className="mt-4 inline-flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-medium text-white"
+              style={{ backgroundColor: org?.brandingPrimaryColor ?? "#0D8F7A" }}
+            >
+              <Phone className="h-4 w-4" />
+              {org.phone}
+            </a>
+          )}
+          <p className="mt-6 text-xs text-muted-foreground">
+            {org?.name ?? "Centro Riparazioni"}
+          </p>
+        </div>
+      </div>
+    );
+  }
 
   const allPhotos = await db
     .select({ id: ticketPhotos.id, storageKey: ticketPhotos.storageKey, photoType: ticketPhotos.photoType, isPublic: ticketPhotos.isPublic })
@@ -177,6 +213,43 @@ export default async function TrackingPage({ params }: { params: Promise<{ token
           }))}
         />
 
+        {/* Documenti scaricabili */}
+        {(ticket.estimatedCost != null || ticket.quoteAcceptedAt != null || ticket.isFinal) && (
+          <div className="rounded-2xl bg-white p-5 shadow-sm">
+            <p className="mb-3 text-sm font-semibold text-foreground">Documenti</p>
+            <div className="space-y-2">
+              {ticket.estimatedCost != null && (
+                <DocLink
+                  href={`/api/t/${token}/doc?type=preventivo`}
+                  label="Preventivo di riparazione"
+                  primaryColor={primaryColor}
+                />
+              )}
+              {ticket.quoteAcceptedAt != null && (
+                <>
+                  <DocLink
+                    href={`/api/t/${token}/doc?type=liberatoria`}
+                    label="Liberatoria firmata"
+                    primaryColor={primaryColor}
+                  />
+                  <DocLink
+                    href={`/api/t/${token}/doc?type=accettazione`}
+                    label="Accettazione riparazione"
+                    primaryColor={primaryColor}
+                  />
+                </>
+              )}
+              {ticket.isFinal && (
+                <DocLink
+                  href={`/api/t/${token}/doc?type=ricevuta`}
+                  label="Ricevuta"
+                  primaryColor={primaryColor}
+                />
+              )}
+            </div>
+          </div>
+        )}
+
         {/* Contatti */}
         {(org?.phone || org?.address || waLink) && (
           <div className="rounded-2xl bg-white p-5 shadow-sm">
@@ -246,5 +319,25 @@ function Row({ label, value }: { label: string; value: string | null | undefined
       <dt className="w-36 shrink-0 text-muted-foreground">{label}:</dt>
       <dd className="font-medium text-foreground">{value}</dd>
     </div>
+  );
+}
+
+function DocLink({ href, label, primaryColor }: { href: string; label: string; primaryColor: string }) {
+  return (
+    <a
+      href={href}
+      target="_blank"
+      rel="noopener noreferrer"
+      className="flex items-center gap-3 rounded-xl border border-slate-200 px-4 py-3 text-sm hover:bg-slate-50 transition-colors"
+    >
+      <div
+        className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full"
+        style={{ backgroundColor: primaryColor + "15" }}
+      >
+        <FileText className="h-4 w-4" style={{ color: primaryColor }} />
+      </div>
+      <span className="font-medium text-foreground">{label}</span>
+      <span className="ml-auto text-xs text-muted-foreground">PDF</span>
+    </a>
   );
 }
