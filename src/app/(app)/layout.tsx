@@ -10,7 +10,10 @@ export default async function AppLayout({ children }: { children: React.ReactNod
   if (!session?.user) redirect("/login");
 
   const orgId = session.user.organizationId;
-  if (!orgId) redirect("/login");
+  if (!orgId) {
+    // super admin non ha org: il middleware dovrebbe già bloccarlo, ma per sicurezza
+    redirect(session.user.isSuperAdmin ? "/admin" : "/login");
+  }
 
   const [org] = await db
     .select({ registrationStatus: organizations.registrationStatus })
