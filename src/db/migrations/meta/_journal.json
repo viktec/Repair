@@ -50,6 +50,13 @@
       "when": 1777484415333,
       "tag": "0006_tan_marvel_apes",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1777487353958,
+      "tag": "0007_yummy_living_tribunal",
+      "breakpoints": true
     }
   ]
 }

@@ -27,6 +27,7 @@ type Org = {
   brandingLogoUrl: string | null;
   whatsappTemplate: string | null;
   googleReviewUrl: string | null;
+  termsAndConditions: string | null;
 };
 
 export function SettingsForm({ org }: { org: Org }) {
@@ -218,6 +219,26 @@ export function SettingsForm({ org }: { org: Org }) {
               className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm font-mono placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring"
             />
           </div>
+        </CardContent>
+      </Card>
+
+      {/* Termini e condizioni */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-base">Termini e condizioni</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-2">
+          <p className="text-xs text-muted-foreground">
+            Questi termini vengono mostrati al cliente quando accetta un preventivo da remoto. Lascia vuoto per usare i termini di default.
+          </p>
+          <textarea
+            id="termsAndConditions"
+            name="termsAndConditions"
+            defaultValue={org.termsAndConditions ?? ""}
+            rows={12}
+            placeholder="Inserisci i tuoi termini e condizioni di assistenza..."
+            className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm font-mono placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring"
+          />
         </CardContent>
       </Card>
 

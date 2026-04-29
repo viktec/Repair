@@ -48,6 +48,7 @@ export default async function TrackingPage({ params }: { params: Promise<{ token
       city: organizations.city,
       brandingPrimaryColor: organizations.brandingPrimaryColor,
       brandingLogoUrl: organizations.brandingLogoUrl,
+      termsAndConditions: organizations.termsAndConditions,
     })
     .from(organizations)
     .where(eq(organizations.id, ticket.orgId))
@@ -151,6 +152,7 @@ export default async function TrackingPage({ params }: { params: Promise<{ token
             accepted={ticket.quoteAcceptedAt != null}
             rejected={ticket.quoteRejectedAt != null}
             primaryColor={primaryColor}
+            termsAndConditions={org?.termsAndConditions ?? null}
           />
         )}
 

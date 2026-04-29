@@ -15,9 +15,10 @@ export async function acceptQuoteAction(token: string) {
   if (!ticket || ticket.estimatedCost == null) return;
   if (ticket.quoteAcceptedAt || ticket.quoteRejectedAt) return;
 
+  const now = new Date();
   await db
     .update(tickets)
-    .set({ quoteAcceptedAt: new Date(), updatedAt: new Date() })
+    .set({ quoteAcceptedAt: now, quoteTermsAcceptedAt: now, updatedAt: now })
     .where(eq(tickets.qrToken, token));
 
   revalidatePath(`/t/${token}`);

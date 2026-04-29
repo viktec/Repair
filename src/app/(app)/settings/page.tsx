@@ -30,6 +30,7 @@ export default async function SettingsPage() {
       brandingLogoUrl: organizations.brandingLogoUrl,
       whatsappTemplate: organizations.whatsappTemplate,
       googleReviewUrl: organizations.googleReviewUrl,
+      termsAndConditions: organizations.termsAndConditions,
     })
     .from(organizations)
     .where(eq(organizations.id, orgId))
