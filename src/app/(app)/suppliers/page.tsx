@@ -3,6 +3,7 @@ import { db } from "@/lib/db";
 import { suppliers, inventoryItems } from "@/db/schema";
 import { eq, and, isNull, count } from "drizzle-orm";
 import { redirect } from "next/navigation";
+import { can } from "@/lib/permissions";
 import Link from "next/link";
 import { Plus, Truck } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -12,6 +13,7 @@ import { formatDate } from "@/lib/utils";
 export default async function SuppliersPage() {
   const session = await auth();
   if (!session?.user.organizationId) redirect("/login");
+  if (!can.accessSuppliers(session.user.role)) redirect("/dashboard");
   const orgId = session.user.organizationId;
 
   const rows = await db

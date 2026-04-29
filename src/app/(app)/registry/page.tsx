@@ -3,6 +3,7 @@ import { db } from "@/lib/db";
 import { usedItemsRegistry } from "@/db/schema";
 import { eq, desc } from "drizzle-orm";
 import { redirect } from "next/navigation";
+import { can } from "@/lib/permissions";
 import Link from "next/link";
 import { Plus, BookOpen } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -12,6 +13,7 @@ import { formatCurrency } from "@/lib/utils";
 export default async function RegistryPage() {
   const session = await auth();
   if (!session?.user.organizationId) redirect("/login");
+  if (!can.accessRegistry(session.user.role)) redirect("/dashboard");
   const orgId = session.user.organizationId;
 
   const entries = await db

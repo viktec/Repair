@@ -5,10 +5,12 @@ import { eq, and, isNull, gte, count, sum, avg } from "drizzle-orm";
 import { redirect } from "next/navigation";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { formatCurrency } from "@/lib/utils";
+import { can } from "@/lib/permissions";
 
 export default async function ReportsPage() {
   const session = await auth();
   if (!session?.user.organizationId) redirect("/login");
+  if (!can.accessReports(session.user.role)) redirect("/dashboard");
   const orgId = session.user.organizationId;
 
   const thirtyDaysAgo = new Date();

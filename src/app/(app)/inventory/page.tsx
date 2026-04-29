@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { formatCurrency } from "@/lib/utils";
+import { can } from "@/lib/permissions";
 
 export default async function InventoryPage({
   searchParams,
@@ -18,6 +19,7 @@ export default async function InventoryPage({
   const { q, low } = await searchParams;
   const session = await auth();
   if (!session?.user.organizationId) redirect("/login");
+  if (!can.accessInventory(session.user.role)) redirect("/dashboard");
   const orgId = session.user.organizationId;
 
   const conditions = [eq(inventoryItems.organizationId, orgId), isNull(inventoryItems.deletedAt)];

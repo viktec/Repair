@@ -10,10 +10,12 @@ export function AppShell({
   children,
   userName,
   userEmail,
+  role,
 }: {
   children: React.ReactNode;
   userName?: string | null;
   userEmail?: string | null;
+  role?: string | null;
 }) {
   const [open, setOpen] = useState(false);
   const pathname = usePathname();
@@ -38,7 +40,7 @@ export function AppShell({
           open ? "translate-x-0" : "-translate-x-full lg:translate-x-0"
         }`}
       >
-        <Sidebar />
+        <Sidebar role={role} />
       </div>
 
       {/* Main */}

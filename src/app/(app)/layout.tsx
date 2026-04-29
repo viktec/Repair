@@ -24,7 +24,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
   if (!org || org.registrationStatus !== "approved") redirect("/pending");
 
   return (
-    <AppShell userName={session.user.name} userEmail={session.user.email}>
+    <AppShell userName={session.user.name} userEmail={session.user.email} role={session.user.role}>
       {children}
     </AppShell>
   );

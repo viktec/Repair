@@ -7,6 +7,7 @@ import { eq, and, isNull } from "drizzle-orm";
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
+import { can } from "@/lib/permissions";
 
 const itemSchema = z.object({
   name: z.string().min(1, "Nome obbligatorio"),
@@ -129,6 +130,7 @@ export async function addMovementAction(itemId: string, type: string, qty: numbe
 export async function deleteInventoryItemAction(id: string) {
   const session = await auth();
   if (!session?.user.organizationId) redirect("/login");
+  if (!can.delete(session.user.role)) throw new Error("Non autorizzato");
 
   await db
     .update(inventoryItems)

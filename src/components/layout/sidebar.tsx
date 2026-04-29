@@ -17,22 +17,31 @@ import {
   BookOpen,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { can, type Role } from "@/lib/permissions";
 
-const navItems = [
-  { href: "/dashboard", icon: LayoutDashboard, label: "Dashboard", available: true },
-  { href: "/tickets", icon: Ticket, label: "Ticket", available: true },
-  { href: "/customers", icon: Users, label: "Clienti", available: true },
-  { href: "/imei", icon: Smartphone, label: "Storico IMEI", available: true },
-  { href: "/inventory", icon: Package, label: "Magazzino", available: true },
-  { href: "/suppliers", icon: Truck, label: "Fornitori", available: true },
-  { href: "/pos", icon: ShoppingCart, label: "Cassa POS", available: true },
-  { href: "/reports", icon: BarChart3, label: "Report", available: true },
-  { href: "/registry", icon: BookOpen, label: "Registro Usato", available: true },
-  { href: "/settings", icon: Settings, label: "Impostazioni", available: true },
+type NavItem = {
+  href: string;
+  icon: React.ElementType;
+  label: string;
+  visible: (role: string | null | undefined) => boolean;
+};
+
+const navItems: NavItem[] = [
+  { href: "/dashboard",  icon: LayoutDashboard, label: "Dashboard",      visible: () => true },
+  { href: "/tickets",    icon: Ticket,          label: "Ticket",          visible: () => true },
+  { href: "/customers",  icon: Users,           label: "Clienti",         visible: () => true },
+  { href: "/imei",       icon: Smartphone,      label: "Storico IMEI",    visible: can.accessImei },
+  { href: "/inventory",  icon: Package,         label: "Magazzino",       visible: can.accessInventory },
+  { href: "/suppliers",  icon: Truck,           label: "Fornitori",       visible: can.accessSuppliers },
+  { href: "/pos",        icon: ShoppingCart,    label: "Cassa POS",       visible: () => true },
+  { href: "/reports",    icon: BarChart3,       label: "Report",          visible: can.accessReports },
+  { href: "/registry",   icon: BookOpen,        label: "Registro Usato",  visible: can.accessRegistry },
+  { href: "/settings",   icon: Settings,        label: "Impostazioni",    visible: () => true },
 ];
 
-export function Sidebar() {
+export function Sidebar({ role }: { role?: string | null }) {
   const pathname = usePathname();
+  const visibleItems = navItems.filter((item) => item.visible(role));
 
   return (
     <aside className="flex h-full w-60 flex-col border-r bg-white">
@@ -44,19 +53,17 @@ export function Sidebar() {
       </div>
 
       <nav className="flex flex-1 flex-col gap-1 p-3">
-        {navItems.map((item) => {
-          const isActive = pathname === item.href;
+        {visibleItems.map((item) => {
+          const isActive = pathname === item.href || pathname.startsWith(item.href + "/");
           return (
             <Link
               key={item.href}
-              href={item.available ? item.href : "#"}
+              href={item.href}
               className={cn(
                 "flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors",
                 isActive
                   ? "bg-primary text-white"
-                  : item.available
-                    ? "text-muted-foreground hover:bg-accent hover:text-foreground"
-                    : "cursor-not-allowed text-muted-foreground/50",
+                  : "text-muted-foreground hover:bg-accent hover:text-foreground",
               )}
             >
               <item.icon className="h-4 w-4 shrink-0" />

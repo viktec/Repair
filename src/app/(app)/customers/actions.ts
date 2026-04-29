@@ -7,6 +7,7 @@ import { eq, and } from "drizzle-orm";
 import { z } from "zod";
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
+import { can } from "@/lib/permissions";
 
 const customerSchema = z.object({
   name: z.string().min(1, "Il nome è obbligatorio"),
@@ -77,6 +78,7 @@ export async function createCustomerInlineAction(data: {
 export async function deleteCustomerAction(customerId: string) {
   const session = await auth();
   if (!session?.user.organizationId) redirect("/login");
+  if (!can.delete(session.user.role)) throw new Error("Non autorizzato");
 
   await db
     .delete(customers)

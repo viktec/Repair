@@ -9,10 +9,12 @@ import { revalidatePath } from "next/cache";
 import { getPresignedUploadUrl } from "@/lib/storage";
 import { randomUUID } from "crypto";
 import bcrypt from "bcryptjs";
+import { can } from "@/lib/permissions";
 
 export async function updateOrganizationAction(formData: FormData) {
   const session = await auth();
   if (!session?.user.organizationId) redirect("/login");
+  if (!can.editOrgSettings(session.user.role)) throw new Error("Non autorizzato");
 
   const name = formData.get("name") as string;
   const phone = formData.get("phone") as string;
@@ -46,6 +48,7 @@ export async function updateOrganizationAction(formData: FormData) {
 export async function getLogoUploadUrl(fileName: string, contentType: string) {
   const session = await auth();
   if (!session?.user.organizationId) redirect("/login");
+  if (!can.editOrgSettings(session.user.role)) throw new Error("Non autorizzato");
 
   const key = `logos/${session.user.organizationId}/${randomUUID()}.${fileName.split(".").pop()}`;
   const { url } = await getPresignedUploadUrl(key, true, contentType);
@@ -55,6 +58,7 @@ export async function getLogoUploadUrl(fileName: string, contentType: string) {
 export async function saveLogoUrl(storageKey: string) {
   const session = await auth();
   if (!session?.user.organizationId) redirect("/login");
+  if (!can.editOrgSettings(session.user.role)) throw new Error("Non autorizzato");
 
   const { getPublicUrl } = await import("@/lib/storage");
   const logoUrl = getPublicUrl(storageKey);
@@ -111,6 +115,7 @@ export async function changePasswordAction(
 export async function deleteCustomModelAction(modelId: string) {
   const session = await auth();
   if (!session?.user.organizationId) redirect("/login");
+  if (!can.editOrgSettings(session.user.role)) throw new Error("Non autorizzato");
 
   await db
     .delete(customDeviceModels)
