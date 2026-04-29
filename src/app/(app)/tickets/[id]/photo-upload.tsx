@@ -222,7 +222,6 @@ function PhotoSection({
         ref={inputRef}
         type="file"
         accept="image/*"
-        capture="environment"
         multiple
         className="hidden"
         onChange={(e) => e.target.files && onAdd(e.target.files)}

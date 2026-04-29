@@ -11,7 +11,9 @@ export default auth((req) => {
   const isLoggedIn = !!req.auth;
 
   // Tracking subdomain: t.my-repair.it/<token> → /t/<token> interno
+  // API paths pass through directly (PDF doc generation, etc.)
   if (host === TRACKING_HOST) {
+    if (pathname.startsWith("/api/")) return NextResponse.next();
     const url = req.nextUrl.clone();
     url.pathname = `/t${pathname}`;
     return NextResponse.rewrite(url);
@@ -34,6 +36,7 @@ export default auth((req) => {
     pathname.startsWith("/pending") ||
     pathname.startsWith("/t/") ||
     pathname.startsWith("/api/auth") ||
+    pathname.startsWith("/api/t/") ||
     (!isAppHost && pathname === "/"); // landing pubblica solo in dev
 
   const isSuperAdmin = (req.auth?.user as { isSuperAdmin?: boolean })?.isSuperAdmin;
