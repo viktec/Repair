@@ -4,7 +4,7 @@ import { useState, useTransition } from "react";
 import { updateTicketStatusAction, updateTicketNotesAction, sendStatusEmailAction } from "../actions";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Check, Copy, ExternalLink, Loader2, Mail, Printer, QrCode, MessageSquare } from "lucide-react";
+import { Check, Copy, ExternalLink, Loader2, Mail, Printer, QrCode, MessageSquare, FileText } from "lucide-react";
 
 type Status = { id: string; name: string; color: string };
 
@@ -180,13 +180,30 @@ export function TicketActions({
         </CardContent>
       </Card>
 
-      {/* Stampa ricevuta */}
-      <a href={printUrl} target="_blank" rel="noopener noreferrer" className="block">
-        <Button variant="outline" className="w-full gap-2">
-          <Printer className="h-4 w-4" />
-          Stampa ricevuta
-        </Button>
-      </a>
+      {/* Documenti */}
+      <Card>
+        <CardHeader>
+          <div className="flex items-center gap-2">
+            <FileText className="h-4 w-4 text-muted-foreground" />
+            <CardTitle className="text-sm font-medium text-muted-foreground">Documenti</CardTitle>
+          </div>
+        </CardHeader>
+        <CardContent className="grid grid-cols-2 gap-2">
+          {[
+            { doc: "ricevuta", label: "Ricevuta" },
+            { doc: "preventivo", label: "Preventivo" },
+            { doc: "accettazione", label: "Accettazione" },
+            { doc: "liberatoria", label: "Liberatoria" },
+          ].map(({ doc, label }) => (
+            <a key={doc} href={`${printUrl}?doc=${doc}`} target="_blank" rel="noopener noreferrer">
+              <Button variant="outline" size="sm" className="w-full gap-1.5 text-xs">
+                <Printer className="h-3.5 w-3.5" />
+                {label}
+              </Button>
+            </a>
+          ))}
+        </CardContent>
+      </Card>
 
       {/* Email cliente */}
       {hasCustomerEmail && (
