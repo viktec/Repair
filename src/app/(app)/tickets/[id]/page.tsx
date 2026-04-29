@@ -15,6 +15,7 @@ import { PhotoUpload } from "./photo-upload";
 import { getPublicUrl, getPresignedDownloadUrl } from "@/lib/storage";
 import { ensureDefaultStatuses } from "@/lib/seed-statuses";
 import { TicketPartsSection } from "./parts-section";
+import { CostEditor } from "./cost-editor";
 
 export default async function TicketDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -259,35 +260,13 @@ export default async function TicketDetailPage({ params }: { params: Promise<{ i
                 <p className="mt-1 text-foreground">{ticket.faultDescription}</p>
               </div>
               <Separator />
-              <div className="flex gap-8 flex-wrap">
-                {ticket.estimatedCost != null && (
-                  <div>
-                    <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Preventivo</p>
-                    <p className="mt-1 font-medium">{formatCurrency(ticket.estimatedCost)}</p>
-                    {ticket.quoteAcceptedAt && (
-                      <span className="mt-1 inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2 py-0.5 text-xs font-medium text-emerald-700">
-                        ✅ Accettato dal cliente
-                      </span>
-                    )}
-                    {ticket.quoteRejectedAt && (
-                      <span className="mt-1 inline-flex items-center gap-1 rounded-full bg-red-50 px-2 py-0.5 text-xs font-medium text-red-700">
-                        ❌ Rifiutato dal cliente
-                      </span>
-                    )}
-                    {!ticket.quoteAcceptedAt && !ticket.quoteRejectedAt && (
-                      <span className="mt-1 inline-flex items-center gap-1 rounded-full bg-amber-50 px-2 py-0.5 text-xs font-medium text-amber-700">
-                        ⏳ In attesa risposta
-                      </span>
-                    )}
-                  </div>
-                )}
-                {ticket.finalCost != null && (
-                  <div>
-                    <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Costo finale</p>
-                    <p className="mt-1 font-medium">{formatCurrency(ticket.finalCost)}</p>
-                  </div>
-                )}
-              </div>
+              <CostEditor
+                ticketId={ticket.id}
+                estimatedCost={ticket.estimatedCost}
+                finalCost={ticket.finalCost}
+                accepted={ticket.quoteAcceptedAt != null}
+                rejected={ticket.quoteRejectedAt != null}
+              />
             </CardContent>
           </Card>
           {/* Ricambi */}
