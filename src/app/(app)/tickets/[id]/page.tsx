@@ -1,7 +1,7 @@
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
-import { tickets, customers, ticketStatuses, organizations, ticketPhotos } from "@/db/schema";
-import { eq, and } from "drizzle-orm";
+import { tickets, customers, ticketStatuses, organizations, ticketPhotos, ticketParts, inventoryItems } from "@/db/schema";
+import { eq, and, isNull } from "drizzle-orm";
 import { redirect, notFound } from "next/navigation";
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
@@ -14,6 +14,7 @@ import { TicketActions } from "./actions-client";
 import { PhotoUpload } from "./photo-upload";
 import { getPublicUrl, getPresignedDownloadUrl } from "@/lib/storage";
 import { ensureDefaultStatuses } from "@/lib/seed-statuses";
+import { TicketPartsSection } from "./parts-section";
 
 export default async function TicketDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -70,10 +71,38 @@ export default async function TicketDetailPage({ params }: { params: Promise<{ i
       phone: organizations.phone,
       whatsappTemplate: organizations.whatsappTemplate,
       googleReviewUrl: organizations.googleReviewUrl,
+      vatRate: organizations.vatRate,
     })
     .from(organizations)
     .where(eq(organizations.id, orgId))
     .limit(1);
+
+  const [parts, invItems] = await Promise.all([
+    db
+      .select({
+        id: ticketParts.id,
+        description: ticketParts.description,
+        quantity: ticketParts.quantity,
+        unitCostCents: ticketParts.unitCostCents,
+        unitSellCents: ticketParts.unitSellCents,
+        inventoryItemId: ticketParts.inventoryItemId,
+      })
+      .from(ticketParts)
+      .where(eq(ticketParts.ticketId, id))
+      .orderBy(ticketParts.createdAt),
+    db
+      .select({
+        id: inventoryItems.id,
+        name: inventoryItems.name,
+        quantity: inventoryItems.quantity,
+        costPriceCents: inventoryItems.costPriceCents,
+        sellPriceCents: inventoryItems.sellPriceCents,
+        category: inventoryItems.category,
+      })
+      .from(inventoryItems)
+      .where(and(eq(inventoryItems.organizationId, orgId), isNull(inventoryItems.deletedAt)))
+      .orderBy(inventoryItems.name),
+  ]);
 
   const rawPhotos = await db
     .select()
@@ -261,6 +290,14 @@ export default async function TicketDetailPage({ params }: { params: Promise<{ i
               </div>
             </CardContent>
           </Card>
+          {/* Ricambi */}
+          <TicketPartsSection
+            ticketId={ticket.id}
+            initialParts={parts}
+            inventoryItems={invItems}
+            finalCost={ticket.finalCost}
+            vatRate={org?.vatRate ?? 22}
+          />
         </div>
 
         {/* Colonna laterale */}

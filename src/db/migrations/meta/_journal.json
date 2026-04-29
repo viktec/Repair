@@ -57,6 +57,13 @@
       "when": 1777487353958,
       "tag": "0007_yummy_living_tribunal",
       "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1777487920993,
+      "tag": "0008_jazzy_tattoo",
+      "breakpoints": true
     }
   ]
 }

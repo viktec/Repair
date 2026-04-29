@@ -28,6 +28,7 @@ type Org = {
   whatsappTemplate: string | null;
   googleReviewUrl: string | null;
   termsAndConditions: string | null;
+  vatRate: number;
 };
 
 export function SettingsForm({ org }: { org: Org }) {
@@ -97,7 +98,7 @@ export function SettingsForm({ org }: { org: Org }) {
             </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-3 gap-3">
             <div className="space-y-1.5">
               <Label htmlFor="postalCode">CAP</Label>
               <Input id="postalCode" name="postalCode" defaultValue={org.postalCode ?? ""} placeholder="20100" maxLength={5} />
@@ -105,6 +106,10 @@ export function SettingsForm({ org }: { org: Org }) {
             <div className="space-y-1.5">
               <Label htmlFor="vatNumber">P. IVA / C.F.</Label>
               <Input id="vatNumber" name="vatNumber" defaultValue={org.vatNumber ?? ""} placeholder="IT12345678901" />
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="vatRate">Aliquota IVA (%)</Label>
+              <Input id="vatRate" name="vatRate" type="number" min="0" max="99" defaultValue={org.vatRate} placeholder="22" />
             </div>
           </div>
         </CardContent>

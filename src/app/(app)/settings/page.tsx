@@ -31,6 +31,7 @@ export default async function SettingsPage() {
       whatsappTemplate: organizations.whatsappTemplate,
       googleReviewUrl: organizations.googleReviewUrl,
       termsAndConditions: organizations.termsAndConditions,
+      vatRate: organizations.vatRate,
     })
     .from(organizations)
     .where(eq(organizations.id, orgId))

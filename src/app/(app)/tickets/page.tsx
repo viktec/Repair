@@ -35,7 +35,7 @@ export default async function TicketsPage({
       .selectDistinct({ year: sql<number>`extract(year from ${tickets.createdAt})::integer` })
       .from(tickets)
       .where(and(eq(tickets.organizationId, orgId), isNull(tickets.deletedAt)))
-      .orderBy(sql`extract(year from ${tickets.createdAt}) desc`),
+      .orderBy(sql`1 desc`),
   ]);
   const availableYears = yearsResult.map((r) => r.year);
 

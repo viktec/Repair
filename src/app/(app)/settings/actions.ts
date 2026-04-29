@@ -27,6 +27,7 @@ export async function updateOrganizationAction(formData: FormData) {
   const whatsappTemplate = formData.get("whatsappTemplate") as string;
   const googleReviewUrl = formData.get("googleReviewUrl") as string;
   const termsAndConditions = formData.get("termsAndConditions") as string;
+  const vatRateRaw = parseInt(formData.get("vatRate") as string, 10);
 
   await db
     .update(organizations)
@@ -42,6 +43,7 @@ export async function updateOrganizationAction(formData: FormData) {
       whatsappTemplate: whatsappTemplate || null,
       googleReviewUrl: googleReviewUrl || null,
       termsAndConditions: termsAndConditions || null,
+      vatRate: !isNaN(vatRateRaw) && vatRateRaw >= 0 ? vatRateRaw : undefined,
       updatedAt: new Date(),
     })
     .where(eq(organizations.id, session.user.organizationId));

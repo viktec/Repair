@@ -61,6 +61,7 @@ export const organizations = pgTable("organizations", {
   whatsappTemplate: text("whatsapp_template"),
   googleReviewUrl: text("google_review_url"),
   termsAndConditions: text("terms_and_conditions"),
+  vatRate: integer("vat_rate").notNull().default(22),
   adminNotes: text("admin_notes"),
   registrationStatus: registrationStatusEnum("registration_status").notNull().default("pending"),
   rejectionReason: text("rejection_reason"),
@@ -247,6 +248,17 @@ export const inventoryMovements = pgTable("inventory_movements", {
   ticketId: uuid("ticket_id").references(() => tickets.id, { onDelete: "set null" }),
   notes: text("notes"),
   createdBy: uuid("created_by").references(() => users.id, { onDelete: "set null" }),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+});
+
+export const ticketParts = pgTable("ticket_parts", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  ticketId: uuid("ticket_id").notNull().references(() => tickets.id, { onDelete: "cascade" }),
+  inventoryItemId: uuid("inventory_item_id").references(() => inventoryItems.id, { onDelete: "set null" }),
+  description: varchar("description", { length: 255 }).notNull(),
+  quantity: integer("quantity").notNull().default(1),
+  unitCostCents: integer("unit_cost_cents").notNull().default(0),
+  unitSellCents: integer("unit_sell_cents").notNull().default(0),
   createdAt: timestamp("created_at").notNull().defaultNow(),
 });
 
@@ -492,7 +504,13 @@ export const ticketsRelations = relations(tickets, ({ one, many }) => ({
   customer: one(customers, { fields: [tickets.customerId], references: [customers.id] }),
   status: one(ticketStatuses, { fields: [tickets.statusId], references: [ticketStatuses.id] }),
   photos: many(ticketPhotos),
+  parts: many(ticketParts),
   tagAssignments: many(ticketTagAssignments),
+}));
+
+export const ticketPartsRelations = relations(ticketParts, ({ one }) => ({
+  ticket: one(tickets, { fields: [ticketParts.ticketId], references: [tickets.id] }),
+  inventoryItem: one(inventoryItems, { fields: [ticketParts.inventoryItemId], references: [inventoryItems.id] }),
 }));
 
 export const ticketPhotosRelations = relations(ticketPhotos, ({ one }) => ({
