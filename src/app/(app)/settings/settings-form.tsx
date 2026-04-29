@@ -11,7 +11,9 @@ import { Check, Loader2, Upload, X } from "lucide-react";
 
 const DEFAULT_WA_TEMPLATE = `Salve {{nome}}!
 Il suo {{dispositivo}} è ora in stato: *{{stato}}*.
-Può seguire l'avanzamento qui: {{link_tracking}}`;
+Può seguire l'avanzamento qui: {{link_tracking}}
+
+— {{nome_negozio}}`;
 
 type Org = {
   name: string;
@@ -24,6 +26,7 @@ type Org = {
   brandingPrimaryColor: string | null;
   brandingLogoUrl: string | null;
   whatsappTemplate: string | null;
+  googleReviewUrl: string | null;
 };
 
 export function SettingsForm({ org }: { org: Org }) {
@@ -177,24 +180,44 @@ export function SettingsForm({ org }: { org: Org }) {
         </CardContent>
       </Card>
 
-      {/* Template WhatsApp */}
+      {/* Template WhatsApp + Google */}
       <Card>
         <CardHeader>
-          <CardTitle className="text-base">Template messaggio WhatsApp</CardTitle>
-          <p className="text-sm text-muted-foreground">
-            Variabili disponibili: <code className="rounded bg-slate-100 px-1 text-xs">{"{{nome}}"}</code>{" "}
-            <code className="rounded bg-slate-100 px-1 text-xs">{"{{dispositivo}}"}</code>{" "}
-            <code className="rounded bg-slate-100 px-1 text-xs">{"{{stato}}"}</code>{" "}
-            <code className="rounded bg-slate-100 px-1 text-xs">{"{{link_tracking}}"}</code>
-          </p>
+          <CardTitle className="text-base">Messaggi WhatsApp</CardTitle>
         </CardHeader>
-        <CardContent>
-          <textarea
-            name="whatsappTemplate"
-            defaultValue={org.whatsappTemplate ?? DEFAULT_WA_TEMPLATE}
-            rows={5}
-            className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm font-mono placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring"
-          />
+        <CardContent className="space-y-4">
+          <div className="space-y-1.5">
+            <Label htmlFor="googleReviewUrl">Link recensione Google</Label>
+            <Input
+              id="googleReviewUrl"
+              name="googleReviewUrl"
+              type="url"
+              defaultValue={org.googleReviewUrl ?? ""}
+              placeholder="https://g.page/r/..."
+            />
+            <p className="text-xs text-muted-foreground">
+              Incolla il link diretto alla tua pagina Google Reviews. Viene usato nel template "Richiedere recensione".
+            </p>
+          </div>
+
+          <Separator />
+
+          <div className="space-y-1.5">
+            <Label htmlFor="whatsappTemplate">Template aggiornamento stato</Label>
+            <p className="text-xs text-muted-foreground">
+              Variabili:{" "}
+              {["{{nome}}", "{{dispositivo}}", "{{stato}}", "{{numero_ticket}}", "{{link_tracking}}", "{{nome_negozio}}"].map((v) => (
+                <code key={v} className="rounded bg-slate-100 px-1 text-xs mr-1">{v}</code>
+              ))}
+            </p>
+            <textarea
+              id="whatsappTemplate"
+              name="whatsappTemplate"
+              defaultValue={org.whatsappTemplate ?? DEFAULT_WA_TEMPLATE}
+              rows={5}
+              className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm font-mono placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring"
+            />
+          </div>
         </CardContent>
       </Card>
 

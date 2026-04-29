@@ -59,6 +59,7 @@ export const organizations = pgTable("organizations", {
   postalCode: varchar("postal_code", { length: 20 }),
   vatNumber: varchar("vat_number", { length: 20 }),
   whatsappTemplate: text("whatsapp_template"),
+  googleReviewUrl: text("google_review_url"),
   adminNotes: text("admin_notes"),
   registrationStatus: registrationStatusEnum("registration_status").notNull().default("pending"),
   rejectionReason: text("rejection_reason"),

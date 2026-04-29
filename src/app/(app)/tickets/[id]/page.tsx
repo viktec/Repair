@@ -63,7 +63,12 @@ export default async function TicketDetailPage({ params }: { params: Promise<{ i
     .orderBy(ticketStatuses.sortOrder);
 
   const [org] = await db
-    .select({ phone: organizations.phone, whatsappTemplate: organizations.whatsappTemplate })
+    .select({
+      name: organizations.name,
+      phone: organizations.phone,
+      whatsappTemplate: organizations.whatsappTemplate,
+      googleReviewUrl: organizations.googleReviewUrl,
+    })
     .from(organizations)
     .where(eq(organizations.id, orgId))
     .limit(1);
@@ -96,6 +101,9 @@ export default async function TicketDetailPage({ params }: { params: Promise<{ i
     ? new Intl.NumberFormat("it-IT", { style: "currency", currency: "EUR" }).format(ticket.estimatedCost / 100)
     : "";
 
+  const orgName = org?.name ?? "il nostro centro";
+  const googleLink = org?.googleReviewUrl ?? "";
+
   function fillTemplate(tpl: string) {
     return tpl
       .replace(/\{\{nome\}\}/g, firstName)
@@ -103,29 +111,33 @@ export default async function TicketDetailPage({ params }: { params: Promise<{ i
       .replace(/\{\{stato\}\}/g, ticket.statusName ?? "—")
       .replace(/\{\{link_tracking\}\}/g, trackingUrl)
       .replace(/\{\{numero_ticket\}\}/g, num)
-      .replace(/\{\{preventivo\}\}/g, estimatedStr);
+      .replace(/\{\{preventivo\}\}/g, estimatedStr)
+      .replace(/\{\{nome_negozio\}\}/g, orgName)
+      .replace(/\{\{link_google\}\}/g, googleLink);
   }
 
   const waTemplates = [
     {
       label: "Aggiornamento stato",
       text: fillTemplate(org?.whatsappTemplate ??
-        `Salve {{nome}}!\nIl suo {{dispositivo}} (ticket #{{numero_ticket}}) è ora in stato: *{{stato}}*.\nSegua l'avanzamento qui: {{link_tracking}}`),
+        `Salve {{nome}}!\nIl suo {{dispositivo}} (ticket #{{numero_ticket}}) è ora in stato: *{{stato}}*.\nSegua l'avanzamento qui: {{link_tracking}}\n\n— {{nome_negozio}}`),
     },
     {
       label: "Preventivo",
       text: fillTemplate(
-        `Salve {{nome}}, abbiamo completato la diagnosi del suo {{dispositivo}}.\n\n*Preventivo: {{preventivo}}*\n\nCi confermi se procedere con la riparazione.\nInfo sul ticket: {{link_tracking}}`),
+        `Salve {{nome}}, da {{nome_negozio}} abbiamo completato la diagnosi del suo {{dispositivo}}.\n\n*Preventivo: {{preventivo}}*\n\nPuò accettare e seguire il ticket qui: {{link_tracking}}\n\nCi faccia sapere se procedere. Grazie!`),
     },
     {
       label: "Pronto per ritiro",
       text: fillTemplate(
-        `Buone notizie {{nome}}! Il suo {{dispositivo}} è *pronto per il ritiro*. ✅\n\nPuò passare quando preferisce.\nDettagli: {{link_tracking}}`),
+        `Buone notizie {{nome}}! 🎉\nDa {{nome_negozio}}: il suo {{dispositivo}} è *pronto per il ritiro*. ✅\n\nPuò passare quando preferisce.\nDettagli ticket: {{link_tracking}}\n\nGrazie per averci scelto!`),
     },
     {
       label: "Richiedere recensione",
       text: fillTemplate(
-        `Salve {{nome}}, speriamo sia soddisfatto della riparazione del suo {{dispositivo}}! 😊\nSe ha un momento, ci farebbe un grande favore lasciando una recensione su Google. Grazie mille!`),
+        googleLink
+          ? `Salve {{nome}}, grazie per aver scelto {{nome_negozio}}! 😊\nSperiamo sia soddisfatto della riparazione del suo {{dispositivo}}.\n\nSe ha un momento, ci farebbe un enorme favore:\n⭐ Lasci una recensione su Google: {{link_google}}\n\nGrazie di cuore! — {{nome_negozio}}`
+          : `Salve {{nome}}, grazie per aver scelto {{nome_negozio}}! 😊\nSperiamo sia soddisfatto della riparazione del suo {{dispositivo}}.\n\nSe ha un momento, ci farebbe un grande favore lasciando una recensione su Google.\n\nGrazie di cuore! — {{nome_negozio}}`),
     },
   ];
 

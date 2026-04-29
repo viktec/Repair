@@ -36,6 +36,13 @@
       "when": 1777452551442,
       "tag": "0004_long_black_tarantula",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1777484181923,
+      "tag": "0005_breezy_old_lace",
+      "breakpoints": true
     }
   ]
 }

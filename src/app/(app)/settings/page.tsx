@@ -29,6 +29,7 @@ export default async function SettingsPage() {
       brandingPrimaryColor: organizations.brandingPrimaryColor,
       brandingLogoUrl: organizations.brandingLogoUrl,
       whatsappTemplate: organizations.whatsappTemplate,
+      googleReviewUrl: organizations.googleReviewUrl,
     })
     .from(organizations)
     .where(eq(organizations.id, orgId))
