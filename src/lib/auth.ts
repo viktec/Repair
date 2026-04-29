@@ -11,6 +11,7 @@ declare module "next-auth" {
       id: string;
       organizationId: string | null;
       role: string | null;
+      isSuperAdmin: boolean;
     } & DefaultSession["user"];
   }
 }
@@ -54,6 +55,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           name: user.name,
           organizationId: membership?.organizationId ?? null,
           role: membership?.role ?? null,
+          isSuperAdmin: user.isSuperAdmin,
         };
       },
     }),
@@ -64,6 +66,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         token.id = user.id;
         token.organizationId = (user as { organizationId?: string | null }).organizationId ?? null;
         token.role = (user as { role?: string | null }).role ?? null;
+        token.isSuperAdmin = (user as { isSuperAdmin?: boolean }).isSuperAdmin ?? false;
       }
       return token;
     },
@@ -71,6 +74,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       session.user.id = token.id as string;
       session.user.organizationId = (token.organizationId as string | null) ?? null;
       session.user.role = (token.role as string | null) ?? null;
+      session.user.isSuperAdmin = (token.isSuperAdmin as boolean) ?? false;
       return session;
     },
   },

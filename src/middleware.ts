@@ -36,7 +36,8 @@ export default auth((req) => {
     (!isAppHost && pathname === "/"); // landing pubblica solo in dev
 
   if (isLoggedIn && (pathname === "/" || pathname === "/login" || pathname === "/register")) {
-    return NextResponse.redirect(new URL("/dashboard", req.url));
+    const isSuperAdmin = (req.auth?.user as { isSuperAdmin?: boolean })?.isSuperAdmin;
+    return NextResponse.redirect(new URL(isSuperAdmin ? "/admin" : "/dashboard", req.url));
   }
 
   if (!isLoggedIn && !isPublicPath) {
