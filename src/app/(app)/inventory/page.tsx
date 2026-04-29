@@ -4,7 +4,7 @@ import { inventoryItems, suppliers } from "@/db/schema";
 import { eq, and, isNull, ilike, or, lte, sql } from "drizzle-orm";
 import { redirect } from "next/navigation";
 import Link from "next/link";
-import { Plus, Package, Search, AlertTriangle } from "lucide-react";
+import { Plus, Package, Search, AlertTriangle, FileUp } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
@@ -67,12 +67,20 @@ export default async function InventoryPage({
             )}
           </p>
         </div>
-        <Link href="/inventory/new">
-          <Button className="gap-2 w-full sm:w-auto">
-            <Plus className="h-4 w-4" />
-            Nuovo ricambio
-          </Button>
-        </Link>
+        <div className="flex gap-2 w-full sm:w-auto">
+          <Link href="/inventory/import" className="w-full sm:w-auto">
+            <Button variant="outline" className="gap-2 w-full sm:w-auto">
+              <FileUp className="h-4 w-4" />
+              Importa fattura
+            </Button>
+          </Link>
+          <Link href="/inventory/new" className="w-full sm:w-auto">
+            <Button className="gap-2 w-full sm:w-auto">
+              <Plus className="h-4 w-4" />
+              Nuovo ricambio
+            </Button>
+          </Link>
+        </div>
       </div>
 
       <form method="GET" className="flex gap-2 flex-wrap">
