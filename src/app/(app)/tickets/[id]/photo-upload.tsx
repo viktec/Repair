@@ -4,7 +4,8 @@ import { useRef, useState, useTransition } from "react";
 import { getUploadUrl, savePhoto, deletePhoto } from "./photo-actions";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Camera, Trash2, Loader2, Eye, EyeOff, ImagePlus } from "lucide-react";
+import { PhotoLightbox, type LightboxPhoto } from "@/components/photo-lightbox";
+import { Camera, Trash2, Loader2, ImagePlus, ZoomIn } from "lucide-react";
 
 type Photo = {
   id: string;
@@ -19,11 +20,16 @@ type Props = {
   initialPhotos: Photo[];
 };
 
+type LightboxState = {
+  photos: LightboxPhoto[];
+  index: number;
+} | null;
+
 export function PhotoUpload({ ticketId, initialPhotos }: Props) {
   const [photos, setPhotos] = useState<Photo[]>(initialPhotos);
   const [uploading, setUploading] = useState(false);
   const [isPending, startTransition] = useTransition();
-  const inputRef = useRef<HTMLInputElement>(null);
+  const [lightbox, setLightbox] = useState<LightboxState>(null);
 
   async function handleFiles(files: FileList | null, photoType: "pre" | "post") {
     if (!files || files.length === 0) return;
@@ -67,45 +73,67 @@ export function PhotoUpload({ ticketId, initialPhotos }: Props) {
     });
   }
 
+  function openLightbox(sectionPhotos: Photo[], clickedId: string) {
+    const lbPhotos: LightboxPhoto[] = sectionPhotos.map((p) => ({
+      url: p.url,
+      label: p.photoType === "pre" ? "Prima" : "Dopo",
+    }));
+    const idx = sectionPhotos.findIndex((p) => p.id === clickedId);
+    setLightbox({ photos: lbPhotos, index: idx >= 0 ? idx : 0 });
+  }
+
   const prePhotos = photos.filter((p) => p.photoType === "pre");
   const postPhotos = photos.filter((p) => p.photoType === "post");
 
   return (
-    <Card>
-      <CardHeader>
-        <div className="flex items-center gap-2">
-          <Camera className="h-4 w-4 text-muted-foreground" />
-          <CardTitle className="text-sm font-medium text-muted-foreground">
-            Foto intervento
-          </CardTitle>
-        </div>
-      </CardHeader>
-      <CardContent className="space-y-4">
-        <div className="grid grid-cols-2 gap-3">
-          <PhotoSection
-            label="Prima"
-            photos={prePhotos}
-            onAdd={(files) => handleFiles(files, "pre")}
-            onDelete={handleDelete}
-            uploading={uploading}
-            deleting={isPending}
-          />
-          <PhotoSection
-            label="Dopo"
-            photos={postPhotos}
-            onAdd={(files) => handleFiles(files, "post")}
-            onDelete={handleDelete}
-            uploading={uploading}
-            deleting={isPending}
-          />
-        </div>
+    <>
+      <Card>
+        <CardHeader>
+          <div className="flex items-center gap-2">
+            <Camera className="h-4 w-4 text-muted-foreground" />
+            <CardTitle className="text-sm font-medium text-muted-foreground">
+              Foto intervento
+            </CardTitle>
+          </div>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="grid grid-cols-2 gap-3">
+            <PhotoSection
+              label="Prima"
+              photos={prePhotos}
+              onAdd={(files) => handleFiles(files, "pre")}
+              onDelete={handleDelete}
+              onView={(id) => openLightbox(prePhotos, id)}
+              uploading={uploading}
+              deleting={isPending}
+            />
+            <PhotoSection
+              label="Dopo"
+              photos={postPhotos}
+              onAdd={(files) => handleFiles(files, "post")}
+              onDelete={handleDelete}
+              onView={(id) => openLightbox(postPhotos, id)}
+              uploading={uploading}
+              deleting={isPending}
+            />
+          </div>
 
-        <p className="text-xs text-muted-foreground">
-          Le foto sono visibili al cliente nella pagina di tracking.
-          Puoi scattare direttamente dalla fotocamera del dispositivo.
-        </p>
-      </CardContent>
-    </Card>
+          <p className="text-xs text-muted-foreground">
+            Le foto sono visibili al cliente nella pagina di tracking.
+            Puoi scattare direttamente dalla fotocamera del dispositivo.
+          </p>
+        </CardContent>
+      </Card>
+
+      {lightbox && (
+        <PhotoLightbox
+          photos={lightbox.photos}
+          index={lightbox.index}
+          onClose={() => setLightbox(null)}
+          onNavigate={(i) => setLightbox((prev) => prev ? { ...prev, index: i } : null)}
+        />
+      )}
+    </>
   );
 }
 
@@ -114,6 +142,7 @@ function PhotoSection({
   photos,
   onAdd,
   onDelete,
+  onView,
   uploading,
   deleting,
 }: {
@@ -121,6 +150,7 @@ function PhotoSection({
   photos: Photo[];
   onAdd: (files: FileList) => void;
   onDelete: (id: string) => void;
+  onView: (id: string) => void;
   uploading: boolean;
   deleting: boolean;
 }) {
@@ -131,19 +161,35 @@ function PhotoSection({
       <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">{label}</p>
       <div className="grid grid-cols-2 gap-1.5">
         {photos.map((p) => (
-          <div key={p.id} className="group relative aspect-square overflow-hidden rounded-lg bg-slate-100">
+          <div
+            key={p.id}
+            className="group relative aspect-square overflow-hidden rounded-lg bg-slate-100 cursor-pointer"
+            onClick={() => onView(p.id)}
+          >
             <img src={p.url} alt="" className="h-full w-full object-cover" />
-            <button
-              onClick={() => onDelete(p.id)}
-              disabled={deleting}
-              className="absolute inset-0 flex items-center justify-center bg-black/50 opacity-0 transition-opacity group-hover:opacity-100"
-            >
-              {deleting ? (
-                <Loader2 className="h-4 w-4 animate-spin text-white" />
-              ) : (
-                <Trash2 className="h-4 w-4 text-white" />
-              )}
-            </button>
+
+            {/* Hover overlay — stops propagation so click-to-view still works */}
+            <div className="absolute inset-0 flex items-start justify-between bg-black/40 opacity-0 transition-opacity group-hover:opacity-100 p-1.5">
+              <button
+                onClick={(e) => { e.stopPropagation(); onDelete(p.id); }}
+                disabled={deleting}
+                className="flex h-7 w-7 items-center justify-center rounded-full bg-black/60 text-white hover:bg-red-600 disabled:opacity-50"
+                aria-label="Elimina foto"
+              >
+                {deleting ? (
+                  <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                ) : (
+                  <Trash2 className="h-3.5 w-3.5" />
+                )}
+              </button>
+              <button
+                onClick={(e) => { e.stopPropagation(); onView(p.id); }}
+                className="flex h-7 w-7 items-center justify-center rounded-full bg-black/60 text-white hover:bg-white/20"
+                aria-label="Ingrandisci foto"
+              >
+                <ZoomIn className="h-3.5 w-3.5" />
+              </button>
+            </div>
           </div>
         ))}
 

@@ -4,6 +4,7 @@ import { eq } from "drizzle-orm";
 import { notFound } from "next/navigation";
 import { CheckCircle2, Clock, Wrench, Phone, MapPin, PenLine } from "lucide-react";
 import { getPublicUrl } from "@/lib/storage";
+import { PublicPhotoGallery } from "./public-photo-gallery";
 
 export default async function TrackingPage({ params }: { params: Promise<{ token: string }> }) {
   const { token } = await params;
@@ -158,25 +159,13 @@ export default async function TrackingPage({ params }: { params: Promise<{ token
         </div>
 
         {/* Foto pubbliche */}
-        {publicPhotos.length > 0 && (
-          <div className="rounded-2xl bg-white p-5 shadow-sm">
-            <p className="mb-3 text-sm font-semibold text-foreground">Foto</p>
-            <div className="grid grid-cols-2 gap-2">
-              {publicPhotos.map((p) => (
-                <div key={p.id} className="relative aspect-square overflow-hidden rounded-xl bg-slate-100">
-                  <img
-                    src={getPublicUrl(p.storageKey)}
-                    alt="Foto riparazione"
-                    className="h-full w-full object-cover"
-                  />
-                  <span className="absolute bottom-1.5 right-1.5 rounded-full bg-black/60 px-2 py-0.5 text-[10px] font-medium text-white">
-                    {p.photoType === "pre" ? "Prima" : "Dopo"}
-                  </span>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
+        <PublicPhotoGallery
+          photos={publicPhotos.map((p) => ({
+            id: p.id,
+            url: getPublicUrl(p.storageKey),
+            photoType: p.photoType,
+          }))}
+        />
 
         {/* Contatti */}
         {(org?.phone || org?.address || waLink) && (
