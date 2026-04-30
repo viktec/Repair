@@ -1,10 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
-import { tickets, customers, ticketStatuses, organizations } from "@/db/schema";
-import { eq, and, isNull, sql, asc } from "drizzle-orm";
+import { tickets, customers, ticketStatuses, organizations, ticketPhotos } from "@/db/schema";
+import { eq, and, isNull, sql, asc, inArray } from "drizzle-orm";
 import { PDFDocument, StandardFonts, rgb } from "pdf-lib";
 import JSZip from "jszip";
+import { getObjectBuffer } from "@/lib/storage";
 
 // Strip characters outside WinAnsiEncoding (pdf-lib standard fonts)
 function san(text: string | null | undefined): string {
@@ -203,11 +204,46 @@ export async function GET(req: NextRequest) {
   const orgName = org?.name ?? "Centro Riparazioni";
   const orgAddress = [org?.address, org?.city].filter(Boolean).join(", ");
 
+  // Fetch all photos for these tickets in one query
+  const ticketIds = rows.map((r) => r.id);
+  const photos = await db
+    .select({
+      ticketId: ticketPhotos.ticketId,
+      storageKey: ticketPhotos.storageKey,
+      photoType: ticketPhotos.photoType,
+      isPublic: ticketPhotos.isPublic,
+    })
+    .from(ticketPhotos)
+    .where(inArray(ticketPhotos.ticketId, ticketIds))
+    .orderBy(asc(ticketPhotos.createdAt));
+
+  // Group photos by ticketId
+  const photosByTicket = new Map<string, typeof photos>();
+  for (const p of photos) {
+    if (!photosByTicket.has(p.ticketId)) photosByTicket.set(p.ticketId, []);
+    photosByTicket.get(p.ticketId)!.push(p);
+  }
+
   const zip = new JSZip();
   for (const ticket of rows) {
+    const folderName = `ticket-${String(ticket.ticketNumber).padStart(4, "0")}`;
+    const folder = zip.folder(folderName)!;
+
+    // PDF scheda ticket
     const pdf = await buildPdf(ticket, orgName, orgAddress);
-    const filename = `ticket-${String(ticket.ticketNumber).padStart(4, "0")}.pdf`;
-    zip.file(filename, pdf);
+    folder.file(`${folderName}.pdf`, pdf);
+
+    // Foto allegate
+    const ticketPhotosData = photosByTicket.get(ticket.id) ?? [];
+    const typeCounters: Record<string, number> = {};
+    for (const photo of ticketPhotosData) {
+      const ext = photo.storageKey.split(".").pop() ?? "jpg";
+      const type = photo.photoType ?? "foto";
+      typeCounters[type] = (typeCounters[type] ?? 0) + 1;
+      const photoName = `${type}-${typeCounters[type]}.${ext}`;
+      const buffer = await getObjectBuffer(photo.storageKey, photo.isPublic ?? false);
+      if (buffer) folder.file(photoName, buffer);
+    }
   }
 
   const zipBuffer = await zip.generateAsync({ type: "nodebuffer", compression: "DEFLATE" });

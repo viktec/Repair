@@ -47,3 +47,19 @@ export async function getPresignedDownloadUrl(key: string): Promise<string> {
   const command = new GetObjectCommand({ Bucket: BUCKET_PRIVATE, Key: key });
   return getSignedUrl(s3Public, command, { expiresIn: 3600 });
 }
+
+export async function getObjectBuffer(key: string, isPublic: boolean): Promise<Buffer | null> {
+  const bucket = isPublic ? BUCKET_PUBLIC : BUCKET_PRIVATE;
+  try {
+    const command = new GetObjectCommand({ Bucket: bucket, Key: key });
+    const response = await s3Internal.send(command);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const chunks: Buffer[] = [];
+    for await (const chunk of response.Body as AsyncIterable<Uint8Array>) {
+      chunks.push(Buffer.from(chunk));
+    }
+    return Buffer.concat(chunks);
+  } catch {
+    return null;
+  }
+}
