@@ -2,6 +2,7 @@
 
 import { useRef, useState, useTransition } from "react";
 import { getUploadUrl, savePhoto, deletePhoto } from "./photo-actions";
+import { toJpeg } from "@/lib/image-convert";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { PhotoLightbox, type LightboxPhoto } from "@/components/photo-lightbox";
@@ -35,12 +36,13 @@ export function PhotoUpload({ ticketId, initialPhotos }: Props) {
     if (!files || files.length === 0) return;
     setUploading(true);
 
-    for (const file of Array.from(files)) {
+    for (const rawFile of Array.from(files)) {
       try {
+        const file = await toJpeg(rawFile);
         const { uploadUrl, key, isPublic } = await getUploadUrl(
           ticketId,
           file.name,
-          file.type || "image/jpeg",
+          "image/jpeg",
           photoType,
           true,
         );
@@ -48,7 +50,7 @@ export function PhotoUpload({ ticketId, initialPhotos }: Props) {
         await fetch(uploadUrl, {
           method: "PUT",
           body: file,
-          headers: { "Content-Type": file.type || "image/jpeg" },
+          headers: { "Content-Type": "image/jpeg" },
         });
 
         await savePhoto(ticketId, key, photoType, isPublic);

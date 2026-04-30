@@ -2,6 +2,7 @@
 
 import { useTransition, useRef, useState } from "react";
 import { updateOrganizationAction, getLogoUploadUrl, saveLogoUrl } from "./actions";
+import { toJpeg } from "@/lib/image-convert";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -48,11 +49,12 @@ export function SettingsForm({ org }: { org: Org }) {
     });
   }
 
-  async function handleLogoUpload(file: File) {
+  async function handleLogoUpload(rawFile: File) {
     setUploadingLogo(true);
     try {
-      const { uploadUrl, key } = await getLogoUploadUrl(file.name, file.type);
-      await fetch(uploadUrl, { method: "PUT", body: file, headers: { "Content-Type": file.type } });
+      const file = await toJpeg(rawFile);
+      const { uploadUrl, key } = await getLogoUploadUrl(file.name, "image/jpeg");
+      await fetch(uploadUrl, { method: "PUT", body: file, headers: { "Content-Type": "image/jpeg" } });
       await saveLogoUrl(key);
       const { getPublicUrl } = await import("@/lib/storage");
       setLogoUrl(getPublicUrl(key));
