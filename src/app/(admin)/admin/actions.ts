@@ -20,7 +20,7 @@ async function assertSuperAdmin() {
 
 export async function updateOrgPlanAction(
   orgId: string,
-  plan: "solo" | "pro" | "business",
+  plan: "start" | "pro" | "business",
   subscriptionStatus: "trial" | "active" | "past_due" | "canceled",
   adminNotes: string,
   trialEndsAt: string | null,

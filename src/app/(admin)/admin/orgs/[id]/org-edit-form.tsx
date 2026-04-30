@@ -8,7 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Check, Loader2, Settings } from "lucide-react";
 
-type Plan = "solo" | "pro" | "business";
+type Plan = "start" | "pro" | "business";
 type Status = "trial" | "active" | "past_due" | "canceled";
 
 export function OrgEditForm({
@@ -56,7 +56,7 @@ export function OrgEditForm({
               onChange={(e) => setPlan(e.target.value as Plan)}
               className="w-full rounded-md border px-3 py-2 text-sm"
             >
-              <option value="solo">Solo</option>
+              <option value="start">Start</option>
               <option value="pro">Pro</option>
               <option value="business">Business</option>
             </select>

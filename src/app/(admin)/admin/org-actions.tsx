@@ -5,7 +5,7 @@ import { updateOrgPlanAction } from "./actions";
 import { Button } from "@/components/ui/button";
 import { Check, ChevronDown, Loader2 } from "lucide-react";
 
-type Plan = "solo" | "pro" | "business";
+type Plan = "start" | "pro" | "business";
 type Status = "trial" | "active" | "past_due" | "canceled";
 
 export function AdminOrgActions({
@@ -48,7 +48,7 @@ export function AdminOrgActions({
               onChange={(e) => setPlan(e.target.value as Plan)}
               className="w-full rounded border px-2 py-1.5 text-sm"
             >
-              <option value="solo">Solo</option>
+              <option value="start">Start</option>
               <option value="pro">Pro</option>
               <option value="business">Business</option>
             </select>

@@ -39,8 +39,8 @@ const features = [
 
 const plans = [
   {
-    id: "solo",
-    name: "Solo",
+    id: "start",
+    name: "Start",
     tagline: "Per chi al banco è da solo",
     price: "14,90",
     highlight: false,
@@ -56,7 +56,7 @@ const plans = [
       "Firma digitale su tablet",
       "Branding personalizzato",
     ],
-    cta: "Inizia con Solo",
+    cta: "Inizia con Start",
     ctaHref: "/register",
   },
   {

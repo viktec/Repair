@@ -41,7 +41,7 @@ export default async function AdminOrgsPage() {
   const pendingCount = orgs.filter((o) => o.registrationStatus === "pending").length;
 
   const planColors: Record<string, string> = {
-    solo: "bg-slate-100 text-slate-700",
+    start: "bg-slate-100 text-slate-700",
     pro: "bg-blue-100 text-blue-700",
     business: "bg-purple-100 text-purple-700",
   };

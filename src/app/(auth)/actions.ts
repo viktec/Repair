@@ -55,7 +55,7 @@ export async function registerAction(_prev: RegisterState, formData: FormData): 
         .values({
           name: shopName,
           slug,
-          plan: "solo",
+          plan: "start",
           registrationStatus: "pending",
           subscriptionStatus: "trial",
           trialEndsAt: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000),

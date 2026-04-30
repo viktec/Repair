@@ -32,7 +32,7 @@ const [org] = await db
   .values({
     name: shopName,
     slug: "laboratorio-demo",
-    plan: "solo",
+    plan: "start",
     subscriptionStatus: "trial",
     trialEndsAt: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000),
   })

@@ -13,7 +13,7 @@ import {
 } from "drizzle-orm/pg-core";
 import { relations } from "drizzle-orm";
 
-export const planEnum = pgEnum("plan", ["solo", "pro", "business"]);
+export const planEnum = pgEnum("plan", ["start", "pro", "business"]);
 export const subscriptionStatusEnum = pgEnum("subscription_status", [
   "trial",
   "active",
@@ -49,7 +49,7 @@ export const organizations = pgTable("organizations", {
   id: uuid("id").primaryKey().defaultRandom(),
   name: varchar("name", { length: 255 }).notNull(),
   slug: varchar("slug", { length: 100 }).notNull().unique(),
-  plan: planEnum("plan").notNull().default("solo"),
+  plan: planEnum("plan").notNull().default("start"),
   brandingLogoUrl: text("branding_logo_url"),
   brandingPrimaryColor: varchar("branding_primary_color", { length: 7 }).default("#0D8F7A"),
   phone: varchar("phone", { length: 50 }),
