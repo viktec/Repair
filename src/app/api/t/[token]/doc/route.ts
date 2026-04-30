@@ -21,8 +21,9 @@ function fmtDate(d: Date | null | undefined, withTime = false): string {
 }
 
 function fmtCents(cents: number | null | undefined): string {
-  if (cents == null) return "—";
-  return new Intl.NumberFormat("it-IT", { style: "currency", currency: "EUR" }).format(cents / 100);
+  if (cents == null) return "-";
+  const val = (cents / 100).toFixed(2).replace(".", ",");
+  return `EUR ${val}`;
 }
 
 function wrapText(text: string, font: Awaited<ReturnType<typeof PDFDocument.prototype.embedFont>>, size: number, maxW: number): string[] {
@@ -182,7 +183,7 @@ async function buildPdf(type: DocType, d: TicketData): Promise<Uint8Array> {
     section("DICHIARAZIONI");
     for (const decl of WAIVER_DECLARATIONS) {
       const lines = wrapText(decl, reg, 8, W - 60);
-      page.drawText("✓", { x: 22, y: y + 1, size: 9, font: bold, color: rgb(0.05, 0.6, 0.3) });
+      page.drawText("v", { x: 22, y: y + 1, size: 9, font: bold, color: rgb(0.05, 0.6, 0.3) });
       for (let i = 0; i < lines.length; i++) {
         page.drawText(lines[i], { x: 36, y: y - i * 12, size: 8, font: reg, color: dark });
       }
@@ -222,7 +223,7 @@ async function buildPdf(type: DocType, d: TicketData): Promise<Uint8Array> {
     ];
 
     for (const item of items) {
-      page.drawText("✓", { x: 22, y: y + 1, size: 9, font: bold, color: rgb(0.05, 0.6, 0.3) });
+      page.drawText("v", { x: 22, y: y + 1, size: 9, font: bold, color: rgb(0.05, 0.6, 0.3) });
       page.drawText(san(item), { x: 36, y, size: 8.5, font: reg, color: dark });
       y -= 16;
     }

@@ -93,7 +93,7 @@ function SignatureStep({ ticketId }: { ticketId: string }) {
   }
 
   return (
-    <div className="mx-auto max-w-2xl space-y-6">
+    <div className="mx-auto max-w-2xl space-y-6 overflow-hidden">
       <div>
         <h1 className="text-xl font-bold text-foreground">Firma del cliente</h1>
         <p className="mt-1 text-sm text-muted-foreground">
@@ -128,17 +128,17 @@ function SignatureStep({ ticketId }: { ticketId: string }) {
             )}
           </div>
 
-          <div className="flex items-center justify-between">
-            <Button type="button" variant="outline" size="sm" onClick={clear} disabled={!hasStrokes} className="gap-1.5">
-              <RotateCcw className="h-3.5 w-3.5" /> Cancella
+          <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+            <Button type="button" variant="outline" size="sm" onClick={clear} disabled={!hasStrokes} className="gap-1.5 w-full sm:w-auto">
+              <RotateCcw className="h-3.5 w-3.5" /> Cancella firma
             </Button>
             <div className="flex gap-2">
-              <Button type="button" variant="outline" onClick={handleSkip} className="gap-2">
-                <SkipForward className="h-4 w-4" /> Salta firma
+              <Button type="button" variant="outline" onClick={handleSkip} className="gap-2 flex-1 sm:flex-none">
+                <SkipForward className="h-4 w-4" /> Salta
               </Button>
-              <Button onClick={handleSave} disabled={!hasStrokes || isSaving} className="gap-2">
+              <Button onClick={handleSave} disabled={!hasStrokes || isSaving} className="gap-2 flex-1 sm:flex-none">
                 {isSaving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Check className="h-4 w-4" />}
-                Firma e vai al ticket
+                Salva firma
               </Button>
             </div>
           </div>
