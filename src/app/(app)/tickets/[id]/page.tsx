@@ -4,9 +4,10 @@ import { tickets, customers, ticketStatuses, organizations, ticketPhotos, ticket
 import { eq, and, isNull } from "drizzle-orm";
 import { redirect, notFound } from "next/navigation";
 import Link from "next/link";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, Pencil, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { DeleteTicketButton } from "./delete-button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { formatDate, formatCurrency } from "@/lib/utils";
@@ -193,19 +194,28 @@ export default async function TicketDetailPage({ params }: { params: Promise<{ i
             </p>
           </div>
         </div>
-        {ticket.statusName && (
-          <Badge
-            style={ticket.statusColor ? {
-              backgroundColor: ticket.statusColor + "20",
-              color: ticket.statusColor,
-              borderColor: ticket.statusColor + "40",
-            } : undefined}
-            variant="outline"
-            className="text-sm font-medium"
-          >
-            {ticket.statusName}
-          </Badge>
-        )}
+        <div className="flex items-center gap-2">
+          {ticket.statusName && (
+            <Badge
+              style={ticket.statusColor ? {
+                backgroundColor: ticket.statusColor + "20",
+                color: ticket.statusColor,
+                borderColor: ticket.statusColor + "40",
+              } : undefined}
+              variant="outline"
+              className="text-sm font-medium"
+            >
+              {ticket.statusName}
+            </Badge>
+          )}
+          <Link href={`/tickets/${ticket.id}/edit`}>
+            <Button variant="outline" size="sm" className="gap-1.5">
+              <Pencil className="h-3.5 w-3.5" />
+              <span className="hidden sm:inline">Modifica</span>
+            </Button>
+          </Link>
+          <DeleteTicketButton ticketId={ticket.id} />
+        </div>
       </div>
 
       <div className="grid gap-4 lg:grid-cols-3">

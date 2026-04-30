@@ -202,3 +202,54 @@ export async function updateTicketNotesAction(ticketId: string, notes: string) {
 
   revalidatePath(`/tickets/${ticketId}`);
 }
+
+export async function updateTicketFieldsAction(
+  _prev: { errors?: Record<string, string[]> } | null,
+  formData: FormData,
+): Promise<{ errors?: Record<string, string[]> } | null> {
+  const session = await auth();
+  if (!session?.user?.organizationId) redirect("/login");
+  const orgId = session.user.organizationId;
+
+  const ticketId = formData.get("ticketId") as string;
+  const parsed = ticketSchema.safeParse(Object.fromEntries(formData));
+  if (!parsed.success) return { errors: parsed.error.flatten().fieldErrors };
+
+  const data = parsed.data;
+  const estimatedCents = data.estimatedCost
+    ? Math.round(parseFloat(data.estimatedCost) * 100)
+    : null;
+
+  await db
+    .update(tickets)
+    .set({
+      customerId: data.customerId || null,
+      deviceBrand: data.deviceBrand || null,
+      deviceModel: data.deviceModel || null,
+      deviceImei: data.deviceImei || null,
+      deviceSerial: data.deviceSerial || null,
+      devicePatternLock: data.devicePatternLock || null,
+      accessories: data.accessories || null,
+      deviceCondition: data.deviceCondition || null,
+      faultDescription: data.faultDescription,
+      estimatedCost: estimatedCents,
+      updatedAt: new Date(),
+    })
+    .where(and(eq(tickets.id, ticketId), eq(tickets.organizationId, orgId)));
+
+  revalidatePath(`/tickets/${ticketId}`);
+  redirect(`/tickets/${ticketId}`);
+}
+
+export async function deleteTicketAction(ticketId: string) {
+  const session = await auth();
+  if (!session?.user?.organizationId) redirect("/login");
+  const orgId = session.user.organizationId;
+
+  await db
+    .update(tickets)
+    .set({ deletedAt: new Date() })
+    .where(and(eq(tickets.id, ticketId), eq(tickets.organizationId, orgId)));
+
+  redirect("/tickets");
+}
