@@ -17,6 +17,7 @@ import { getPublicUrl, getPresignedDownloadUrl } from "@/lib/storage";
 import { ensureDefaultStatuses } from "@/lib/seed-statuses";
 import { TicketPartsSection } from "./parts-section";
 import { CostEditor } from "./cost-editor";
+import { RepairNotesEditor } from "./repair-notes-editor";
 
 export default async function TicketDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -39,6 +40,7 @@ export default async function TicketDetailPage({ params }: { params: Promise<{ i
       deviceCondition: tickets.deviceCondition,
       faultDescription: tickets.faultDescription,
       internalNotes: tickets.internalNotes,
+      repairNotes: tickets.repairNotes,
       estimatedCost: tickets.estimatedCost,
       finalCost: tickets.finalCost,
       qrToken: tickets.qrToken,
@@ -279,6 +281,11 @@ export default async function TicketDetailPage({ params }: { params: Promise<{ i
               />
             </CardContent>
           </Card>
+          {/* Note diagnosi / riparazione */}
+          <RepairNotesEditor
+            ticketId={ticket.id}
+            initialNotes={ticket.repairNotes ?? ""}
+          />
           {/* Ricambi */}
           <TicketPartsSection
             ticketId={ticket.id}

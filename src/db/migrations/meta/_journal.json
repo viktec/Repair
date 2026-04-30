@@ -71,6 +71,13 @@
       "when": 1777503161207,
       "tag": "0009_even_dazzler",
       "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1777565600530,
+      "tag": "0010_happy_lionheart",
+      "breakpoints": true
     }
   ]
 }

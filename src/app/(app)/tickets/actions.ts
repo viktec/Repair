@@ -203,6 +203,18 @@ export async function updateTicketNotesAction(ticketId: string, notes: string) {
   revalidatePath(`/tickets/${ticketId}`);
 }
 
+export async function updateRepairNotesAction(ticketId: string, notes: string) {
+  const session = await auth();
+  if (!session?.user?.organizationId) redirect("/login");
+
+  await db
+    .update(tickets)
+    .set({ repairNotes: notes || null, updatedAt: new Date() })
+    .where(and(eq(tickets.id, ticketId), eq(tickets.organizationId, session.user.organizationId)));
+
+  revalidatePath(`/tickets/${ticketId}`);
+}
+
 export async function updateTicketFieldsAction(
   _prev: { errors?: Record<string, string[]> } | null,
   formData: FormData,

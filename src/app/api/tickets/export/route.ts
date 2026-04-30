@@ -107,6 +107,12 @@ async function buildPdf(ticket: TicketRow, orgName: string, orgAddress: string):
   section("GUASTO SEGNALATO");
   textBlock(ticket.faultDescription ?? "");
 
+  // ── Diagnosi / Note riparazione ──────────────────────────
+  if (ticket.repairNotes) {
+    section("DIAGNOSI / NOTE RIPARAZIONE");
+    textBlock(ticket.repairNotes);
+  }
+
   // ── Importi ──────────────────────────────────────────────
   if (ticket.estimatedCost != null || ticket.finalCost != null) {
     section("IMPORTI");
@@ -116,7 +122,7 @@ async function buildPdf(ticket: TicketRow, orgName: string, orgAddress: string):
 
   // ── Note interne ─────────────────────────────────────────
   if (ticket.internalNotes) {
-    section("NOTE INTERNE");
+    section("NOTE INTERNE (solo uso interno)");
     textBlock(ticket.internalNotes);
   }
 
@@ -141,6 +147,7 @@ type TicketRow = {
   accessories: string | null;
   deviceCondition: string | null;
   faultDescription: string | null;
+  repairNotes: string | null;
   estimatedCost: number | null;
   finalCost: number | null;
   internalNotes: string | null;
@@ -183,6 +190,7 @@ export async function GET(req: NextRequest) {
       accessories: tickets.accessories,
       deviceCondition: tickets.deviceCondition,
       faultDescription: tickets.faultDescription,
+      repairNotes: tickets.repairNotes,
       estimatedCost: tickets.estimatedCost,
       finalCost: tickets.finalCost,
       internalNotes: tickets.internalNotes,

@@ -46,6 +46,7 @@ type TicketData = {
   deviceImei: string | null;
   deviceSerial: string | null;
   faultDescription: string | null;
+  repairNotes: string | null;
   estimatedCost: number | null;
   finalCost: number | null;
   quoteAcceptedAt: Date | null;
@@ -152,6 +153,11 @@ async function buildPdf(type: DocType, d: TicketData): Promise<Uint8Array> {
     section("GUASTO SEGNALATO");
     textBlock(d.faultDescription);
 
+    if (d.repairNotes) {
+      section("DIAGNOSI");
+      textBlock(d.repairNotes);
+    }
+
     section("PREVENTIVO");
     row("Importo stimato", fmtCents(d.estimatedCost), true);
 
@@ -248,6 +254,11 @@ async function buildPdf(type: DocType, d: TicketData): Promise<Uint8Array> {
     section("INTERVENTO");
     textBlock(d.faultDescription);
 
+    if (d.repairNotes) {
+      section("DIAGNOSI / NOTE RIPARAZIONE");
+      textBlock(d.repairNotes);
+    }
+
     section("IMPORTI");
     if (d.estimatedCost != null) row("Preventivo", fmtCents(d.estimatedCost));
     row("Costo finale", fmtCents(d.finalCost ?? d.estimatedCost), true);
@@ -290,6 +301,7 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ toke
       deviceImei: tickets.deviceImei,
       deviceSerial: tickets.deviceSerial,
       faultDescription: tickets.faultDescription,
+      repairNotes: tickets.repairNotes,
       estimatedCost: tickets.estimatedCost,
       finalCost: tickets.finalCost,
       quoteAcceptedAt: tickets.quoteAcceptedAt,

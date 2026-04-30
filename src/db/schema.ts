@@ -152,6 +152,7 @@ export const tickets = pgTable("tickets", {
   faultDescription: text("fault_description").notNull(),
 
   internalNotes: text("internal_notes"),
+  repairNotes: text("repair_notes"),
   estimatedCost: integer("estimated_cost"),
   finalCost: integer("final_cost"),
 

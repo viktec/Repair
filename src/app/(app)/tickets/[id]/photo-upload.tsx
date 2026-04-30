@@ -100,41 +100,34 @@ export function PhotoUpload({ ticketId, initialPhotos }: Props) {
             </CardTitle>
           </div>
         </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="grid grid-cols-3 gap-3">
-            <PhotoSection
-              label="Prima"
-              photos={prePhotos}
-              onAdd={(files) => handleFiles(files, "pre")}
-              onDelete={handleDelete}
-              onView={(id) => openLightbox(prePhotos, id)}
-              uploading={uploading}
-              deleting={isPending}
-            />
-            <PhotoSection
-              label="Durante"
-              photos={duringPhotos}
-              onAdd={(files) => handleFiles(files, "during")}
-              onDelete={handleDelete}
-              onView={(id) => openLightbox(duringPhotos, id)}
-              uploading={uploading}
-              deleting={isPending}
-            />
-            <PhotoSection
-              label="Dopo"
-              photos={postPhotos}
-              onAdd={(files) => handleFiles(files, "post")}
-              onDelete={handleDelete}
-              onView={(id) => openLightbox(postPhotos, id)}
-              uploading={uploading}
-              deleting={isPending}
-            />
-          </div>
-
-          <p className="text-xs text-muted-foreground">
-            Le foto sono visibili al cliente nella pagina di tracking.
-            Puoi scattare direttamente dalla fotocamera del dispositivo.
-          </p>
+        <CardContent className="space-y-3">
+          <PhotoSection
+            label="Prima"
+            photos={prePhotos}
+            onAdd={(files) => handleFiles(files, "pre")}
+            onDelete={handleDelete}
+            onView={(id) => openLightbox(prePhotos, id)}
+            uploading={uploading}
+            deleting={isPending}
+          />
+          <PhotoSection
+            label="Durante"
+            photos={duringPhotos}
+            onAdd={(files) => handleFiles(files, "during")}
+            onDelete={handleDelete}
+            onView={(id) => openLightbox(duringPhotos, id)}
+            uploading={uploading}
+            deleting={isPending}
+          />
+          <PhotoSection
+            label="Dopo"
+            photos={postPhotos}
+            onAdd={(files) => handleFiles(files, "post")}
+            onDelete={handleDelete}
+            onView={(id) => openLightbox(postPhotos, id)}
+            uploading={uploading}
+            deleting={isPending}
+          />
         </CardContent>
       </Card>
 
@@ -170,37 +163,31 @@ function PhotoSection({
   const inputRef = useRef<HTMLInputElement>(null);
 
   return (
-    <div className="space-y-2">
-      <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">{label}</p>
-      <div className="grid grid-cols-2 gap-1.5">
+    <div className="space-y-1.5">
+      <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">{label}</p>
+      <div className="flex gap-2 overflow-x-auto pb-1">
         {photos.map((p) => (
           <div
             key={p.id}
-            className="group relative aspect-square overflow-hidden rounded-lg bg-slate-100 cursor-pointer"
+            className="group relative h-20 w-20 shrink-0 overflow-hidden rounded-lg bg-slate-100 cursor-pointer"
             onClick={() => onView(p.id)}
           >
             <img src={p.url} alt="" className="h-full w-full object-cover" />
-
-            {/* Hover overlay — stops propagation so click-to-view still works */}
-            <div className="absolute inset-0 flex items-start justify-between bg-black/40 opacity-0 transition-opacity group-hover:opacity-100 p-1.5">
+            <div className="absolute inset-0 flex items-start justify-between bg-black/40 opacity-0 transition-opacity group-hover:opacity-100 p-1">
               <button
                 onClick={(e) => { e.stopPropagation(); onDelete(p.id); }}
                 disabled={deleting}
-                className="flex h-7 w-7 items-center justify-center rounded-full bg-black/60 text-white hover:bg-red-600 disabled:opacity-50"
+                className="flex h-6 w-6 items-center justify-center rounded-full bg-black/60 text-white hover:bg-red-600 disabled:opacity-50"
                 aria-label="Elimina foto"
               >
-                {deleting ? (
-                  <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                ) : (
-                  <Trash2 className="h-3.5 w-3.5" />
-                )}
+                {deleting ? <Loader2 className="h-3 w-3 animate-spin" /> : <Trash2 className="h-3 w-3" />}
               </button>
               <button
                 onClick={(e) => { e.stopPropagation(); onView(p.id); }}
-                className="flex h-7 w-7 items-center justify-center rounded-full bg-black/60 text-white hover:bg-white/20"
-                aria-label="Ingrandisci foto"
+                className="flex h-6 w-6 items-center justify-center rounded-full bg-black/60 text-white hover:bg-white/20"
+                aria-label="Ingrandisci"
               >
-                <ZoomIn className="h-3.5 w-3.5" />
+                <ZoomIn className="h-3 w-3" />
               </button>
             </div>
           </div>
@@ -209,14 +196,10 @@ function PhotoSection({
         <button
           onClick={() => inputRef.current?.click()}
           disabled={uploading}
-          className="flex aspect-square flex-col items-center justify-center gap-1 rounded-lg border-2 border-dashed border-slate-200 text-muted-foreground transition-colors hover:border-primary/50 hover:text-primary disabled:opacity-50"
+          className="flex h-20 w-20 shrink-0 flex-col items-center justify-center gap-1 rounded-lg border-2 border-dashed border-slate-200 text-muted-foreground transition-colors hover:border-primary/50 hover:text-primary disabled:opacity-50"
         >
-          {uploading ? (
-            <Loader2 className="h-5 w-5 animate-spin" />
-          ) : (
-            <ImagePlus className="h-5 w-5" />
-          )}
-          <span className="text-[10px]">Aggiungi</span>
+          {uploading ? <Loader2 className="h-4 w-4 animate-spin" /> : <ImagePlus className="h-4 w-4" />}
+          <span className="text-[9px]">Aggiungi</span>
         </button>
       </div>
 
