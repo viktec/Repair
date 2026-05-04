@@ -72,6 +72,8 @@ export const organizations = pgTable("organizations", {
   stripeCustomerId: varchar("stripe_customer_id", { length: 255 }),
   stripeSubscriptionId: varchar("stripe_subscription_id", { length: 255 }),
   stripePriceId: varchar("stripe_price_id", { length: 255 }),
+  stripeCancelAtPeriodEnd: boolean("stripe_cancel_at_period_end").notNull().default(false),
+  stripeCurrentPeriodEnd: timestamp("stripe_current_period_end"),
   onboardingCompletedAt: timestamp("onboarding_completed_at"),
   createdAt: timestamp("created_at").notNull().defaultNow(),
   updatedAt: timestamp("updated_at").notNull().defaultNow(),

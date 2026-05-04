@@ -67,11 +67,14 @@ export async function POST(req: NextRequest) {
         const plan = getPlanFromPriceId(priceId);
         const status = stripeStatusToLocal(sub.status);
 
+        const periodEndTs = sub.items.data[0]?.current_period_end ?? 0;
         await db
           .update(organizations)
           .set({
             stripePriceId: priceId,
             subscriptionStatus: status,
+            stripeCancelAtPeriodEnd: sub.cancel_at_period_end,
+            stripeCurrentPeriodEnd: periodEndTs ? new Date(periodEndTs * 1000) : null,
             ...(plan ? { plan } : {}),
             updatedAt: new Date(),
           })
@@ -83,7 +86,12 @@ export async function POST(req: NextRequest) {
         const sub = event.data.object as Stripe.Subscription;
         await db
           .update(organizations)
-          .set({ subscriptionStatus: "canceled", updatedAt: new Date() })
+          .set({
+            subscriptionStatus: "canceled",
+            stripeCancelAtPeriodEnd: false,
+            stripeCurrentPeriodEnd: null,
+            updatedAt: new Date(),
+          })
           .where(eq(organizations.stripeSubscriptionId, sub.id));
         break;
       }

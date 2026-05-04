@@ -99,6 +99,13 @@
       "when": 1746100000000,
       "tag": "0013_gift_plan",
       "breakpoints": true
+    },
+    {
+      "idx": 14,
+      "version": "7",
+      "when": 1746200000000,
+      "tag": "0014_subscription_cancel",
+      "breakpoints": true
     }
   ]
 }

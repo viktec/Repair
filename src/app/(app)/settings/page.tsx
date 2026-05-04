@@ -46,6 +46,8 @@ export default async function SettingsPage({
       trialEndsAt: organizations.trialEndsAt,
       stripeCustomerId: organizations.stripeCustomerId,
       stripeSubscriptionId: organizations.stripeSubscriptionId,
+      stripeCancelAtPeriodEnd: organizations.stripeCancelAtPeriodEnd,
+      stripeCurrentPeriodEnd: organizations.stripeCurrentPeriodEnd,
     })
     .from(organizations)
     .where(eq(organizations.id, orgId))
@@ -92,6 +94,8 @@ export default async function SettingsPage({
             trialEndsAt={org.trialEndsAt ? org.trialEndsAt.toISOString() : null}
             hasStripeCustomer={!!org.stripeCustomerId}
             hasStripeSubscription={!!org.stripeSubscriptionId}
+            cancelAtPeriodEnd={org.stripeCancelAtPeriodEnd}
+            currentPeriodEnd={org.stripeCurrentPeriodEnd ? org.stripeCurrentPeriodEnd.toISOString() : null}
           />
 
           {/* Team management link */}
