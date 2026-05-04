@@ -18,13 +18,14 @@ import {
   Gift,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { can } from "@/lib/permissions";
+import { can, hasPlan } from "@/lib/permissions";
 
 type NavItem = {
   href: string;
   icon: React.ElementType;
   label: string;
   visible: (role: string | null | undefined) => boolean;
+  planRequired?: "pro" | "business";
 };
 
 const navItems: NavItem[] = [
@@ -32,11 +33,11 @@ const navItems: NavItem[] = [
   { href: "/tickets",    icon: Ticket,          label: "Ticket",          visible: () => true },
   { href: "/customers",  icon: Users,           label: "Clienti",         visible: () => true },
   { href: "/imei",       icon: Smartphone,      label: "Storico IMEI",    visible: can.accessImei },
-  { href: "/inventory",  icon: Package,         label: "Magazzino",       visible: can.accessInventory },
-  { href: "/suppliers",  icon: Truck,           label: "Fornitori",       visible: can.accessSuppliers },
-  { href: "/pos",        icon: ShoppingCart,    label: "Cassa POS",       visible: () => true },
-  { href: "/reports",    icon: BarChart3,       label: "Report",          visible: can.accessReports },
-  { href: "/registry",   icon: BookOpen,        label: "Registro Usato",  visible: can.accessRegistry },
+  { href: "/inventory",  icon: Package,         label: "Magazzino",       visible: can.accessInventory, planRequired: "pro" },
+  { href: "/suppliers",  icon: Truck,           label: "Fornitori",       visible: can.accessSuppliers, planRequired: "pro" },
+  { href: "/pos",        icon: ShoppingCart,    label: "Cassa POS",       visible: () => true, planRequired: "pro" },
+  { href: "/reports",    icon: BarChart3,       label: "Report",          visible: can.accessReports, planRequired: "pro" },
+  { href: "/registry",   icon: BookOpen,        label: "Registro Usato",  visible: can.accessRegistry, planRequired: "business" },
   { href: "/settings",   icon: Settings,        label: "Impostazioni",    visible: () => true },
 ];
 
@@ -59,7 +60,10 @@ export function Sidebar({
   trialDaysLeft?: number | null;
 }) {
   const pathname = usePathname();
-  const visibleItems = navItems.filter((item) => item.visible(role));
+  const visibleItems = navItems.filter((item) =>
+    item.visible(role) &&
+    (!item.planRequired || hasPlan(plan ?? "start", item.planRequired))
+  );
   const planLabel = PLAN_LABELS[plan ?? "start"] ?? plan ?? "Start";
 
   return (

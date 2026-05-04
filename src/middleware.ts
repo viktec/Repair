@@ -37,6 +37,10 @@ export default auth((req) => {
     pathname.startsWith("/login") ||
     pathname.startsWith("/register") ||
     pathname.startsWith("/pending") ||
+    pathname.startsWith("/forgot-password") ||
+    pathname.startsWith("/reset-password") ||
+    pathname.startsWith("/privacy") ||
+    pathname.startsWith("/terms") ||
     pathname.startsWith("/t/") ||
     pathname.startsWith("/api/auth") ||
     pathname.startsWith("/api/t/") ||

@@ -1,5 +1,5 @@
-import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
+import { requirePlan } from "@/lib/require-plan";
 import { usedItemsRegistry } from "@/db/schema";
 import { eq, desc } from "drizzle-orm";
 import { redirect } from "next/navigation";
@@ -11,10 +11,9 @@ import { Card, CardContent } from "@/components/ui/card";
 import { formatCurrency } from "@/lib/utils";
 
 export default async function RegistryPage() {
-  const session = await auth();
-  if (!session?.user?.organizationId) redirect("/login");
+  const session = await requirePlan("business");
   if (!can.accessRegistry(session.user.role)) redirect("/dashboard");
-  const orgId = session.user.organizationId;
+  const orgId = session.user.organizationId!;
 
   const entries = await db
     .select()

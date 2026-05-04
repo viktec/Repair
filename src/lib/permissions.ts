@@ -26,3 +26,11 @@ export const can = {
   manageTeam:     (role: string | null | undefined) => role === "owner",
   editOrgSettings:(role: string | null | undefined) => role === "owner",
 };
+
+export type Plan = "start" | "pro" | "business" | "gift";
+const PLAN_LEVEL: Record<string, number> = { start: 0, pro: 1, business: 2, gift: 2 };
+
+export function hasPlan(plan: string | null | undefined, minPlan: "pro" | "business"): boolean {
+  if (!plan) return false;
+  return (PLAN_LEVEL[plan] ?? -1) >= (PLAN_LEVEL[minPlan] ?? 99);
+}

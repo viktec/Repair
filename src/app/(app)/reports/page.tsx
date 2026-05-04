@@ -1,5 +1,5 @@
-import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
+import { requirePlan } from "@/lib/require-plan";
 import { tickets, ticketStatuses, posTransactions } from "@/db/schema";
 import { eq, and, isNull, gte, count, sum, avg } from "drizzle-orm";
 import { redirect } from "next/navigation";
@@ -8,10 +8,9 @@ import { formatCurrency } from "@/lib/utils";
 import { can } from "@/lib/permissions";
 
 export default async function ReportsPage() {
-  const session = await auth();
-  if (!session?.user?.organizationId) redirect("/login");
+  const session = await requirePlan("pro");
   if (!can.accessReports(session.user.role)) redirect("/dashboard");
-  const orgId = session.user.organizationId;
+  const orgId = session.user.organizationId!;
 
   const thirtyDaysAgo = new Date();
   thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);

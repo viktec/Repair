@@ -1,6 +1,6 @@
 import Link from "next/link";
-import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
+import { requirePlan } from "@/lib/require-plan";
 import { posTransactions, customers, posSessions } from "@/db/schema";
 import { eq, and, desc, sum, count } from "drizzle-orm";
 import { redirect } from "next/navigation";
@@ -10,9 +10,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { formatCurrency, formatDate } from "@/lib/utils";
 
 export default async function PosPage() {
-  const session = await auth();
-  if (!session?.user?.organizationId) redirect("/login");
-  const orgId = session.user.organizationId;
+  const session = await requirePlan("pro");
+  const orgId = session.user.organizationId!;
 
   const today = new Date();
   today.setHours(0, 0, 0, 0);

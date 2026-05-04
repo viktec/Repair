@@ -1,6 +1,6 @@
-import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { inventoryItems, suppliers } from "@/db/schema";
+import { requirePlan } from "@/lib/require-plan";
 import { eq, and, isNull, ilike, or, lte, sql } from "drizzle-orm";
 import { redirect } from "next/navigation";
 import Link from "next/link";
@@ -17,10 +17,9 @@ export default async function InventoryPage({
   searchParams: Promise<{ q?: string; low?: string }>;
 }) {
   const { q, low } = await searchParams;
-  const session = await auth();
-  if (!session?.user?.organizationId) redirect("/login");
+  const session = await requirePlan("pro");
   if (!can.accessInventory(session.user.role)) redirect("/dashboard");
-  const orgId = session.user.organizationId;
+  const orgId = session.user.organizationId!;
 
   const conditions = [eq(inventoryItems.organizationId, orgId), isNull(inventoryItems.deletedAt)];
   if (q) {

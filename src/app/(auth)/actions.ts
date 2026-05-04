@@ -5,11 +5,12 @@ import { db } from "@/lib/db";
 import { users, organizations, memberships, stores, ticketStatuses } from "@/db/schema";
 import { eq } from "drizzle-orm";
 import bcrypt from "bcryptjs";
+import crypto from "crypto";
 import { z } from "zod";
 import { generateSlug } from "@/lib/utils";
 import { AuthError } from "next-auth";
 import { redirect } from "next/navigation";
-import { sendNewRegistrationEmail } from "@/lib/email";
+import { sendNewRegistrationEmail, sendPasswordResetEmail, sendTrialExpiryEmail } from "@/lib/email";
 
 const registerSchema = z.object({
   name: z.string().min(2, "Il nome deve avere almeno 2 caratteri"),
@@ -127,10 +128,51 @@ export async function loginAction(_prev: LoginState, formData: FormData): Promis
   }
 
   const [user] = await db
-    .select({ isSuperAdmin: users.isSuperAdmin })
+    .select({ id: users.id, isSuperAdmin: users.isSuperAdmin })
     .from(users)
     .where(eq(users.email, parsed.data.email))
     .limit(1);
+
+  // Check trial expiry reminder (only send once, 3 days before)
+  if (user) {
+    const [membership] = await db
+      .select({ organizationId: memberships.organizationId })
+      .from(memberships)
+      .where(eq(memberships.userId, user.id))
+      .limit(1);
+
+    if (membership?.organizationId) {
+      const [org] = await db
+        .select({
+          name: organizations.name,
+          subscriptionStatus: organizations.subscriptionStatus,
+          trialEndsAt: organizations.trialEndsAt,
+          trialReminderSentAt: organizations.trialReminderSentAt,
+        })
+        .from(organizations)
+        .where(eq(organizations.id, membership.organizationId))
+        .limit(1);
+
+      if (
+        org?.subscriptionStatus === "trial" &&
+        org.trialEndsAt &&
+        !org.trialReminderSentAt
+      ) {
+        const daysLeft = Math.ceil((org.trialEndsAt.getTime() - Date.now()) / (1000 * 60 * 60 * 24));
+        if (daysLeft > 0 && daysLeft <= 3) {
+          await db
+            .update(organizations)
+            .set({ trialReminderSentAt: new Date() })
+            .where(eq(organizations.id, membership.organizationId));
+          sendTrialExpiryEmail({
+            to: parsed.data.email,
+            shopName: org.name,
+            daysLeft,
+          }).catch(() => {});
+        }
+      }
+    }
+  }
 
   const redirectTo = user?.isSuperAdmin ? "/admin" : "/dashboard";
 
@@ -151,6 +193,67 @@ export async function loginAction(_prev: LoginState, formData: FormData): Promis
 
 export async function logoutAction() {
   await signOut({ redirectTo: "/" });
+}
+
+export async function forgotPasswordAction(
+  _prev: { ok?: boolean; error?: string } | null,
+  formData: FormData
+): Promise<{ ok?: boolean; error?: string }> {
+  const email = (formData.get("email") as string)?.toLowerCase().trim();
+  if (!email) return { error: "Email obbligatoria" };
+
+  const [user] = await db.select({ id: users.id }).from(users).where(eq(users.email, email)).limit(1);
+
+  if (user) {
+    const rawToken = crypto.randomBytes(32).toString("hex");
+    const hashedToken = crypto.createHash("sha256").update(rawToken).digest("hex");
+    const expiresAt = new Date(Date.now() + 60 * 60 * 1000); // 1 ora
+
+    await db.update(users).set({
+      passwordResetToken: hashedToken,
+      passwordResetExpiresAt: expiresAt,
+      updatedAt: new Date(),
+    }).where(eq(users.id, user.id));
+
+    await sendPasswordResetEmail({ to: email, token: rawToken });
+  }
+
+  // Sempre ok per non rivelare se email esiste
+  return { ok: true };
+}
+
+export async function resetPasswordAction(
+  _prev: { error?: string } | null,
+  formData: FormData
+): Promise<{ error?: string }> {
+  const token = formData.get("token") as string;
+  const password = formData.get("password") as string;
+  const confirm = formData.get("confirm") as string;
+
+  if (!token) return { error: "Token mancante" };
+  if (!password || password.length < 8) return { error: "Password troppo corta (min 8 caratteri)" };
+  if (password !== confirm) return { error: "Le password non coincidono" };
+
+  const hashedToken = crypto.createHash("sha256").update(token).digest("hex");
+
+  const [user] = await db.select({
+    id: users.id,
+    passwordResetExpiresAt: users.passwordResetExpiresAt,
+  }).from(users).where(eq(users.passwordResetToken, hashedToken)).limit(1);
+
+  if (!user || !user.passwordResetExpiresAt || user.passwordResetExpiresAt < new Date()) {
+    return { error: "Link non valido o scaduto. Richiedine uno nuovo." };
+  }
+
+  const passwordHash = await bcrypt.hash(password, 12);
+  await db.update(users).set({
+    passwordHash,
+    passwordResetToken: null,
+    passwordResetExpiresAt: null,
+    updatedAt: new Date(),
+  }).where(eq(users.id, user.id));
+
+  redirect("/login");
 }
 
 export async function completeOnboardingAction(formData: FormData) {

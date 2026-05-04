@@ -247,6 +247,75 @@ export async function sendNewSubscriptionEmail({
   }
 }
 
+export async function sendPasswordResetEmail({ to, token }: { to: string; token: string }) {
+  const transport = getTransport();
+  if (!transport) return { ok: false, error: "SMTP non configurato" };
+  const appUrl = process.env.APP_URL ?? "https://app.my-repair.it";
+  const resetUrl = `${appUrl}/reset-password?token=${token}`;
+
+  const html = `${BASE_HEADER("Reset password")}
+    <p style="margin:0 0 16px;font-size:15px;color:#1e293b">Hai richiesto il reset della password.</p>
+    <p style="margin:0 0 24px;font-size:14px;color:#475569">Clicca il bottone qui sotto per impostare una nuova password. Il link è valido per 1 ora.</p>
+    <a href="${resetUrl}" style="display:inline-block;background:#0D8F7A;color:#fff;text-decoration:none;font-weight:600;font-size:14px;padding:12px 24px;border-radius:8px">
+      Reimposta password →
+    </a>
+    <p style="margin:24px 0 0;font-size:12px;color:#94a3b8">Se non hai richiesto il reset, ignora questa email.</p>
+  ${BASE_FOOTER}`;
+
+  try {
+    await transport.sendMail({
+      from: process.env.EMAIL_FROM ?? "My-Repair <noreply@my-repair.it>",
+      to,
+      subject: "Reset password My-Repair",
+      html,
+    });
+    return { ok: true };
+  } catch (err) {
+    console.error("[email]", err);
+    return { ok: false, error: String(err) };
+  }
+}
+
+export async function sendTrialExpiryEmail({
+  to,
+  shopName,
+  daysLeft,
+}: {
+  to: string;
+  shopName: string;
+  daysLeft: number;
+}) {
+  const transport = getTransport();
+  if (!transport) return { ok: false, error: "SMTP non configurato" };
+  const appUrl = process.env.APP_URL ?? "https://app.my-repair.it";
+
+  const html = `${BASE_HEADER("Il tuo trial sta per scadere")}
+    <p style="margin:0 0 16px;font-size:15px;color:#1e293b">Ciao!</p>
+    <p style="margin:0 0 20px;font-size:14px;color:#475569">
+      Il trial di <strong>${shopName}</strong> su My-Repair scadrà tra <strong>${daysLeft === 1 ? "1 giorno" : `${daysLeft} giorni`}</strong>.
+    </p>
+    <div style="background:#fffbeb;border:1px solid #fcd34d;border-radius:8px;padding:14px 18px;margin:0 0 24px">
+      <p style="margin:0;font-size:14px;color:#92400e">Attiva un piano per continuare ad usare My-Repair senza interruzioni.</p>
+    </div>
+    <a href="${appUrl}/upgrade" style="display:inline-block;background:#0D8F7A;color:#fff;text-decoration:none;font-weight:600;font-size:14px;padding:12px 24px;border-radius:8px">
+      Scegli il tuo piano →
+    </a>
+  ${BASE_FOOTER}`;
+
+  try {
+    await transport.sendMail({
+      from: process.env.EMAIL_FROM ?? "My-Repair <noreply@my-repair.it>",
+      to,
+      subject: `Il tuo trial My-Repair scade tra ${daysLeft === 1 ? "1 giorno" : `${daysLeft} giorni`}`,
+      html,
+    });
+    return { ok: true };
+  } catch (err) {
+    console.error("[email]", err);
+    return { ok: false, error: String(err) };
+  }
+}
+
 export async function sendRejectionEmail({
   to,
   name,

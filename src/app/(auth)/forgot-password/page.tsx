@@ -3,20 +3,43 @@
 import { useActionState } from "react";
 import Link from "next/link";
 import { Loader2 } from "lucide-react";
-import { loginAction } from "@/app/(auth)/actions";
+import { forgotPasswordAction } from "@/app/(auth)/actions";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 
-export default function LoginPage() {
-  const [state, action, isPending] = useActionState(loginAction, null);
+export default function ForgotPasswordPage() {
+  const [state, action, isPending] = useActionState(forgotPasswordAction, null);
+
+  if (state?.ok) {
+    return (
+      <Card className="w-full max-w-sm">
+        <CardHeader className="space-y-1">
+          <CardTitle className="text-2xl">Email inviata!</CardTitle>
+          <CardDescription>Controlla la tua casella di posta</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="rounded-md bg-green-50 border border-green-200 px-4 py-3 text-sm text-green-800">
+            Email inviata! Controlla la tua casella.
+          </div>
+          <p className="mt-4 text-center text-sm text-muted-foreground">
+            <Link href="/login" className="text-primary font-medium hover:underline">
+              Torna al login
+            </Link>
+          </p>
+        </CardContent>
+      </Card>
+    );
+  }
 
   return (
     <Card className="w-full max-w-sm">
       <CardHeader className="space-y-1">
-        <CardTitle className="text-2xl">Accedi</CardTitle>
-        <CardDescription>Inserisci email e password del tuo account</CardDescription>
+        <CardTitle className="text-2xl">Password dimenticata</CardTitle>
+        <CardDescription>
+          Inserisci la tua email, ti mandiamo un link per resettare la password
+        </CardDescription>
       </CardHeader>
       <CardContent>
         <form action={action} className="flex flex-col gap-4">
@@ -31,21 +54,6 @@ export default function LoginPage() {
               required
             />
           </div>
-          <div className="flex flex-col gap-1.5">
-            <div className="flex items-center justify-between">
-              <Label htmlFor="password">Password</Label>
-              <Link href="/forgot-password" className="text-xs text-primary hover:underline">
-                Password dimenticata?
-              </Link>
-            </div>
-            <Input
-              id="password"
-              name="password"
-              type="password"
-              autoComplete="current-password"
-              required
-            />
-          </div>
 
           {state?.error && (
             <p className="rounded-md bg-destructive/10 px-3 py-2 text-sm text-destructive">
@@ -55,20 +63,14 @@ export default function LoginPage() {
 
           <Button type="submit" className="w-full" disabled={isPending}>
             {isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-            Accedi
+            Invia link di reset
           </Button>
         </form>
 
         <p className="mt-4 text-center text-sm text-muted-foreground">
-          Non hai un account?{" "}
-          <Link href="/register" className="text-primary font-medium hover:underline">
-            Registrati gratis
+          <Link href="/login" className="text-primary font-medium hover:underline">
+            Torna al login
           </Link>
-        </p>
-        <p className="mt-2 text-center text-xs text-muted-foreground">
-          <Link href="/privacy" className="hover:underline">Privacy Policy</Link>
-          {" · "}
-          <Link href="/terms" className="hover:underline">Termini di servizio</Link>
         </p>
       </CardContent>
     </Card>

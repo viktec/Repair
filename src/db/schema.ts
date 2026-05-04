@@ -41,6 +41,8 @@ export const users = pgTable("users", {
   passwordHash: text("password_hash"),
   emailVerifiedAt: timestamp("email_verified_at"),
   isSuperAdmin: boolean("is_super_admin").notNull().default(false),
+  passwordResetToken: text("password_reset_token"),
+  passwordResetExpiresAt: timestamp("password_reset_expires_at"),
   createdAt: timestamp("created_at").notNull().defaultNow(),
   updatedAt: timestamp("updated_at").notNull().defaultNow(),
 });
@@ -69,6 +71,7 @@ export const organizations = pgTable("organizations", {
   rejectionReason: text("rejection_reason"),
   subscriptionStatus: subscriptionStatusEnum("subscription_status").notNull().default("trial"),
   trialEndsAt: timestamp("trial_ends_at"),
+  trialReminderSentAt: timestamp("trial_reminder_sent_at"),
   stripeCustomerId: varchar("stripe_customer_id", { length: 255 }),
   stripeSubscriptionId: varchar("stripe_subscription_id", { length: 255 }),
   stripePriceId: varchar("stripe_price_id", { length: 255 }),

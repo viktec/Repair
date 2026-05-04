@@ -1,5 +1,5 @@
-import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
+import { requirePlan } from "@/lib/require-plan";
 import { suppliers, inventoryItems } from "@/db/schema";
 import { eq, and, isNull, count } from "drizzle-orm";
 import { redirect } from "next/navigation";
@@ -11,10 +11,9 @@ import { Card, CardContent } from "@/components/ui/card";
 import { formatDate } from "@/lib/utils";
 
 export default async function SuppliersPage() {
-  const session = await auth();
-  if (!session?.user?.organizationId) redirect("/login");
+  const session = await requirePlan("pro");
   if (!can.accessSuppliers(session.user.role)) redirect("/dashboard");
-  const orgId = session.user.organizationId;
+  const orgId = session.user.organizationId!;
 
   const rows = await db
     .select({
