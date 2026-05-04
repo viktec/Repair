@@ -1,7 +1,8 @@
 import NextAuth, { type DefaultSession } from "next-auth";
 import Credentials from "next-auth/providers/credentials";
-import { eq } from "drizzle-orm";
+import { eq, and, gt } from "drizzle-orm";
 import bcrypt from "bcryptjs";
+import crypto from "crypto";
 import { db } from "./db";
 import { users, memberships } from "@/db/schema";
 
@@ -24,6 +25,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
   },
   providers: [
     Credentials({
+      id: "credentials",
       credentials: {
         email: { label: "Email", type: "email" },
         password: { label: "Password", type: "password" },
@@ -42,6 +44,53 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         if (!user?.passwordHash) return null;
         const valid = await bcrypt.compare(password, user.passwordHash);
         if (!valid) return null;
+
+        const [membership] = await db
+          .select({ organizationId: memberships.organizationId, role: memberships.role })
+          .from(memberships)
+          .where(eq(memberships.userId, user.id))
+          .limit(1);
+
+        return {
+          id: user.id,
+          email: user.email,
+          name: user.name,
+          organizationId: membership?.organizationId ?? null,
+          role: membership?.role ?? null,
+          isSuperAdmin: user.isSuperAdmin,
+        };
+      },
+    }),
+    Credentials({
+      id: "magic",
+      credentials: {
+        token: { label: "Token", type: "text" },
+      },
+      async authorize(credentials) {
+        const rawToken = credentials?.token as string | undefined;
+        if (!rawToken) return null;
+
+        const hashedToken = crypto.createHash("sha256").update(rawToken).digest("hex");
+
+        const [user] = await db
+          .select()
+          .from(users)
+          .where(
+            and(
+              eq(users.magicLinkToken, hashedToken),
+              gt(users.magicLinkExpiresAt, new Date()),
+            )
+          )
+          .limit(1);
+
+        if (!user) return null;
+
+        // Invalida token — uso singolo
+        await db.update(users).set({
+          magicLinkToken: null,
+          magicLinkExpiresAt: null,
+          updatedAt: new Date(),
+        }).where(eq(users.id, user.id));
 
         const [membership] = await db
           .select({ organizationId: memberships.organizationId, role: memberships.role })

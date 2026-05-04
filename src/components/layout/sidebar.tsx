@@ -16,6 +16,7 @@ import {
   Truck,
   BookOpen,
   Gift,
+  MapPin,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { can, hasPlan } from "@/lib/permissions";
@@ -38,6 +39,7 @@ const navItems: NavItem[] = [
   { href: "/pos",        icon: ShoppingCart,    label: "Cassa POS",       visible: () => true, planRequired: "pro" },
   { href: "/reports",    icon: BarChart3,       label: "Report",          visible: can.accessReports, planRequired: "pro" },
   { href: "/registry",   icon: BookOpen,        label: "Registro Usato",  visible: can.accessRegistry, planRequired: "business" },
+  { href: "/stores",     icon: MapPin,          label: "Sedi",            visible: () => true, planRequired: "business" },
   { href: "/settings",   icon: Settings,        label: "Impostazioni",    visible: () => true },
 ];
 

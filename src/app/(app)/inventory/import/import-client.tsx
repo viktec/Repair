@@ -41,9 +41,11 @@ export function ImportClient() {
   const [isParsing, startParse] = useTransition();
   const [isConfirming, startConfirm] = useTransition();
 
+  const ALLOWED_TYPES = ["application/pdf", "image/jpeg", "image/png", "image/webp"];
+
   function handleFile(file: File) {
-    if (file.type !== "application/pdf") {
-      setParseError("Il file deve essere un PDF.");
+    if (!ALLOWED_TYPES.includes(file.type)) {
+      setParseError("Formato non supportato. Carica un PDF, JPEG, PNG o WEBP.");
       return;
     }
     if (file.size > 10 * 1024 * 1024) {
@@ -147,8 +149,12 @@ export function ImportClient() {
 
         <div className="grid gap-4 lg:grid-cols-2">
           <div className="rounded-xl border bg-white p-3">
-            {pdfBlobUrl && (
+            {pdfBlobUrl && pdfFile?.type === "application/pdf" && (
               <object data={pdfBlobUrl} type="application/pdf" className="w-full h-[600px] rounded-lg" />
+            )}
+            {pdfBlobUrl && pdfFile?.type !== "application/pdf" && (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img src={pdfBlobUrl} alt="Anteprima fattura" className="w-full max-h-[600px] object-contain rounded-lg" />
             )}
           </div>
 
@@ -269,13 +275,13 @@ export function ImportClient() {
         onClick={() => inputRef.current?.click()}
       >
         <FileText className="h-10 w-10 text-slate-300" />
-        <p className="text-sm font-medium">Trascina il PDF della fattura qui</p>
-        <p className="text-xs text-muted-foreground">oppure clicca per selezionare · Max 10 MB</p>
+        <p className="text-sm font-medium">Trascina il PDF o la foto della fattura qui</p>
+        <p className="text-xs text-muted-foreground">PDF, JPEG, PNG, WEBP · Max 10 MB</p>
       </div>
       <input
         ref={inputRef}
         type="file"
-        accept="application/pdf"
+        accept="application/pdf,image/jpeg,image/png,image/webp"
         className="hidden"
         onChange={(e) => {
           const file = e.target.files?.[0];
@@ -293,11 +299,16 @@ export function ImportClient() {
             </div>
           </div>
 
-          <object
-            data={pdfBlobUrl}
-            type="application/pdf"
-            className="w-full h-96 rounded-lg border"
-          />
+          {pdfFile?.type === "application/pdf" ? (
+            <object
+              data={pdfBlobUrl}
+              type="application/pdf"
+              className="w-full h-96 rounded-lg border"
+            />
+          ) : (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img src={pdfBlobUrl} alt="Anteprima fattura" className="w-full max-h-96 object-contain rounded-lg border" />
+          )}
 
           {parseError && (
             <p className="rounded-lg bg-destructive/10 px-4 py-2.5 text-sm text-destructive">{parseError}</p>

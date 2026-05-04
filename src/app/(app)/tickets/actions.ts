@@ -2,7 +2,7 @@
 
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
-import { tickets, ticketStatuses, customDeviceModels, customers, organizations } from "@/db/schema";
+import { tickets, ticketStatuses, customDeviceModels, customers, organizations, stores } from "@/db/schema";
 import { eq, and, max, count, isNull } from "drizzle-orm";
 import { z } from "zod";
 import { redirect } from "next/navigation";
@@ -13,6 +13,7 @@ import { sendStatusEmail } from "@/lib/email";
 
 const ticketSchema = z.object({
   customerId: z.string().uuid().optional().or(z.literal("")),
+  storeId: z.string().uuid().optional().or(z.literal("")),
   deviceBrand: z.string().optional(),
   deviceModel: z.string().optional(),
   deviceImei: z.string().optional(),
@@ -71,10 +72,22 @@ export async function createTicketAction(
     ? Math.round(parseFloat(data.estimatedCost) * 100)
     : null;
 
+  // Verifica che storeId appartenga all'org (se fornito)
+  let resolvedStoreId: string | null = null;
+  if (data.storeId) {
+    const [storeRow] = await db
+      .select({ id: stores.id })
+      .from(stores)
+      .where(and(eq(stores.id, data.storeId), eq(stores.organizationId, orgId)))
+      .limit(1);
+    resolvedStoreId = storeRow?.id ?? null;
+  }
+
   const [ticket] = await db
     .insert(tickets)
     .values({
       organizationId: orgId,
+      storeId: resolvedStoreId,
       customerId: data.customerId || null,
       statusId: defaultStatus?.id ?? null,
       ticketNumber: nextNumber,
@@ -109,6 +122,7 @@ export async function createTicketAction(
 export async function updateTicketStatusAction(ticketId: string, statusId: string) {
   const session = await auth();
   if (!session?.user?.organizationId) redirect("/login");
+  const orgId = session.user.organizationId;
 
   await db
     .update(tickets)
@@ -116,12 +130,57 @@ export async function updateTicketStatusAction(ticketId: string, statusId: strin
     .where(
       and(
         eq(tickets.id, ticketId),
-        eq(tickets.organizationId, session.user.organizationId),
+        eq(tickets.organizationId, orgId),
       ),
     );
 
   revalidatePath(`/tickets/${ticketId}`);
   revalidatePath("/tickets");
+
+  // Fire-and-forget: send status email if customer has an email address
+  void (async () => {
+    try {
+      const [row] = await db
+        .select({
+          ticketNumber: tickets.ticketNumber,
+          deviceBrand: tickets.deviceBrand,
+          deviceModel: tickets.deviceModel,
+          qrToken: tickets.qrToken,
+          customerEmail: customers.email,
+          customerName: customers.name,
+          statusName: ticketStatuses.name,
+        })
+        .from(tickets)
+        .leftJoin(customers, eq(customers.id, tickets.customerId))
+        .leftJoin(ticketStatuses, eq(ticketStatuses.id, tickets.statusId))
+        .where(and(eq(tickets.id, ticketId), eq(tickets.organizationId, orgId)))
+        .limit(1);
+
+      if (!row?.customerEmail) return;
+
+      const [org] = await db
+        .select({ name: organizations.name, phone: organizations.phone })
+        .from(organizations)
+        .where(eq(organizations.id, orgId))
+        .limit(1);
+
+      const trackingUrl = `${process.env.TRACKING_URL ?? "https://t.my-repair.it"}/${row.qrToken}`;
+      const device = [row.deviceBrand, row.deviceModel].filter(Boolean).join(" ") || "Dispositivo";
+
+      await sendStatusEmail({
+        to: row.customerEmail,
+        customerName: row.customerName,
+        ticketNumber: row.ticketNumber,
+        device,
+        statusName: row.statusName ?? "In lavorazione",
+        trackingUrl,
+        orgName: org?.name ?? "Centro Riparazioni",
+        orgPhone: org?.phone,
+      });
+    } catch {
+      // Email failure must not block the status update
+    }
+  })();
 }
 
 export async function sendStatusEmailAction(ticketId: string): Promise<{ ok: boolean; error?: string }> {

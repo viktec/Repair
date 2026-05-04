@@ -1,64 +1,237 @@
 import { db } from "@/lib/db";
 import { requirePlan } from "@/lib/require-plan";
-import { tickets, ticketStatuses, posTransactions } from "@/db/schema";
-import { eq, and, isNull, gte, count, sum, avg } from "drizzle-orm";
+import {
+  tickets, ticketStatuses, ticketParts,
+} from "@/db/schema";
+import { eq, and, isNull, gte, count, sum, avg, sql } from "drizzle-orm";
 import { redirect } from "next/navigation";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { formatCurrency } from "@/lib/utils";
 import { can } from "@/lib/permissions";
+import { formatCurrency } from "@/lib/utils";
+import { Card, CardContent } from "@/components/ui/card";
+import { ReportsTabs } from "./reports-tabs";
+import type { MarginRow, FaultRow, AvgTimeRow, AvgTimeMonthRow, PeriodPoint } from "./charts";
 
-export default async function ReportsPage() {
+type Period = "30d" | "90d" | "180d" | "365d";
+
+function trunc(s: string | null | undefined, maxLen = 40): string {
+  if (!s) return "Guasto non specificato";
+  return s.length > maxLen ? s.slice(0, maxLen - 1) + "…" : s;
+}
+
+function periodStart(period: Period): Date {
+  const d = new Date();
+  switch (period) {
+    case "90d":  d.setDate(d.getDate() - 90);  break;
+    case "180d": d.setDate(d.getDate() - 180); break;
+    case "365d": d.setDate(d.getDate() - 365); break;
+    default:     d.setDate(d.getDate() - 30);  break;
+  }
+  return d;
+}
+
+export default async function ReportsPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ period?: string }>;
+}) {
   const session = await requirePlan("pro");
   if (!can.accessReports(session.user.role)) redirect("/dashboard");
   const orgId = session.user.organizationId!;
 
-  const thirtyDaysAgo = new Date();
-  thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+  const params = await searchParams;
+  const validPeriods: Period[] = ["30d", "90d", "180d", "365d"];
+  const period: Period = validPeriods.includes(params.period as Period)
+    ? (params.period as Period)
+    : "30d";
 
-  const [ticketStats] = await db
-    .select({ total: count(), avgCost: avg(tickets.finalCost) })
-    .from(tickets)
-    .where(and(eq(tickets.organizationId, orgId), isNull(tickets.deletedAt)));
+  const now = new Date();
+  const since = periodStart(period);
+  const currentYear = now.getFullYear();
 
-  const [recentTickets] = await db
-    .select({ total: count() })
+  // ─── KPI riepilogo ────────────────────────────────────────────────────────
+  const [totalTickets, recentTickets, avgCostRow] = await Promise.all([
+    db.select({ c: count() }).from(tickets)
+      .where(and(eq(tickets.organizationId, orgId), isNull(tickets.deletedAt)))
+      .then((r) => Number(r[0].c)),
+
+    db.select({ c: count() }).from(tickets)
+      .where(and(
+        eq(tickets.organizationId, orgId),
+        isNull(tickets.deletedAt),
+        gte(tickets.createdAt, since),
+      ))
+      .then((r) => Number(r[0].c)),
+
+    db.select({ a: avg(tickets.finalCost) }).from(tickets)
+      .leftJoin(ticketStatuses, eq(ticketStatuses.id, tickets.statusId))
+      .where(and(
+        eq(tickets.organizationId, orgId),
+        isNull(tickets.deletedAt),
+        eq(ticketStatuses.isFinal, true),
+      ))
+      .then((r) => Number(r[0].a ?? 0)),
+  ]);
+
+  // ─── Tab 1: Margini ricambi — top 10 nel periodo ──────────────────────────
+  const marginsRaw = await db
+    .select({
+      name: ticketParts.description,
+      qty: sql<number>`cast(sum(${ticketParts.quantity}) as int)`,
+      totalCostCents: sql<number>`sum(${ticketParts.unitCostCents} * ${ticketParts.quantity})`,
+      totalRevenueCents: sql<number>`sum(${ticketParts.unitSellCents} * ${ticketParts.quantity})`,
+    })
+    .from(ticketParts)
+    .leftJoin(tickets, eq(tickets.id, ticketParts.ticketId))
+    .where(and(
+      eq(tickets.organizationId, orgId),
+      isNull(tickets.deletedAt),
+      gte(ticketParts.createdAt, since),
+    ))
+    .groupBy(ticketParts.description)
+    .orderBy(sql`sum((${ticketParts.unitSellCents} - ${ticketParts.unitCostCents}) * ${ticketParts.quantity}) desc`)
+    .limit(10);
+
+  const margins: MarginRow[] = marginsRaw.map((r) => {
+    const cost = Number(r.totalCostCents ?? 0);
+    const rev = Number(r.totalRevenueCents ?? 0);
+    const margin = rev - cost;
+    const pct = cost > 0 ? (margin / cost) * 100 : 0;
+    return {
+      name: r.name,
+      qty: Number(r.qty),
+      totalCostCents: cost,
+      totalRevenueCents: rev,
+      marginCents: margin,
+      marginPct: pct,
+    };
+  });
+
+  // ─── Tab 2: Top guasti — top 10 nel periodo ───────────────────────────────
+  const faultsRaw = await db
+    .select({
+      fault: tickets.faultDescription,
+      c: count(),
+    })
     .from(tickets)
     .where(and(
       eq(tickets.organizationId, orgId),
       isNull(tickets.deletedAt),
-      gte(tickets.createdAt, thirtyDaysAgo),
-    ));
+      gte(tickets.createdAt, since),
+    ))
+    .groupBy(tickets.faultDescription)
+    .orderBy(sql`count(*) desc`)
+    .limit(10);
 
-  const [posStats] = await db
-    .select({ total: sum(posTransactions.totalCents), qty: count() })
-    .from(posTransactions)
-    .where(and(
-      eq(posTransactions.organizationId, orgId),
-      eq(posTransactions.status, "completed"),
-    ));
+  const faults: FaultRow[] = faultsRaw.map((r) => ({
+    fault: trunc(r.fault),
+    count: Number(r.c),
+  }));
 
-  const statusBreakdown = await db
+  // ─── Tab 3: Tempo medio riparazione ───────────────────────────────────────
+  // deliveredAt come timestamp di chiusura; fallback su updatedAt con stato finale
+  const avgByBrandRaw = await db
     .select({
-      statusName: ticketStatuses.name,
-      statusColor: ticketStatuses.color,
-      total: count(),
+      brand: tickets.deviceBrand,
+      avgDays: sql<number>`avg(extract(epoch from (coalesce(${tickets.deliveredAt}, ${tickets.updatedAt}) - ${tickets.createdAt})) / 86400)`,
     })
     .from(tickets)
     .leftJoin(ticketStatuses, eq(ticketStatuses.id, tickets.statusId))
-    .where(and(eq(tickets.organizationId, orgId), isNull(tickets.deletedAt)))
-    .groupBy(ticketStatuses.name, ticketStatuses.color)
-    .orderBy(ticketStatuses.name);
+    .where(and(
+      eq(tickets.organizationId, orgId),
+      isNull(tickets.deletedAt),
+      eq(ticketStatuses.isFinal, true),
+      gte(tickets.createdAt, since),
+    ))
+    .groupBy(tickets.deviceBrand)
+    .orderBy(sql`avg(extract(epoch from (coalesce(${tickets.deliveredAt}, ${tickets.updatedAt}) - ${tickets.createdAt})) / 86400) desc`)
+    .limit(10);
 
-  const totalTickets = Number(ticketStats?.total ?? 0);
+  const avgByBrand: AvgTimeRow[] = avgByBrandRaw.map((r) => ({
+    label: r.brand ?? "Marca non specificata",
+    avgDays: Math.round(Number(r.avgDays ?? 0) * 10) / 10,
+  }));
+
+  const avgByMonthRaw = await db
+    .select({
+      month: sql<string>`to_char(date_trunc('month', ${tickets.createdAt}), 'Mon YY')`,
+      avgDays: sql<number>`avg(extract(epoch from (coalesce(${tickets.deliveredAt}, ${tickets.updatedAt}) - ${tickets.createdAt})) / 86400)`,
+    })
+    .from(tickets)
+    .leftJoin(ticketStatuses, eq(ticketStatuses.id, tickets.statusId))
+    .where(and(
+      eq(tickets.organizationId, orgId),
+      isNull(tickets.deletedAt),
+      eq(ticketStatuses.isFinal, true),
+      sql`${tickets.createdAt} >= now() - interval '12 months'`,
+    ))
+    .groupBy(sql`date_trunc('month', ${tickets.createdAt})`)
+    .orderBy(sql`date_trunc('month', ${tickets.createdAt})`);
+
+  const avgByMonth: AvgTimeMonthRow[] = avgByMonthRaw.map((r) => ({
+    month: r.month,
+    avgDays: Math.round(Number(r.avgDays ?? 0) * 10) / 10,
+  }));
+
+  // ─── Tab 4: Confronto periodi (ultimi 3 anni, per mese) ───────────────────
+  const periodRaw = await db
+    .select({
+      yr: sql<number>`extract(year from ${tickets.createdAt})`,
+      mo: sql<number>`extract(month from ${tickets.createdAt})`,
+      moLabel: sql<string>`to_char(date_trunc('month', ${tickets.createdAt}), 'Mon')`,
+      revenue: sql<number>`coalesce(sum(${tickets.finalCost}), 0)`,
+    })
+    .from(tickets)
+    .leftJoin(ticketStatuses, eq(ticketStatuses.id, tickets.statusId))
+    .where(and(
+      eq(tickets.organizationId, orgId),
+      isNull(tickets.deletedAt),
+      eq(ticketStatuses.isFinal, true),
+      sql`${tickets.createdAt} >= now() - interval '3 years'`,
+    ))
+    .groupBy(sql`extract(year from ${tickets.createdAt}), extract(month from ${tickets.createdAt}), date_trunc('month', ${tickets.createdAt})`)
+    .orderBy(sql`extract(year from ${tickets.createdAt}), extract(month from ${tickets.createdAt})`);
+
+  const monthMap = new Map<number, { label: string; curr: number; prev: number; twoPrev: number }>();
+  for (const r of periodRaw) {
+    const yr = Number(r.yr);
+    const mo = Number(r.mo);
+    const rev = Number(r.revenue);
+    if (!monthMap.has(mo)) {
+      monthMap.set(mo, { label: r.moLabel, curr: 0, prev: 0, twoPrev: 0 });
+    }
+    const entry = monthMap.get(mo)!;
+    if (yr === currentYear) entry.curr = rev;
+    else if (yr === currentYear - 1) entry.prev = rev;
+    else if (yr === currentYear - 2) entry.twoPrev = rev;
+  }
+
+  const periodData: PeriodPoint[] = Array.from({ length: 12 }, (_, i) => i + 1)
+    .filter((mo) => monthMap.has(mo))
+    .map((mo) => {
+      const e = monthMap.get(mo)!;
+      return {
+        month: e.label,
+        currentYear: e.curr,
+        prevYear: e.prev,
+        twoPrevYear: e.twoPrev,
+      };
+    });
+
+  const currMo = now.getMonth() + 1;
+  const curr = monthMap.get(currMo);
+  const yoyDelta = curr && curr.prev > 0
+    ? Math.round(((curr.curr - curr.prev) / curr.prev) * 100)
+    : null;
 
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold">Report</h1>
-        <p className="mt-1 text-sm text-muted-foreground">Panoramica dell&apos;attività del tuo centro</p>
+        <h1 className="text-2xl font-bold">Report avanzati</h1>
+        <p className="mt-1 text-sm text-muted-foreground">Analisi approfondita — piano Pro</p>
       </div>
 
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+      {/* KPI riepilogo */}
+      <div className="grid grid-cols-2 lg:grid-cols-3 gap-4">
         <Card>
           <CardContent className="pt-6">
             <p className="text-sm text-muted-foreground">Ticket totali</p>
@@ -67,57 +240,31 @@ export default async function ReportsPage() {
         </Card>
         <Card>
           <CardContent className="pt-6">
-            <p className="text-sm text-muted-foreground">Ultimi 30 giorni</p>
-            <p className="mt-1 text-3xl font-bold">{recentTickets?.total ?? 0}</p>
+            <p className="text-sm text-muted-foreground">Nel periodo selezionato</p>
+            <p className="mt-1 text-3xl font-bold">{recentTickets}</p>
           </CardContent>
         </Card>
         <Card>
           <CardContent className="pt-6">
             <p className="text-sm text-muted-foreground">Costo medio riparazione</p>
             <p className="mt-1 text-3xl font-bold">
-              {ticketStats?.avgCost != null ? formatCurrency(Math.round(Number(ticketStats.avgCost))) : "—"}
+              {avgCostRow > 0 ? formatCurrency(Math.round(avgCostRow)) : "—"}
             </p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="pt-6">
-            <p className="text-sm text-muted-foreground">Incassi POS totali</p>
-            <p className="mt-1 text-3xl font-bold">{formatCurrency(Number(posStats?.total ?? 0))}</p>
           </CardContent>
         </Card>
       </div>
 
-      <Card>
-        <CardHeader><CardTitle className="text-sm font-medium text-muted-foreground">Ticket per stato</CardTitle></CardHeader>
-        <CardContent>
-          {statusBreakdown.length === 0 ? (
-            <p className="text-sm text-muted-foreground italic">Nessun dato disponibile.</p>
-          ) : (
-            <div className="space-y-3">
-              {statusBreakdown.map((s) => {
-                const pct = totalTickets > 0 ? Math.round((Number(s.total) / totalTickets) * 100) : 0;
-                return (
-                  <div key={s.statusName ?? "none"}>
-                    <div className="flex items-center justify-between mb-1 text-sm">
-                      <div className="flex items-center gap-2">
-                        <span className="h-2.5 w-2.5 rounded-full" style={{ backgroundColor: s.statusColor ?? "#94a3b8" }} />
-                        <span className="font-medium">{s.statusName ?? "Senza stato"}</span>
-                      </div>
-                      <span className="text-muted-foreground">{s.total} ({pct}%)</span>
-                    </div>
-                    <div className="h-2 w-full rounded-full bg-slate-100">
-                      <div
-                        className="h-2 rounded-full transition-all"
-                        style={{ width: `${pct}%`, backgroundColor: s.statusColor ?? "#94a3b8" }}
-                      />
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          )}
-        </CardContent>
-      </Card>
+      {/* 4 tab avanzati */}
+      <ReportsTabs
+        currentYear={currentYear}
+        yoyDelta={yoyDelta}
+        margins={margins}
+        faults={faults}
+        avgByBrand={avgByBrand}
+        avgByMonth={avgByMonth}
+        periodData={periodData}
+        initialPeriod={period}
+      />
     </div>
   );
 }

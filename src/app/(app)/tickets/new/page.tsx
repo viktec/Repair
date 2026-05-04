@@ -1,20 +1,28 @@
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
-import { customers, ticketStatuses } from "@/db/schema";
+import { customers, ticketStatuses, stores, organizations } from "@/db/schema";
 import { eq } from "drizzle-orm";
 import { redirect } from "next/navigation";
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { NewTicketForm } from "./form";
+import { hasPlan } from "@/lib/permissions";
 
 export default async function NewTicketPage() {
   const session = await auth();
   if (!session?.user?.organizationId) redirect("/login");
   const orgId = session.user.organizationId;
 
-  const [customerList, statusList] = await Promise.all([
+  const [org] = await db
+    .select({ plan: organizations.plan })
+    .from(organizations)
+    .where(eq(organizations.id, orgId))
+    .limit(1);
+
+  const isBusiness = hasPlan(org?.plan, "business");
+
+  const [customerList, statusList, storeList] = await Promise.all([
     db
       .select({ id: customers.id, name: customers.name, phone: customers.phone })
       .from(customers)
@@ -25,6 +33,13 @@ export default async function NewTicketPage() {
       .from(ticketStatuses)
       .where(eq(ticketStatuses.organizationId, orgId))
       .orderBy(ticketStatuses.sortOrder),
+    isBusiness
+      ? db
+          .select({ id: stores.id, name: stores.name })
+          .from(stores)
+          .where(eq(stores.organizationId, orgId))
+          .orderBy(stores.name)
+      : Promise.resolve([]),
   ]);
 
   return (
@@ -39,7 +54,7 @@ export default async function NewTicketPage() {
         <h1 className="text-xl font-bold text-foreground">Nuovo ticket</h1>
       </div>
 
-      <NewTicketForm customers={customerList} statuses={statusList} />
+      <NewTicketForm customers={customerList} statuses={statusList} stores={storeList} />
     </div>
   );
 }

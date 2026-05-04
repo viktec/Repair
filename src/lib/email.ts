@@ -316,6 +316,36 @@ export async function sendTrialExpiryEmail({
   }
 }
 
+export async function sendMagicLinkEmail({ to, token }: { to: string; token: string }) {
+  const transport = getTransport();
+  if (!transport) return { ok: false, error: "SMTP non configurato" };
+  const appUrl = process.env.APP_URL ?? "https://app.my-repair.it";
+  const magicUrl = `${appUrl}/api/auth/magic?token=${token}`;
+
+  const html = `${BASE_HEADER("Link di accesso")}
+    <p style="margin:0 0 16px;font-size:15px;color:#1e293b">Hai richiesto un link di accesso a My-Repair.</p>
+    <p style="margin:0 0 24px;font-size:14px;color:#475569">Clicca il pulsante qui sotto per accedere. Il link è valido per 10 minuti.</p>
+    <a href="${magicUrl}" style="display:inline-block;background:#0D8F7A;color:#fff;text-decoration:none;font-weight:600;font-size:14px;padding:12px 24px;border-radius:8px">
+      Accedi ora →
+    </a>
+    <p style="margin:24px 0 0;font-size:12px;color:#94a3b8">Se non hai richiesto questo link, ignora questa email. Il link scadrà automaticamente.</p>
+    <p style="margin:8px 0 0;font-size:12px;color:#94a3b8">Per sicurezza, non condividere questo link con nessuno.</p>
+  ${BASE_FOOTER}`;
+
+  try {
+    await transport.sendMail({
+      from: process.env.EMAIL_FROM ?? "My-Repair <noreply@my-repair.it>",
+      to,
+      subject: "Il tuo link di accesso a My-Repair",
+      html,
+    });
+    return { ok: true };
+  } catch (err) {
+    console.error("[email]", err);
+    return { ok: false, error: String(err) };
+  }
+}
+
 export async function sendRejectionEmail({
   to,
   name,

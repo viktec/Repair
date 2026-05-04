@@ -14,9 +14,11 @@ import { useRouter } from "next/navigation";
 import { DEVICE_BRANDS, DEVICE_MODELS } from "@/lib/devices";
 
 type Customer = { id: string; name: string; phone: string | null };
+type Store = { id: string; name: string };
 type Props = {
   customers: Customer[];
   statuses: { id: string; name: string }[];
+  stores: Store[];
 };
 
 // ─── Step 2: Firma ──────────────────────────────────────────────────────────
@@ -150,7 +152,7 @@ function SignatureStep({ ticketId }: { ticketId: string }) {
 
 // ─── Step 1: Form ticket ─────────────────────────────────────────────────────
 
-export function NewTicketForm({ customers: initialCustomers }: Props) {
+export function NewTicketForm({ customers: initialCustomers, stores }: Props) {
   const [state, action, pending] = useActionState(createTicketAction, null);
   const [selectedBrand, setSelectedBrand] = useState("");
 
@@ -336,6 +338,28 @@ export function NewTicketForm({ customers: initialCustomers }: Props) {
           </div>
         </CardContent>
       </Card>
+
+      {/* Sede (solo piano Business con almeno una sede) */}
+      {stores.length > 0 && (
+        <Card>
+          <CardHeader><CardTitle className="text-base">Sede</CardTitle></CardHeader>
+          <CardContent>
+            <div className="space-y-1.5">
+              <Label htmlFor="storeId">Punto vendita</Label>
+              <select
+                id="storeId"
+                name="storeId"
+                className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+              >
+                <option value="">— Nessuna sede —</option>
+                {stores.map((s) => (
+                  <option key={s.id} value={s.id}>{s.name}</option>
+                ))}
+              </select>
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       <div className="flex justify-end gap-3">
         <Link href="/tickets"><Button type="button" variant="outline">Annulla</Button></Link>

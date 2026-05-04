@@ -43,6 +43,8 @@ export const users = pgTable("users", {
   isSuperAdmin: boolean("is_super_admin").notNull().default(false),
   passwordResetToken: text("password_reset_token"),
   passwordResetExpiresAt: timestamp("password_reset_expires_at"),
+  magicLinkToken: text("magic_link_token"),
+  magicLinkExpiresAt: timestamp("magic_link_expires_at"),
   createdAt: timestamp("created_at").notNull().defaultNow(),
   updatedAt: timestamp("updated_at").notNull().defaultNow(),
 });
@@ -339,6 +341,7 @@ export const posSessions = pgTable("pos_sessions", {
   openingCashCents: integer("opening_cash_cents").notNull().default(0),
   closingCashCents: integer("closing_cash_cents"),
   notes: text("notes"),
+  zReportPrintedAt: timestamp("z_report_printed_at"),
 });
 
 export const posTransactions = pgTable("pos_transactions", {

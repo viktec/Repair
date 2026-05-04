@@ -1,7 +1,7 @@
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
-import { tickets, customers, ticketStatuses } from "@/db/schema";
-import { eq, and, isNull, ilike, or, sql } from "drizzle-orm";
+import { tickets, customers, ticketStatuses, ticketTags, ticketTagAssignments } from "@/db/schema";
+import { eq, and, isNull, ilike, or, sql, inArray } from "drizzle-orm";
 import { redirect } from "next/navigation";
 import Link from "next/link";
 import { Plus, Ticket as TicketIcon, Search, Download } from "lucide-react";
@@ -16,16 +16,16 @@ import { Suspense } from "react";
 export default async function TicketsPage({
   searchParams,
 }: {
-  searchParams: Promise<{ view?: string; q?: string; status?: string; imei?: string; year?: string }>;
+  searchParams: Promise<{ view?: string; q?: string; status?: string; imei?: string; year?: string; tag?: string }>;
 }) {
-  const { view, q, status, imei, year } = await searchParams;
+  const { view, q, status, imei, year, tag } = await searchParams;
   const isKanban = view === "kanban";
 
   const session = await auth();
   if (!session?.user?.organizationId) redirect("/login");
   const orgId = session.user.organizationId;
 
-  const [statuses, yearsResult] = await Promise.all([
+  const [statuses, yearsResult, orgTags] = await Promise.all([
     db
       .select({ id: ticketStatuses.id, name: ticketStatuses.name, color: ticketStatuses.color })
       .from(ticketStatuses)
@@ -36,14 +36,37 @@ export default async function TicketsPage({
       .from(tickets)
       .where(and(eq(tickets.organizationId, orgId), isNull(tickets.deletedAt)))
       .orderBy(sql`1 desc`),
+    db
+      .select({ id: ticketTags.id, name: ticketTags.name, color: ticketTags.color })
+      .from(ticketTags)
+      .where(eq(ticketTags.organizationId, orgId))
+      .orderBy(ticketTags.name),
   ]);
   const availableYears = yearsResult.map((r) => r.year);
+
+  // Se filtro per tag, recupera i ticketId che hanno quel tag
+  let tagFilterTicketIds: string[] | null = null;
+  if (tag) {
+    const tagRows = await db
+      .select({ ticketId: ticketTagAssignments.ticketId })
+      .from(ticketTagAssignments)
+      .innerJoin(ticketTags, eq(ticketTags.id, ticketTagAssignments.tagId))
+      .where(and(eq(ticketTagAssignments.tagId, tag), eq(ticketTags.organizationId, orgId)));
+    tagFilterTicketIds = tagRows.map((r) => r.ticketId);
+  }
 
   // Build where conditions
   const conditions = [eq(tickets.organizationId, orgId), isNull(tickets.deletedAt)];
   if (status) conditions.push(eq(tickets.statusId, status));
   if (imei) conditions.push(ilike(tickets.deviceImei, `%${imei}%`));
   if (year) conditions.push(sql`extract(year from ${tickets.createdAt})::integer = ${parseInt(year, 10)}`);
+  if (tagFilterTicketIds !== null) {
+    if (tagFilterTicketIds.length === 0) {
+      conditions.push(sql`false`);
+    } else {
+      conditions.push(inArray(tickets.id, tagFilterTicketIds));
+    }
+  }
   if (q) {
     conditions.push(
       or(
@@ -79,15 +102,39 @@ export default async function TicketsPage({
     .where(and(...conditions))
     .orderBy(tickets.ticketNumber);
 
-  const isFiltered = !!(q || status || imei || year);
+  const isFiltered = !!(q || status || imei || year || tag);
 
-  function buildUrl(params: { view?: string; q?: string; status?: string; imei?: string; year?: string }) {
+  // Carica i tag per i ticket visualizzati
+  const ticketIds = rows.map((r) => r.id);
+  const allTicketTagRows = ticketIds.length > 0
+    ? await db
+        .select({
+          ticketId: ticketTagAssignments.ticketId,
+          tagId: ticketTags.id,
+          tagName: ticketTags.name,
+          tagColor: ticketTags.color,
+        })
+        .from(ticketTagAssignments)
+        .innerJoin(ticketTags, eq(ticketTags.id, ticketTagAssignments.tagId))
+        .where(inArray(ticketTagAssignments.ticketId, ticketIds))
+    : [];
+
+  // Mappa ticketId -> tags
+  const tagsByTicket = new Map<string, { id: string; name: string; color: string }[]>();
+  for (const row of allTicketTagRows) {
+    const existing = tagsByTicket.get(row.ticketId) ?? [];
+    existing.push({ id: row.tagId, name: row.tagName, color: row.tagColor });
+    tagsByTicket.set(row.ticketId, existing);
+  }
+
+  function buildUrl(params: { view?: string; q?: string; status?: string; imei?: string; year?: string; tag?: string }) {
     const p = new URLSearchParams();
     if (params.view) p.set("view", params.view);
     if (params.q) p.set("q", params.q);
     if (params.status) p.set("status", params.status);
     if (params.imei) p.set("imei", params.imei);
     if (params.year) p.set("year", params.year);
+    if (params.tag) p.set("tag", params.tag);
     const s = p.toString();
     return s ? `/tickets?${s}` : "/tickets";
   }
@@ -158,17 +205,29 @@ export default async function TicketsPage({
             className="w-full rounded-md border border-input bg-white pl-9 pr-3 py-2 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring"
           />
         </div>
-        <div className="flex gap-2">
+        <div className="flex gap-2 flex-wrap">
           <select
             name="status"
             defaultValue={status ?? ""}
-            className="flex-1 rounded-md border border-input bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+            className="rounded-md border border-input bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
           >
             <option value="">Tutti gli stati</option>
             {statuses.map((s) => (
               <option key={s.id} value={s.id}>{s.name}</option>
             ))}
           </select>
+          {orgTags.length > 0 && (
+            <select
+              name="tag"
+              defaultValue={tag ?? ""}
+              className="rounded-md border border-input bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+            >
+              <option value="">Tutte le etichette</option>
+              {orgTags.map((t) => (
+                <option key={t.id} value={t.id}>{t.name}</option>
+              ))}
+            </select>
+          )}
           <Button type="submit" variant="outline" size="sm">Filtra</Button>
           {isFiltered && (
             <Link href="/tickets">
@@ -234,6 +293,19 @@ export default async function TicketsPage({
                   {t.faultDescription && (
                     <p className="mt-1 text-xs text-muted-foreground line-clamp-1">{t.faultDescription}</p>
                   )}
+                  {(tagsByTicket.get(t.id) ?? []).length > 0 && (
+                    <div className="mt-1.5 flex flex-wrap gap-1">
+                      {(tagsByTicket.get(t.id) ?? []).map((tg) => (
+                        <span
+                          key={tg.id}
+                          className="inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium"
+                          style={{ backgroundColor: tg.color + "20", color: tg.color, border: `1px solid ${tg.color}40` }}
+                        >
+                          {tg.name}
+                        </span>
+                      ))}
+                    </div>
+                  )}
                   <p className="mt-1 text-xs text-muted-foreground">{formatDate(t.createdAt)}</p>
                   {t.quoteAcceptedAt && (
                     <span className="mt-1 inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2 py-0.5 text-xs font-medium text-emerald-700">✅ Preventivo accettato</span>
@@ -279,6 +351,19 @@ export default async function TicketsPage({
                     </td>
                     <td className="max-w-[200px] px-4 py-3 text-muted-foreground">
                       <span className="line-clamp-1">{t.faultDescription}</span>
+                      {(tagsByTicket.get(t.id) ?? []).length > 0 && (
+                        <div className="mt-1 flex flex-wrap gap-1">
+                          {(tagsByTicket.get(t.id) ?? []).map((tg) => (
+                            <span
+                              key={tg.id}
+                              className="inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium"
+                              style={{ backgroundColor: tg.color + "20", color: tg.color, border: `1px solid ${tg.color}40` }}
+                            >
+                              {tg.name}
+                            </span>
+                          ))}
+                        </div>
+                      )}
                     </td>
                     <td className="px-4 py-3">
                       <div className="flex flex-col gap-1 items-start">

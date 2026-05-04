@@ -1,15 +1,15 @@
 import { db } from "@/lib/db";
 import { inventoryItems, suppliers } from "@/db/schema";
 import { requirePlan } from "@/lib/require-plan";
-import { eq, and, isNull, ilike, or, lte, sql } from "drizzle-orm";
+import { eq, and, isNull, ilike, or, lte } from "drizzle-orm";
 import { redirect } from "next/navigation";
 import Link from "next/link";
-import { Plus, Package, Search, AlertTriangle, FileUp } from "lucide-react";
+import { Plus, Package, Search, FileUp } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { formatCurrency } from "@/lib/utils";
 import { can } from "@/lib/permissions";
+import { InventoryTable } from "./inventory-table";
 
 export default async function InventoryPage({
   searchParams,
@@ -34,7 +34,7 @@ export default async function InventoryPage({
   }
   if (low === "1") conditions.push(lte(inventoryItems.quantity, inventoryItems.minQuantity));
 
-  const items = await db
+  const rawItems = await db
     .select({
       id: inventoryItems.id,
       name: inventoryItems.name,
@@ -51,6 +51,12 @@ export default async function InventoryPage({
     .leftJoin(suppliers, eq(suppliers.id, inventoryItems.supplierId))
     .where(and(...conditions))
     .orderBy(inventoryItems.name);
+
+  const items = rawItems.map((i) => ({
+    ...i,
+    costFormatted: i.costPriceCents != null ? formatCurrency(i.costPriceCents) : null,
+    sellFormatted: i.sellPriceCents != null ? formatCurrency(i.sellPriceCents) : null,
+  }));
 
   const lowStockCount = items.filter((i) => i.quantity <= i.minQuantity).length;
 
@@ -116,60 +122,7 @@ export default async function InventoryPage({
           </CardContent>
         </Card>
       ) : (
-        <div className="overflow-x-auto rounded-lg border bg-white">
-          <table className="w-full text-sm min-w-[700px]">
-            <thead>
-              <tr className="border-b bg-slate-50 text-left text-xs font-medium uppercase tracking-wide text-muted-foreground">
-                <th className="px-4 py-3">Articolo</th>
-                <th className="px-4 py-3">SKU</th>
-                <th className="px-4 py-3">Categoria</th>
-                <th className="px-4 py-3 text-center">Giacenza</th>
-                <th className="px-4 py-3">Costo</th>
-                <th className="px-4 py-3">Vendita</th>
-                <th className="px-4 py-3">Fornitore</th>
-                <th className="px-4 py-3" />
-              </tr>
-            </thead>
-            <tbody>
-              {items.map((item) => {
-                const isLow = item.quantity <= item.minQuantity;
-                return (
-                  <tr key={item.id} className="border-b last:border-0 hover:bg-slate-50/50">
-                    <td className="px-4 py-3">
-                      <p className="font-medium">{item.name}</p>
-                      {item.location && <p className="text-xs text-muted-foreground">📍 {item.location}</p>}
-                    </td>
-                    <td className="px-4 py-3 font-mono text-xs text-muted-foreground">{item.sku ?? "—"}</td>
-                    <td className="px-4 py-3 text-muted-foreground">{item.category ?? "—"}</td>
-                    <td className="px-4 py-3 text-center">
-                      <div className="flex items-center justify-center gap-1.5">
-                        <span className={`font-bold ${isLow ? "text-red-600" : "text-foreground"}`}>
-                          {item.quantity}
-                        </span>
-                        {isLow && <AlertTriangle className="h-3.5 w-3.5 text-amber-500" />}
-                      </div>
-                      {item.minQuantity > 0 && (
-                        <p className="text-[10px] text-muted-foreground">min: {item.minQuantity}</p>
-                      )}
-                    </td>
-                    <td className="px-4 py-3 text-muted-foreground">
-                      {item.costPriceCents != null ? formatCurrency(item.costPriceCents) : "—"}
-                    </td>
-                    <td className="px-4 py-3 font-medium">
-                      {item.sellPriceCents != null ? formatCurrency(item.sellPriceCents) : "—"}
-                    </td>
-                    <td className="px-4 py-3 text-muted-foreground text-xs">{item.supplierName ?? "—"}</td>
-                    <td className="px-4 py-3 text-right">
-                      <Link href={`/inventory/${item.id}`}>
-                        <Button variant="outline" size="sm">Apri</Button>
-                      </Link>
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
-        </div>
+        <InventoryTable items={items} />
       )}
     </div>
   );

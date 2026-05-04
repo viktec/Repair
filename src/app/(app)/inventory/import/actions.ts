@@ -67,29 +67,45 @@ export async function parseInvoiceAction(formData: FormData): Promise<ParseResul
 
   const file = formData.get("file");
   if (!(file instanceof File)) return { ok: false, error: "Nessun file ricevuto." };
-  if (file.type !== "application/pdf") return { ok: false, error: "Formato non supportato. Carica un PDF." };
+
+  const ALLOWED_TYPES = ["application/pdf", "image/jpeg", "image/png", "image/webp"];
+  if (!ALLOWED_TYPES.includes(file.type))
+    return { ok: false, error: "Formato non supportato. Carica un PDF, JPEG, PNG o WEBP." };
   if (file.size > 10 * 1024 * 1024) return { ok: false, error: "File troppo grande. Massimo 10MB." };
 
   const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
   const base64 = Buffer.from(await file.arrayBuffer()).toString("base64");
 
+  const isPdf = file.type === "application/pdf";
+
   let rawText: string;
   try {
+    const fileContent = isPdf
+      ? {
+          type: "document" as const,
+          source: {
+            type: "base64" as const,
+            media_type: "application/pdf" as const,
+            data: base64,
+          },
+        }
+      : {
+          type: "image" as const,
+          source: {
+            type: "base64" as const,
+            media_type: file.type as "image/jpeg" | "image/png" | "image/webp",
+            data: base64,
+          },
+        };
+
     const response = await anthropic.messages.create({
-      model: "claude-haiku-4-5",
+      model: "claude-haiku-4-5-20251001",
       max_tokens: 4096,
       messages: [
         {
           role: "user",
           content: [
-            {
-              type: "document",
-              source: {
-                type: "base64",
-                media_type: "application/pdf",
-                data: base64,
-              },
-            },
+            fileContent,
             { type: "text", text: PROMPT },
           ],
         },

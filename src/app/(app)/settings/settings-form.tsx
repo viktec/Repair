@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
-import { Check, Loader2, Upload, X } from "lucide-react";
+import { Check, Loader2, Upload, X, Bot } from "lucide-react";
 import { hasPlan } from "@/lib/permissions";
 
 const DEFAULT_WA_TEMPLATE = `Salve {{nome}}!
@@ -16,6 +16,14 @@ Il suo {{dispositivo}} è ora in stato: *{{stato}}*.
 Può seguire l'avanzamento qui: {{link_tracking}}
 
 — {{nome_negozio}}`;
+
+const WA_PRESETS = [
+  { label: "Ricevuto", body: "Ciao {{nome}}, abbiamo ricevuto il tuo {{dispositivo}} e lo mettiamo in lavorazione. Tieni d'occhio lo stato qui: {{link_tracking}}\n— {{nome_negozio}}" },
+  { label: "Preventivo pronto", body: "Ciao {{nome}}, il preventivo per {{dispositivo}} è pronto. Puoi vederlo qui: {{link_tracking}}\nContattaci per approvarlo.\n— {{nome_negozio}}" },
+  { label: "Pronto per il ritiro", body: "Ciao {{nome}}, ottima notizia! {{dispositivo}} è riparato e pronto per il ritiro. Dettagli: {{link_tracking}}\n— {{nome_negozio}}" },
+  { label: "Non riparabile", body: "Ciao {{nome}}, purtroppo {{dispositivo}} non è riparabile. Ti spieghiamo i motivi di persona. Info: {{link_tracking}}\n— {{nome_negozio}}" },
+  { label: "Promemoria ritiro", body: "Ciao {{nome}}, ti ricordiamo che {{dispositivo}} è pronto da ritirare da qualche giorno. Passa quando vuoi! {{link_tracking}}\n— {{nome_negozio}}" },
+];
 
 type Org = {
   name: string;
@@ -43,6 +51,10 @@ export function SettingsForm({ org }: { org: Org }) {
   const [logoUrl, setLogoUrl] = useState(org.brandingLogoUrl ?? "");
   const [uploadingLogo, setUploadingLogo] = useState(false);
   const logoInputRef = useRef<HTMLInputElement>(null);
+  const [waTemplate, setWaTemplate] = useState(org.whatsappTemplate ?? DEFAULT_WA_TEMPLATE);
+  const [botActivating, setBotActivating] = useState(false);
+  const [botStatus, setBotStatus] = useState<"idle" | "ok" | "error">("idle");
+  const [botError, setBotError] = useState("");
 
   function handleSave(formData: FormData) {
     startTransition(async () => {
@@ -50,6 +62,27 @@ export function SettingsForm({ org }: { org: Org }) {
       setSaved(true);
       setTimeout(() => setSaved(false), 2500);
     });
+  }
+
+  async function handleActivateBot() {
+    setBotActivating(true);
+    setBotStatus("idle");
+    setBotError("");
+    try {
+      const res = await fetch("/api/telegram/setup", { method: "POST" });
+      const data = (await res.json()) as { ok: boolean; error?: string };
+      if (data.ok) {
+        setBotStatus("ok");
+      } else {
+        setBotStatus("error");
+        setBotError(data.error ?? "Errore sconosciuto");
+      }
+    } catch {
+      setBotStatus("error");
+      setBotError("Errore di rete. Riprova.");
+    } finally {
+      setBotActivating(false);
+    }
   }
 
   async function handleLogoUpload(rawFile: File) {
@@ -223,10 +256,25 @@ export function SettingsForm({ org }: { org: Org }) {
                 <code key={v} className="rounded bg-slate-100 px-1 text-xs mr-1">{v}</code>
               ))}
             </p>
+            <div className="flex flex-wrap gap-1.5">
+              {WA_PRESETS.map((p) => (
+                <Button
+                  key={p.label}
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  className="h-7 px-2 text-xs"
+                  onClick={() => setWaTemplate(p.body)}
+                >
+                  {p.label}
+                </Button>
+              ))}
+            </div>
             <textarea
               id="whatsappTemplate"
               name="whatsappTemplate"
-              defaultValue={org.whatsappTemplate ?? DEFAULT_WA_TEMPLATE}
+              value={waTemplate}
+              onChange={(e) => setWaTemplate(e.target.value)}
               rows={5}
               className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm font-mono placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring"
             />
@@ -234,11 +282,11 @@ export function SettingsForm({ org }: { org: Org }) {
         </CardContent>
       </Card>
 
-      {/* Notifiche Telegram — Business only */}
+      {/* Notifiche Telegram + Bot BI — Business only */}
       <Card className={!isBusiness ? "opacity-60" : ""}>
         <CardHeader>
           <div className="flex items-center justify-between">
-            <CardTitle className="text-base">Notifiche Telegram</CardTitle>
+            <CardTitle className="text-base">Telegram — Notifiche e Bot BI</CardTitle>
             {!isBusiness && (
               <a href="/upgrade" className="text-xs font-medium text-primary hover:underline">Piano Business →</a>
             )}
@@ -247,18 +295,22 @@ export function SettingsForm({ org }: { org: Org }) {
         <CardContent className="space-y-4">
           {!isBusiness ? (
             <p className="text-sm text-muted-foreground">
-              Le notifiche Telegram sono disponibili nel piano Business. <a href="/upgrade" className="text-primary hover:underline font-medium">Aggiorna il piano</a> per configurarle.
+              Le notifiche Telegram e il bot BI sono disponibili nel piano Business. <a href="/upgrade" className="text-primary hover:underline font-medium">Aggiorna il piano</a> per configurarli.
             </p>
           ) : (
             <>
               <p className="text-xs text-muted-foreground">
-                Ricevi un messaggio Telegram quando un cliente accetta o rifiuta un preventivo.{" "}
-                <strong>Come configurare:</strong>{" "}
-                1) Cerca <code className="rounded bg-slate-100 px-1">@BotFather</code> su Telegram e crea un bot (ottieni il token).{" "}
-                2) Avvia il bot, poi vai su{" "}
-                <code className="rounded bg-slate-100 px-1">api.telegram.org/bot&#123;TOKEN&#125;/getUpdates</code>{" "}
-                per trovare il tuo <code className="rounded bg-slate-100 px-1">chat_id</code>.
+                Ricevi notifiche quando un cliente accetta o rifiuta un preventivo e chiedi al bot dati in tempo reale (es. &quot;quanti ticket oggi?&quot;, &quot;fatturato questo mese?&quot;).
               </p>
+              <div className="rounded-md border border-slate-200 bg-slate-50 p-3 text-xs text-muted-foreground space-y-1">
+                <p className="font-medium text-slate-700">Come configurare:</p>
+                <ol className="list-decimal list-inside space-y-0.5">
+                  <li>Cerca <code className="rounded bg-white border px-1">@BotFather</code> su Telegram, digita <code className="rounded bg-white border px-1">/newbot</code> e segui le istruzioni per ottenere il <strong>Bot Token</strong>.</li>
+                  <li>Avvia il tuo bot (cerca il suo username su Telegram e clicca Start).</li>
+                  <li>Apri <code className="rounded bg-white border px-1">api.telegram.org/bot&#123;TOKEN&#125;/getUpdates</code> nel browser per trovare il tuo <strong>Chat ID</strong> (numero nel campo <code className="rounded bg-white border px-1">chat.id</code>).</li>
+                  <li>Incolla Token e Chat ID qui sotto, salva le impostazioni, poi clicca <strong>Attiva Bot Telegram</strong>.</li>
+                </ol>
+              </div>
               <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                 <div className="space-y-1.5">
                   <Label htmlFor="telegramBotToken">Bot Token</Label>
@@ -281,6 +333,37 @@ export function SettingsForm({ org }: { org: Org }) {
                   />
                 </div>
               </div>
+
+              <Separator />
+
+              <div className="flex items-center gap-3">
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  disabled={botActivating}
+                  onClick={handleActivateBot}
+                  className="gap-2"
+                >
+                  {botActivating ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <Bot className="h-4 w-4" />
+                  )}
+                  Attiva Bot Telegram
+                </Button>
+                {botStatus === "ok" && (
+                  <span className="flex items-center gap-1 text-xs text-green-700">
+                    <Check className="h-3.5 w-3.5" /> Bot attivato con successo!
+                  </span>
+                )}
+                {botStatus === "error" && (
+                  <span className="text-xs text-destructive">{botError}</span>
+                )}
+              </div>
+              <p className="text-xs text-muted-foreground">
+                Salva prima le impostazioni con Token e Chat ID, poi clicca il bottone per registrare il webhook Telegram.
+              </p>
             </>
           )}
         </CardContent>

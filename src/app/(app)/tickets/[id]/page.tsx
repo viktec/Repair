@@ -1,6 +1,6 @@
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
-import { tickets, customers, ticketStatuses, organizations, ticketPhotos, ticketParts, inventoryItems } from "@/db/schema";
+import { tickets, customers, ticketStatuses, organizations, ticketPhotos, ticketParts, inventoryItems, ticketTags, ticketTagAssignments } from "@/db/schema";
 import { eq, and, isNull } from "drizzle-orm";
 import { redirect, notFound } from "next/navigation";
 import Link from "next/link";
@@ -18,6 +18,7 @@ import { ensureDefaultStatuses } from "@/lib/seed-statuses";
 import { TicketPartsSection } from "./parts-section";
 import { CostEditor } from "./cost-editor";
 import { RepairNotesEditor } from "./repair-notes-editor";
+import { TicketTagsSection } from "./ticket-tags-section";
 import { can } from "@/lib/permissions";
 
 export default async function TicketDetailPage({ params }: { params: Promise<{ id: string }> }) {
@@ -82,7 +83,17 @@ export default async function TicketDetailPage({ params }: { params: Promise<{ i
     .where(eq(organizations.id, orgId))
     .limit(1);
 
-  const [parts, invItems] = await Promise.all([
+  const [orgTags, ticketTagRows, parts, invItems] = await Promise.all([
+    db
+      .select({ id: ticketTags.id, name: ticketTags.name, color: ticketTags.color })
+      .from(ticketTags)
+      .where(eq(ticketTags.organizationId, orgId))
+      .orderBy(ticketTags.name),
+    db
+      .select({ id: ticketTags.id, name: ticketTags.name, color: ticketTags.color })
+      .from(ticketTagAssignments)
+      .innerJoin(ticketTags, eq(ticketTags.id, ticketTagAssignments.tagId))
+      .where(eq(ticketTagAssignments.ticketId, id)),
     db
       .select({
         id: ticketParts.id,
@@ -152,12 +163,21 @@ export default async function TicketDetailPage({ params }: { params: Promise<{ i
       .replace(/\{\{link_google\}\}/g, googleLink);
   }
 
+  const WA_PRESETS = [
+    { label: "Ricevuto", body: "Ciao {{nome}}, abbiamo ricevuto il tuo {{dispositivo}} e lo mettiamo in lavorazione. Tieni d'occhio lo stato qui: {{link_tracking}}\n— {{nome_negozio}}" },
+    { label: "Preventivo pronto", body: "Ciao {{nome}}, il preventivo per {{dispositivo}} è pronto. Puoi vederlo qui: {{link_tracking}}\nContattaci per approvarlo.\n— {{nome_negozio}}" },
+    { label: "Pronto per il ritiro", body: "Ciao {{nome}}, ottima notizia! {{dispositivo}} è riparato e pronto per il ritiro. Dettagli: {{link_tracking}}\n— {{nome_negozio}}" },
+    { label: "Non riparabile", body: "Ciao {{nome}}, purtroppo {{dispositivo}} non è riparabile. Ti spieghiamo i motivi di persona. Info: {{link_tracking}}\n— {{nome_negozio}}" },
+    { label: "Promemoria ritiro", body: "Ciao {{nome}}, ti ricordiamo che {{dispositivo}} è pronto da ritirare da qualche giorno. Passa quando vuoi! {{link_tracking}}\n— {{nome_negozio}}" },
+  ];
+
   const waTemplates = [
     {
       label: "Aggiornamento stato",
       text: fillTemplate(org?.whatsappTemplate ??
         `Salve {{nome}}!\nIl suo {{dispositivo}} (ticket #{{numero_ticket}}) è ora in stato: *{{stato}}*.\nSegua l'avanzamento qui: {{link_tracking}}\n\n— {{nome_negozio}}`),
     },
+    ...WA_PRESETS.map((p) => ({ label: p.label, text: fillTemplate(p.body) })),
     {
       label: "Preventivo",
       text: fillTemplate(
@@ -309,6 +329,11 @@ export default async function TicketDetailPage({ params }: { params: Promise<{ i
             customerPhone={ticket.customerPhone ?? null}
             printUrl={printUrl}
             hasCustomerEmail={!!ticket.customerEmail}
+          />
+          <TicketTagsSection
+            ticketId={ticket.id}
+            initialTicketTags={ticketTagRows}
+            allOrgTags={orgTags}
           />
           <PhotoUpload ticketId={ticket.id} initialPhotos={displayPhotos} />
           <SignatureReadOnly signatureUrl={signatureUrl} />
