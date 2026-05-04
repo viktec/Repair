@@ -306,8 +306,8 @@ export default function LandingPage() {
             © {new Date().getFullYear()} My-Repair. Fatto con cura per i riparatori italiani.
           </p>
           <div className="flex gap-4 text-xs">
-            <a href="#" className="hover:text-white transition-colors">Privacy</a>
-            <a href="#" className="hover:text-white transition-colors">Termini</a>
+            <a href="/privacy" className="hover:text-white transition-colors">Privacy</a>
+            <a href="/terms" className="hover:text-white transition-colors">Termini</a>
           </div>
         </div>
       </footer>
