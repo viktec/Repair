@@ -35,6 +35,14 @@ export function AppShell({
     setOpen(false);
   }, [pathname]);
 
+  useEffect(() => {
+    if ("serviceWorker" in navigator) {
+      navigator.serviceWorker.register("/sw.js").catch((err) => {
+        console.error("[sw] registration failed", err);
+      });
+    }
+  }, []);
+
   return (
     <div className="flex h-screen overflow-hidden bg-slate-50">
       {/* Mobile overlay */}

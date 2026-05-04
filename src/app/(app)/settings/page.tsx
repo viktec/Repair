@@ -10,6 +10,7 @@ import { CustomModelsTable } from "./custom-models-table";
 import { ChangePasswordForm } from "./change-password-form";
 import { can } from "@/lib/permissions";
 import { BillingCard } from "./billing-card";
+import { PushNotificationsCard } from "./push-notifications";
 
 export default async function SettingsPage({
   searchParams,
@@ -142,6 +143,7 @@ export default async function SettingsPage({
       )}
 
       <ChangePasswordForm />
+      <PushNotificationsCard />
     </div>
   );
 }
