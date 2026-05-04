@@ -4,7 +4,7 @@ import { organizations, customDeviceModels } from "@/db/schema";
 import { eq } from "drizzle-orm";
 import { redirect } from "next/navigation";
 import Link from "next/link";
-import { Users, CreditCard, CheckCircle } from "lucide-react";
+import { Users, CreditCard, CheckCircle, Tag } from "lucide-react";
 import { SettingsForm } from "./settings-form";
 import { CustomModelsTable } from "./custom-models-table";
 import { ChangePasswordForm } from "./change-password-form";
@@ -21,6 +21,7 @@ export default async function SettingsPage({
   const orgId = session.user.organizationId;
   const role = session.user.role;
   const isOwner = can.editOrgSettings(role);
+  const canManageTags = can.delete(role);
 
   const { checkout } = await searchParams;
 
@@ -117,6 +118,27 @@ export default async function SettingsPage({
             </Link>
           </div>
         </>
+      )}
+
+      {/* Tags management link — visible to admin+ */}
+      {canManageTags && (
+        <div className="rounded-lg border p-4 flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="rounded-lg bg-primary/10 p-2">
+              <Tag className="h-5 w-5 text-primary" />
+            </div>
+            <div>
+              <p className="font-medium text-sm">Etichette ticket</p>
+              <p className="text-xs text-muted-foreground">Crea e gestisci le etichette per categorizzare i ticket</p>
+            </div>
+          </div>
+          <Link
+            href="/settings/tags"
+            className="text-sm font-medium text-primary hover:underline"
+          >
+            Gestisci →
+          </Link>
+        </div>
       )}
 
       <ChangePasswordForm />
