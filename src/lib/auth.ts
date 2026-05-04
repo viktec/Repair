@@ -2,7 +2,6 @@ import NextAuth, { type DefaultSession } from "next-auth";
 import Credentials from "next-auth/providers/credentials";
 import { eq, and, gt } from "drizzle-orm";
 import bcrypt from "bcryptjs";
-import crypto from "crypto";
 import { db } from "./db";
 import { users, memberships } from "@/db/schema";
 
@@ -70,7 +69,9 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         const rawToken = credentials?.token as string | undefined;
         if (!rawToken) return null;
 
-        const hashedToken = crypto.createHash("sha256").update(rawToken).digest("hex");
+        const encoded = new TextEncoder().encode(rawToken);
+        const hashBuffer = await globalThis.crypto.subtle.digest("SHA-256", encoded);
+        const hashedToken = Array.from(new Uint8Array(hashBuffer)).map(b => b.toString(16).padStart(2, "0")).join("");
 
         const [user] = await db
           .select()
