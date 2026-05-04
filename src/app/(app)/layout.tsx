@@ -34,15 +34,21 @@ export default async function AppLayout({ children }: { children: React.ReactNod
     org.trialEndsAt !== null &&
     new Date(org.trialEndsAt).getTime() < now;
 
-  const isBlocked = isTrialExpired || org.subscriptionStatus === "canceled";
-  if (isBlocked && org.plan !== "gift") redirect("/upgrade");
+  const isHardBlocked = isTrialExpired || org.subscriptionStatus === "canceled";
+  if (isHardBlocked && org.plan !== "gift") redirect("/upgrade");
+
+  // past_due: allow only /settings so user can fix payment
+  const isPastDue = org.subscriptionStatus === "past_due";
+  if (isPastDue && org.plan !== "gift") {
+    const { headers } = await import("next/headers");
+    const pathname = (await headers()).get("x-pathname") ?? "/";
+    if (!pathname.startsWith("/settings")) redirect("/settings");
+  }
 
   const trialDaysLeft =
     org.subscriptionStatus === "trial" && org.trialEndsAt
       ? Math.max(0, Math.ceil((new Date(org.trialEndsAt).getTime() - now) / (1000 * 60 * 60 * 24)))
       : null;
-
-  const isPastDue = org.subscriptionStatus === "past_due";
 
   return (
     <AppShell

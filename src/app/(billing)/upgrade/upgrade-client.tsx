@@ -128,6 +128,27 @@ export function UpgradeClient({
     }
   }
 
+  // Past due: show portal button to fix payment
+  if (subscriptionStatus === "past_due" && hasStripeCustomer) {
+    return (
+      <div className="py-16 px-4">
+        <div className="mx-auto max-w-md text-center">
+          <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-red-100">
+            <ArrowRight className="h-7 w-7 text-red-600" />
+          </div>
+          <h1 className="text-2xl font-bold text-foreground">Pagamento in sospeso</h1>
+          <p className="mt-3 text-muted-foreground text-sm">
+            Il pagamento dell&apos;abbonamento non è andato a buon fine. Aggiorna il metodo di pagamento per ripristinare l&apos;accesso.
+          </p>
+          <Button onClick={handlePortal} disabled={portalLoading} size="lg" className="mt-8 gap-2">
+            {portalLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <ArrowRight className="h-4 w-4" />}
+            Aggiorna metodo di pagamento
+          </Button>
+        </div>
+      </div>
+    );
+  }
+
   // Gift plan: simple informative screen
   if (currentPlan === "gift") {
     return (
