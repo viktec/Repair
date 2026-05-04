@@ -5,7 +5,7 @@ import { revalidatePath } from "next/cache";
 import { eq, and, isNull, ilike, sql } from "drizzle-orm";
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
-import { inventoryItems, suppliers } from "@/db/schema";
+import { inventoryItems, inventoryMovements, suppliers } from "@/db/schema";
 
 export type ParsedItem = {
   name_it: string;
@@ -76,7 +76,7 @@ export async function parseInvoiceAction(formData: FormData): Promise<ParseResul
   let rawText: string;
   try {
     const response = await anthropic.messages.create({
-      model: "claude-sonnet-4-6",
+      model: "claude-haiku-4-5",
       max_tokens: 4096,
       messages: [
         {
@@ -203,6 +203,8 @@ export async function confirmImportAction(
     }
   }
 
+  const userId = session.user.id as string;
+
   for (const item of items) {
     if (item.matched_item_id) {
       await db
@@ -218,8 +220,16 @@ export async function confirmImportAction(
             eq(inventoryItems.organizationId, orgId),
           ),
         );
+      await db.insert(inventoryMovements).values({
+        organizationId: orgId,
+        itemId: item.matched_item_id,
+        type: "in",
+        quantity: item.qty,
+        notes: supplierName ? `Importazione fattura: ${supplierName}` : "Importazione fattura AI",
+        createdBy: userId,
+      });
     } else {
-      await db.insert(inventoryItems).values({
+      const [newItem] = await db.insert(inventoryItems).values({
         organizationId: orgId,
         supplierId,
         name: item.name_it,
@@ -229,7 +239,17 @@ export async function confirmImportAction(
         compatibleModels: item.compatible_models,
         quantity: item.qty,
         costPriceCents: item.unit_cost_cents,
-      });
+      }).returning({ id: inventoryItems.id });
+      if (newItem) {
+        await db.insert(inventoryMovements).values({
+          organizationId: orgId,
+          itemId: newItem.id,
+          type: "in",
+          quantity: item.qty,
+          notes: supplierName ? `Importazione fattura: ${supplierName}` : "Importazione fattura AI",
+          createdBy: userId,
+        });
+      }
     }
   }
 
