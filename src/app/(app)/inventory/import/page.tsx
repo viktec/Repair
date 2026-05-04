@@ -1,10 +1,8 @@
-import { auth } from "@/lib/auth";
-import { redirect } from "next/navigation";
+import { requirePlan } from "@/lib/require-plan";
 import { ImportClient } from "./import-client";
 
 export default async function ImportInvoicePage() {
-  const session = await auth();
-  if (!session?.user?.organizationId) redirect("/login");
+  await requirePlan("business");
 
   return (
     <div className="space-y-6">

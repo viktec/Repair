@@ -37,13 +37,8 @@ export default async function AppLayout({ children }: { children: React.ReactNod
   const isHardBlocked = isTrialExpired || org.subscriptionStatus === "canceled";
   if (isHardBlocked && org.plan !== "gift") redirect("/upgrade");
 
-  // past_due: allow only /settings so user can fix payment
+  // past_due: show banner (AppShell handles it) — don't hard-block, Stripe retries for days
   const isPastDue = org.subscriptionStatus === "past_due";
-  if (isPastDue && org.plan !== "gift") {
-    const { headers } = await import("next/headers");
-    const pathname = (await headers()).get("x-pathname") ?? "/";
-    if (!pathname.startsWith("/settings")) redirect("/settings");
-  }
 
   const trialDaysLeft =
     org.subscriptionStatus === "trial" && org.trialEndsAt

@@ -205,8 +205,11 @@ export function NewTicketForm({ customers: initialCustomers }: Props) {
 
       {/* Cliente */}
       <Card>
-        <CardHeader><CardTitle className="text-base">Cliente</CardTitle></CardHeader>
+        <CardHeader><CardTitle className="text-base">Cliente <span className="text-destructive">*</span></CardTitle></CardHeader>
         <CardContent className="space-y-3">
+          {state && "errors" in state && state.errors?.customerId && (
+            <p className="text-xs text-destructive">{(state.errors.customerId as string[])[0]}</p>
+          )}
           {selectedCustomer && !showNewCustomer ? (
             <div className="flex items-center justify-between rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2.5">
               <div>

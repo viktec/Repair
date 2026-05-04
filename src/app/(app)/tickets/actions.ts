@@ -41,6 +41,10 @@ export async function createTicketAction(
 
   const data = parsed.data;
 
+  if (!data.customerId) {
+    return { errors: { customerId: ["Seleziona o crea un cliente prima di procedere"] } };
+  }
+
   const TICKET_LIMIT = 5000;
   const [countRow] = await db
     .select({ total: count() })

@@ -22,9 +22,14 @@ export default auth((req) => {
     return NextResponse.rewrite(url);
   }
 
-  // Marketing site: serve only landing and auth callbacks
+  // Marketing site: serve landing, auth callbacks, and legal pages
   if (MARKETING_HOSTS.has(host)) {
-    if (pathname === "/" || pathname.startsWith("/api/auth")) {
+    if (
+      pathname === "/" ||
+      pathname.startsWith("/api/auth") ||
+      pathname.startsWith("/privacy") ||
+      pathname.startsWith("/terms")
+    ) {
       return NextResponse.next();
     }
     return NextResponse.redirect(`https://${APP_HOST}${pathname}${search}`);

@@ -9,6 +9,7 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { Check, Loader2, Upload, X } from "lucide-react";
+import { hasPlan } from "@/lib/permissions";
 
 const DEFAULT_WA_TEMPLATE = `Salve {{nome}}!
 Il suo {{dispositivo}} è ora in stato: *{{stato}}*.
@@ -32,9 +33,11 @@ type Org = {
   vatRate: number;
   telegramBotToken: string | null;
   telegramChatId: string | null;
+  plan: string | null;
 };
 
 export function SettingsForm({ org }: { org: Org }) {
+  const isBusiness = hasPlan(org.plan, "business");
   const [isPending, startTransition] = useTransition();
   const [saved, setSaved] = useState(false);
   const [logoUrl, setLogoUrl] = useState(org.brandingLogoUrl ?? "");
@@ -231,42 +234,55 @@ export function SettingsForm({ org }: { org: Org }) {
         </CardContent>
       </Card>
 
-      {/* Notifiche Telegram */}
-      <Card>
+      {/* Notifiche Telegram — Business only */}
+      <Card className={!isBusiness ? "opacity-60" : ""}>
         <CardHeader>
-          <CardTitle className="text-base">Notifiche Telegram</CardTitle>
+          <div className="flex items-center justify-between">
+            <CardTitle className="text-base">Notifiche Telegram</CardTitle>
+            {!isBusiness && (
+              <a href="/upgrade" className="text-xs font-medium text-primary hover:underline">Piano Business →</a>
+            )}
+          </div>
         </CardHeader>
         <CardContent className="space-y-4">
-          <p className="text-xs text-muted-foreground">
-            Ricevi un messaggio Telegram quando un cliente accetta o rifiuta un preventivo.{" "}
-            <strong>Come configurare:</strong>{" "}
-            1) Cerca <code className="rounded bg-slate-100 px-1">@BotFather</code> su Telegram e crea un bot (ottieni il token).{" "}
-            2) Avvia il bot, poi vai su{" "}
-            <code className="rounded bg-slate-100 px-1">api.telegram.org/bot&#123;TOKEN&#125;/getUpdates</code>{" "}
-            per trovare il tuo <code className="rounded bg-slate-100 px-1">chat_id</code>.
-          </p>
-          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-            <div className="space-y-1.5">
-              <Label htmlFor="telegramBotToken">Bot Token</Label>
-              <Input
-                id="telegramBotToken"
-                name="telegramBotToken"
-                type="password"
-                defaultValue={org.telegramBotToken ?? ""}
-                placeholder="123456789:AAF..."
-                autoComplete="off"
-              />
-            </div>
-            <div className="space-y-1.5">
-              <Label htmlFor="telegramChatId">Chat ID</Label>
-              <Input
-                id="telegramChatId"
-                name="telegramChatId"
-                defaultValue={org.telegramChatId ?? ""}
-                placeholder="-100123456789"
-              />
-            </div>
-          </div>
+          {!isBusiness ? (
+            <p className="text-sm text-muted-foreground">
+              Le notifiche Telegram sono disponibili nel piano Business. <a href="/upgrade" className="text-primary hover:underline font-medium">Aggiorna il piano</a> per configurarle.
+            </p>
+          ) : (
+            <>
+              <p className="text-xs text-muted-foreground">
+                Ricevi un messaggio Telegram quando un cliente accetta o rifiuta un preventivo.{" "}
+                <strong>Come configurare:</strong>{" "}
+                1) Cerca <code className="rounded bg-slate-100 px-1">@BotFather</code> su Telegram e crea un bot (ottieni il token).{" "}
+                2) Avvia il bot, poi vai su{" "}
+                <code className="rounded bg-slate-100 px-1">api.telegram.org/bot&#123;TOKEN&#125;/getUpdates</code>{" "}
+                per trovare il tuo <code className="rounded bg-slate-100 px-1">chat_id</code>.
+              </p>
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                <div className="space-y-1.5">
+                  <Label htmlFor="telegramBotToken">Bot Token</Label>
+                  <Input
+                    id="telegramBotToken"
+                    name="telegramBotToken"
+                    type="password"
+                    defaultValue={org.telegramBotToken ?? ""}
+                    placeholder="123456789:AAF..."
+                    autoComplete="off"
+                  />
+                </div>
+                <div className="space-y-1.5">
+                  <Label htmlFor="telegramChatId">Chat ID</Label>
+                  <Input
+                    id="telegramChatId"
+                    name="telegramChatId"
+                    defaultValue={org.telegramChatId ?? ""}
+                    placeholder="-100123456789"
+                  />
+                </div>
+              </div>
+            </>
+          )}
         </CardContent>
       </Card>
 

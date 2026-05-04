@@ -44,6 +44,7 @@ export default async function AdminOrgsPage() {
     start: "bg-slate-100 text-slate-700",
     pro: "bg-blue-100 text-blue-700",
     business: "bg-purple-100 text-purple-700",
+    gift: "bg-emerald-100 text-emerald-700",
   };
 
   const subStatusColors: Record<string, string> = {
@@ -51,6 +52,13 @@ export default async function AdminOrgsPage() {
     active: "bg-emerald-100 text-emerald-700",
     past_due: "bg-red-100 text-red-700",
     canceled: "bg-slate-100 text-slate-500",
+  };
+
+  const subStatusLabels: Record<string, string> = {
+    trial: "Trial",
+    active: "Attivo",
+    past_due: "Pagamento scaduto",
+    canceled: "Cancellato",
   };
 
   const regStatusConfig: Record<string, { cls: string; label: string; Icon: React.ElementType }> = {
@@ -115,8 +123,8 @@ export default async function AdminOrgsPage() {
                     </span>
                   </td>
                   <td className="px-4 py-3">
-                    <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${subStatusColors[org.subscriptionStatus]}`}>
-                      {org.subscriptionStatus}
+                    <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${subStatusColors[org.subscriptionStatus] ?? "bg-slate-100 text-slate-600"}`}>
+                      {subStatusLabels[org.subscriptionStatus] ?? org.subscriptionStatus}
                     </span>
                   </td>
                   <td className="px-4 py-3 text-center">{memberMap.get(org.id) ?? 0}</td>
