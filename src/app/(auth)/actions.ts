@@ -126,11 +126,19 @@ export async function loginAction(_prev: LoginState, formData: FormData): Promis
     return { error: "Dati non validi." };
   }
 
+  const [user] = await db
+    .select({ isSuperAdmin: users.isSuperAdmin })
+    .from(users)
+    .where(eq(users.email, parsed.data.email))
+    .limit(1);
+
+  const redirectTo = user?.isSuperAdmin ? "/admin" : "/dashboard";
+
   try {
     await signIn("credentials", {
       email: parsed.data.email,
       password: parsed.data.password,
-      redirectTo: "/dashboard",
+      redirectTo,
     });
   } catch (error) {
     if (error instanceof AuthError) {
