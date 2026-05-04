@@ -85,6 +85,20 @@
       "when": 1777566517189,
       "tag": "0011_sharp_ultimates",
       "breakpoints": true
+    },
+    {
+      "idx": 12,
+      "version": "7",
+      "when": 1746000000000,
+      "tag": "0012_stripe_fields",
+      "breakpoints": true
+    },
+    {
+      "idx": 13,
+      "version": "7",
+      "when": 1746100000000,
+      "tag": "0013_gift_plan",
+      "breakpoints": true
     }
   ]
 }

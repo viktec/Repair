@@ -10,6 +10,9 @@ export default auth((req) => {
   const host = req.headers.get("host") ?? "";
   const isLoggedIn = !!req.auth;
 
+  // Stripe webhook: always pass through (no auth, verified by signature)
+  if (pathname === "/api/stripe/webhook") return NextResponse.next();
+
   // Tracking subdomain: t.my-repair.it/<token> → /t/<token> interno
   // API paths pass through directly (PDF doc generation, etc.)
   if (host === TRACKING_HOST) {

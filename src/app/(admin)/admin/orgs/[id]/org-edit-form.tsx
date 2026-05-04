@@ -8,7 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Check, Loader2, Settings } from "lucide-react";
 
-type Plan = "start" | "pro" | "business";
+type Plan = "start" | "pro" | "business" | "gift";
 type Status = "trial" | "active" | "past_due" | "canceled";
 
 export function OrgEditForm({
@@ -26,6 +26,7 @@ export function OrgEditForm({
 }) {
   const [plan, setPlan] = useState(currentPlan);
   const [status, setStatus] = useState(currentStatus);
+  const isGift = plan === "gift";
   const [notes, setNotes] = useState(currentNotes);
   const [trialEndsAt, setTrialEndsAt] = useState(currentTrialEndsAt);
   const [isPending, startTransition] = useTransition();
@@ -59,28 +60,33 @@ export function OrgEditForm({
               <option value="start">Start</option>
               <option value="pro">Pro</option>
               <option value="business">Business</option>
+              <option value="gift">Omaggio (Business)</option>
             </select>
           </div>
           <div className="space-y-1.5">
             <Label>Stato abbonamento</Label>
             <select
-              value={status}
+              value={isGift ? "active" : status}
               onChange={(e) => setStatus(e.target.value as Status)}
-              className="w-full rounded-md border px-3 py-2 text-sm"
+              disabled={isGift}
+              className="w-full rounded-md border px-3 py-2 text-sm disabled:opacity-50 disabled:cursor-not-allowed"
             >
               <option value="trial">Trial</option>
               <option value="active">Attivo</option>
               <option value="past_due">Scaduto</option>
               <option value="canceled">Cancellato</option>
             </select>
+            {isGift && <p className="text-[11px] text-muted-foreground">Il piano omaggio è sempre attivo.</p>}
           </div>
         </div>
         <div className="space-y-1.5">
           <Label>Scadenza trial</Label>
           <Input
             type="date"
-            value={trialEndsAt}
+            value={isGift ? "" : trialEndsAt}
             onChange={(e) => setTrialEndsAt(e.target.value)}
+            disabled={isGift}
+            className="disabled:opacity-50 disabled:cursor-not-allowed"
           />
         </div>
         <div className="space-y-1.5">

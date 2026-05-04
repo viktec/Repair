@@ -20,19 +20,20 @@ async function assertSuperAdmin() {
 
 export async function updateOrgPlanAction(
   orgId: string,
-  plan: "start" | "pro" | "business",
+  plan: "start" | "pro" | "business" | "gift",
   subscriptionStatus: "trial" | "active" | "past_due" | "canceled",
   adminNotes: string,
   trialEndsAt: string | null,
 ) {
   await assertSuperAdmin();
+  const isGift = plan === "gift";
   await db
     .update(organizations)
     .set({
       plan,
-      subscriptionStatus,
+      subscriptionStatus: isGift ? "active" : subscriptionStatus,
       adminNotes: adminNotes || null,
-      trialEndsAt: trialEndsAt ? new Date(trialEndsAt) : null,
+      trialEndsAt: isGift ? null : (trialEndsAt ? new Date(trialEndsAt) : null),
       updatedAt: new Date(),
     })
     .where(eq(organizations.id, orgId));

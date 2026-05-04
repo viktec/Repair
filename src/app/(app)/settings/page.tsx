@@ -4,18 +4,25 @@ import { organizations, customDeviceModels } from "@/db/schema";
 import { eq } from "drizzle-orm";
 import { redirect } from "next/navigation";
 import Link from "next/link";
-import { Users } from "lucide-react";
+import { Users, CreditCard, CheckCircle } from "lucide-react";
 import { SettingsForm } from "./settings-form";
 import { CustomModelsTable } from "./custom-models-table";
 import { ChangePasswordForm } from "./change-password-form";
 import { can } from "@/lib/permissions";
+import { BillingCard } from "./billing-card";
 
-export default async function SettingsPage() {
+export default async function SettingsPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ checkout?: string }>;
+}) {
   const session = await auth();
   if (!session?.user?.organizationId) redirect("/login");
   const orgId = session.user.organizationId;
   const role = session.user.role;
   const isOwner = can.editOrgSettings(role);
+
+  const { checkout } = await searchParams;
 
   const [org] = await db
     .select({
@@ -34,6 +41,11 @@ export default async function SettingsPage() {
       vatRate: organizations.vatRate,
       telegramBotToken: organizations.telegramBotToken,
       telegramChatId: organizations.telegramChatId,
+      plan: organizations.plan,
+      subscriptionStatus: organizations.subscriptionStatus,
+      trialEndsAt: organizations.trialEndsAt,
+      stripeCustomerId: organizations.stripeCustomerId,
+      stripeSubscriptionId: organizations.stripeSubscriptionId,
     })
     .from(organizations)
     .where(eq(organizations.id, orgId))
@@ -60,10 +72,27 @@ export default async function SettingsPage() {
         </p>
       </div>
 
+      {/* Checkout success banner */}
+      {checkout === "success" && (
+        <div className="flex items-center gap-3 rounded-lg border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-800">
+          <CheckCircle className="h-5 w-5 shrink-0 text-green-600" />
+          <span>Pagamento confermato! Il tuo piano è ora attivo. Benvenuto!</span>
+        </div>
+      )}
+
       {isOwner && (
         <>
           <SettingsForm org={org} />
           {customModels.length > 0 && <CustomModelsTable models={customModels} />}
+
+          {/* Billing card */}
+          <BillingCard
+            plan={org.plan}
+            subscriptionStatus={org.subscriptionStatus}
+            trialEndsAt={org.trialEndsAt ? org.trialEndsAt.toISOString() : null}
+            hasStripeCustomer={!!org.stripeCustomerId}
+            hasStripeSubscription={!!org.stripeSubscriptionId}
+          />
 
           {/* Team management link */}
           <div className="rounded-lg border p-4 flex items-center justify-between">

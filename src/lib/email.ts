@@ -199,6 +199,54 @@ export async function sendApprovalEmail({
   }
 }
 
+export async function sendNewSubscriptionEmail({
+  shopName,
+  ownerEmail,
+  plan,
+  orgId,
+}: {
+  shopName: string;
+  ownerEmail: string;
+  plan: string;
+  orgId: string;
+}) {
+  const transport = getTransport();
+  const adminEmail = process.env.ADMIN_EMAIL;
+  if (!transport || !adminEmail) return { ok: false, error: "SMTP o ADMIN_EMAIL non configurati" };
+
+  const appUrl = process.env.APP_URL ?? "https://app.my-repair.it";
+  const orgUrl = `${appUrl}/admin/orgs/${orgId}`;
+  const planLabel = plan.charAt(0).toUpperCase() + plan.slice(1);
+
+  const html = `${BASE_HEADER("Nuovo abbonamento attivato")}
+    <p style="margin:0 0 16px;font-size:15px;color:#1e293b">Un nuovo abbonamento è stato attivato:</p>
+    <table style="width:100%;border-collapse:collapse;margin:0 0 24px;font-size:14px">
+      <tr><td style="padding:8px 12px;background:#f8fafc;font-weight:600;color:#475569;border-radius:6px 0 0 0;width:140px">Negozio</td>
+          <td style="padding:8px 12px;color:#1e293b">${shopName}</td></tr>
+      <tr><td style="padding:8px 12px;background:#f8fafc;font-weight:600;color:#475569">Email</td>
+          <td style="padding:8px 12px;color:#1e293b">${ownerEmail}</td></tr>
+      <tr><td style="padding:8px 12px;background:#f8fafc;font-weight:600;color:#475569;border-radius:0 0 0 6px">Piano</td>
+          <td style="padding:8px 12px;color:#0D8F7A;font-weight:700">${planLabel}</td></tr>
+    </table>
+    <a href="${orgUrl}" style="display:inline-block;background:#0D8F7A;color:#fff;text-decoration:none;font-weight:600;font-size:14px;padding:12px 24px;border-radius:8px">
+      Visualizza organizzazione →
+    </a>
+  ${BASE_FOOTER}`;
+
+  try {
+    await transport.sendMail({
+      from: process.env.EMAIL_FROM ?? "My-Repair <noreply@my-repair.it>",
+      to: adminEmail,
+      subject: `Nuovo abbonamento ${planLabel}: ${shopName}`,
+      html,
+    });
+    return { ok: true };
+  } catch (err) {
+    console.error("[email]", err);
+    return { ok: false, error: String(err) };
+  }
+}
+
 export async function sendRejectionEmail({
   to,
   name,

@@ -13,7 +13,7 @@ import {
 } from "drizzle-orm/pg-core";
 import { relations } from "drizzle-orm";
 
-export const planEnum = pgEnum("plan", ["start", "pro", "business"]);
+export const planEnum = pgEnum("plan", ["start", "pro", "business", "gift"]);
 export const subscriptionStatusEnum = pgEnum("subscription_status", [
   "trial",
   "active",
@@ -69,6 +69,9 @@ export const organizations = pgTable("organizations", {
   rejectionReason: text("rejection_reason"),
   subscriptionStatus: subscriptionStatusEnum("subscription_status").notNull().default("trial"),
   trialEndsAt: timestamp("trial_ends_at"),
+  stripeCustomerId: varchar("stripe_customer_id", { length: 255 }),
+  stripeSubscriptionId: varchar("stripe_subscription_id", { length: 255 }),
+  stripePriceId: varchar("stripe_price_id", { length: 255 }),
   onboardingCompletedAt: timestamp("onboarding_completed_at"),
   createdAt: timestamp("created_at").notNull().defaultNow(),
   updatedAt: timestamp("updated_at").notNull().defaultNow(),

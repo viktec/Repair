@@ -11,20 +11,50 @@ export default async function AppLayout({ children }: { children: React.ReactNod
 
   const orgId = session.user.organizationId;
   if (!orgId) {
-    // super admin non ha org: il middleware dovrebbe già bloccarlo, ma per sicurezza
     redirect(session.user.isSuperAdmin ? "/admin" : "/login");
   }
 
   const [org] = await db
-    .select({ registrationStatus: organizations.registrationStatus })
+    .select({
+      registrationStatus: organizations.registrationStatus,
+      plan: organizations.plan,
+      subscriptionStatus: organizations.subscriptionStatus,
+      trialEndsAt: organizations.trialEndsAt,
+      stripeCustomerId: organizations.stripeCustomerId,
+    })
     .from(organizations)
     .where(eq(organizations.id, orgId))
     .limit(1);
 
   if (!org || org.registrationStatus !== "approved") redirect("/pending");
 
+  const now = Date.now();
+  const isTrialExpired =
+    org.subscriptionStatus === "trial" &&
+    org.trialEndsAt !== null &&
+    new Date(org.trialEndsAt).getTime() < now;
+
+  const isBlocked = isTrialExpired || org.subscriptionStatus === "canceled";
+  if (isBlocked && org.plan !== "gift") redirect("/upgrade");
+
+  const trialDaysLeft =
+    org.subscriptionStatus === "trial" && org.trialEndsAt
+      ? Math.max(0, Math.ceil((new Date(org.trialEndsAt).getTime() - now) / (1000 * 60 * 60 * 24)))
+      : null;
+
+  const isPastDue = org.subscriptionStatus === "past_due";
+
   return (
-    <AppShell userName={session.user.name} userEmail={session.user.email} role={session.user.role}>
+    <AppShell
+      userName={session.user.name}
+      userEmail={session.user.email}
+      role={session.user.role}
+      plan={org.plan}
+      subscriptionStatus={org.subscriptionStatus}
+      trialDaysLeft={trialDaysLeft}
+      isPastDue={isPastDue}
+      hasStripeCustomer={!!org.stripeCustomerId}
+    >
       {children}
     </AppShell>
   );

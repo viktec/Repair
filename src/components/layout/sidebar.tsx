@@ -15,9 +15,10 @@ import {
   ShoppingCart,
   Truck,
   BookOpen,
+  Gift,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { can, type Role } from "@/lib/permissions";
+import { can } from "@/lib/permissions";
 
 type NavItem = {
   href: string;
@@ -39,9 +40,27 @@ const navItems: NavItem[] = [
   { href: "/settings",   icon: Settings,        label: "Impostazioni",    visible: () => true },
 ];
 
-export function Sidebar({ role }: { role?: string | null }) {
+const PLAN_LABELS: Record<string, string> = {
+  start: "Start",
+  pro: "Pro",
+  business: "Business",
+  gift: "Omaggio",
+};
+
+export function Sidebar({
+  role,
+  plan,
+  subscriptionStatus,
+  trialDaysLeft,
+}: {
+  role?: string | null;
+  plan?: string | null;
+  subscriptionStatus?: string | null;
+  trialDaysLeft?: number | null;
+}) {
   const pathname = usePathname();
   const visibleItems = navItems.filter((item) => item.visible(role));
+  const planLabel = PLAN_LABELS[plan ?? "start"] ?? plan ?? "Start";
 
   return (
     <aside className="flex h-full w-60 flex-col border-r bg-white">
@@ -75,11 +94,87 @@ export function Sidebar({ role }: { role?: string | null }) {
       </nav>
 
       <div className="border-t p-3">
-        <div className="rounded-md bg-primary/5 p-3 text-xs text-muted-foreground">
-          <p className="font-medium text-foreground">Piano Solo</p>
-          <p className="mt-0.5">Trial — 14 giorni rimasti</p>
-        </div>
+        <PlanWidget
+          plan={plan ?? "start"}
+          planLabel={planLabel}
+          subscriptionStatus={subscriptionStatus ?? "trial"}
+          trialDaysLeft={trialDaysLeft ?? null}
+        />
       </div>
     </aside>
+  );
+}
+
+function PlanWidget({
+  plan,
+  planLabel,
+  subscriptionStatus,
+  trialDaysLeft,
+}: {
+  plan: string;
+  planLabel: string;
+  subscriptionStatus: string;
+  trialDaysLeft: number | null;
+}) {
+  if (subscriptionStatus === "trial") {
+    const days = trialDaysLeft ?? 0;
+    const pct = Math.max(0, Math.min(100, (days / 14) * 100));
+    const barColor = days <= 2 ? "bg-red-500" : days <= 5 ? "bg-amber-500" : "bg-primary";
+    const textColor = days <= 2 ? "text-red-600" : days <= 5 ? "text-amber-600" : "text-muted-foreground";
+
+    return (
+      <Link href="/upgrade" className="block rounded-md bg-primary/5 p-3 hover:bg-primary/10 transition-colors">
+        <div className="flex items-center justify-between">
+          <p className="text-xs font-semibold text-foreground">Piano {planLabel}</p>
+          <span className="text-[10px] font-medium text-amber-600 bg-amber-100 rounded-full px-1.5 py-0.5">Trial</span>
+        </div>
+        <div className="mt-2 w-full bg-slate-200 rounded-full h-1">
+          <div className={`h-1 rounded-full transition-all ${barColor}`} style={{ width: `${pct}%` }} />
+        </div>
+        <p className={`mt-1.5 text-[10px] ${textColor}`}>
+          {days === 0 ? "Scade oggi — attiva il piano" : `${days} ${days === 1 ? "giorno" : "giorni"} al termine`}
+        </p>
+      </Link>
+    );
+  }
+
+  if (subscriptionStatus === "active") {
+    if (plan === "gift") {
+      return (
+        <div className="rounded-md bg-primary/5 p-3">
+          <div className="flex items-center gap-1.5">
+            <Gift className="h-3 w-3 text-primary" />
+            <p className="text-xs font-semibold text-foreground">Piano {planLabel}</p>
+          </div>
+          <p className="mt-1 text-[10px] text-primary font-medium">Attivo</p>
+        </div>
+      );
+    }
+    return (
+      <Link href="/upgrade" className="block rounded-md bg-primary/5 p-3 hover:bg-primary/10 transition-colors">
+        <div className="flex items-center justify-between">
+          <p className="text-xs font-semibold text-foreground">Piano {planLabel}</p>
+          <span className="inline-block h-2 w-2 rounded-full bg-green-500" />
+        </div>
+        <p className="mt-1 text-[10px] text-muted-foreground">Abbonamento attivo</p>
+      </Link>
+    );
+  }
+
+  if (subscriptionStatus === "past_due") {
+    return (
+      <Link href="/upgrade" className="block rounded-md bg-amber-50 border border-amber-200 p-3 hover:bg-amber-100 transition-colors">
+        <p className="text-xs font-semibold text-amber-800">Piano {planLabel}</p>
+        <p className="mt-1 text-[10px] text-amber-700">Pagamento in sospeso</p>
+      </Link>
+    );
+  }
+
+  // canceled or unknown
+  return (
+    <Link href="/upgrade" className="block rounded-md bg-red-50 border border-red-200 p-3 hover:bg-red-100 transition-colors">
+      <p className="text-xs font-semibold text-red-800">Piano {planLabel}</p>
+      <p className="mt-1 text-[10px] text-red-700">Abbonamento non attivo</p>
+    </Link>
   );
 }

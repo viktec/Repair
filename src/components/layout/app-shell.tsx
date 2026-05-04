@@ -2,20 +2,31 @@
 
 import { useState, useEffect } from "react";
 import { usePathname } from "next/navigation";
-import { Menu } from "lucide-react";
+import { Menu, AlertTriangle, Clock } from "lucide-react";
 import { Sidebar } from "./sidebar";
 import { UserMenu } from "./user-menu";
+import Link from "next/link";
 
 export function AppShell({
   children,
   userName,
   userEmail,
   role,
+  plan,
+  subscriptionStatus,
+  trialDaysLeft,
+  isPastDue,
+  hasStripeCustomer,
 }: {
   children: React.ReactNode;
   userName?: string | null;
   userEmail?: string | null;
   role?: string | null;
+  plan?: string | null;
+  subscriptionStatus?: string | null;
+  trialDaysLeft?: number | null;
+  isPastDue?: boolean;
+  hasStripeCustomer?: boolean;
 }) {
   const [open, setOpen] = useState(false);
   const pathname = usePathname();
@@ -40,7 +51,7 @@ export function AppShell({
           open ? "translate-x-0" : "-translate-x-full lg:translate-x-0"
         }`}
       >
-        <Sidebar role={role} />
+        <Sidebar role={role} plan={plan} subscriptionStatus={subscriptionStatus} trialDaysLeft={trialDaysLeft} />
       </div>
 
       {/* Main */}
@@ -56,8 +67,64 @@ export function AppShell({
           <div className="hidden lg:block" />
           <UserMenu name={userName} email={userEmail} />
         </header>
+
+        {/* Trial banner */}
+        {trialDaysLeft !== null && trialDaysLeft !== undefined && (
+          <div className="flex items-center justify-between gap-3 bg-amber-50 border-b border-amber-200 px-4 py-2 text-sm text-amber-800">
+            <div className="flex items-center gap-2">
+              <Clock className="h-4 w-4 shrink-0" />
+              <span>
+                {trialDaysLeft === 0
+                  ? "Il tuo trial scade oggi."
+                  : `${trialDaysLeft} ${trialDaysLeft === 1 ? "giorno" : "giorni"} al termine del trial.`}
+              </span>
+            </div>
+            <Link href="/upgrade" className="font-semibold underline underline-offset-2 shrink-0">
+              Attiva piano →
+            </Link>
+          </div>
+        )}
+
+        {/* Past-due banner */}
+        {isPastDue && (
+          <div className="flex items-center justify-between gap-3 bg-red-50 border-b border-red-200 px-4 py-2 text-sm text-red-800">
+            <div className="flex items-center gap-2">
+              <AlertTriangle className="h-4 w-4 shrink-0" />
+              <span>Pagamento fallito. Aggiorna il metodo di pagamento per continuare.</span>
+            </div>
+            {hasStripeCustomer && (
+              <PortalButton />
+            )}
+          </div>
+        )}
+
         <main className="flex-1 overflow-y-auto p-4 lg:p-6">{children}</main>
       </div>
     </div>
+  );
+}
+
+function PortalButton() {
+  const [loading, setLoading] = useState(false);
+
+  async function handleClick() {
+    setLoading(true);
+    try {
+      const res = await fetch("/api/stripe/portal", { method: "POST" });
+      const data = await res.json();
+      if (data.url) window.location.href = data.url;
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  return (
+    <button
+      onClick={handleClick}
+      disabled={loading}
+      className="font-semibold underline underline-offset-2 shrink-0 disabled:opacity-50"
+    >
+      {loading ? "Caricamento..." : "Gestisci pagamento →"}
+    </button>
   );
 }
