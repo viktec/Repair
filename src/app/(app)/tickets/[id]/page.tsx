@@ -18,6 +18,7 @@ import { ensureDefaultStatuses } from "@/lib/seed-statuses";
 import { TicketPartsSection } from "./parts-section";
 import { CostEditor } from "./cost-editor";
 import { RepairNotesEditor } from "./repair-notes-editor";
+import { can } from "@/lib/permissions";
 
 export default async function TicketDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -216,7 +217,7 @@ export default async function TicketDetailPage({ params }: { params: Promise<{ i
               <span className="hidden sm:inline">Modifica</span>
             </Button>
           </Link>
-          <DeleteTicketButton ticketId={ticket.id} />
+          {can.delete(session.user.role) && <DeleteTicketButton ticketId={ticket.id} />}
         </div>
       </div>
 

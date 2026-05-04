@@ -4,7 +4,7 @@ import { customers, tickets } from "@/db/schema";
 import { eq, count } from "drizzle-orm";
 import { redirect } from "next/navigation";
 import Link from "next/link";
-import { Plus, Users, Phone, Mail, Ticket } from "lucide-react";
+import { Plus, Users, Phone, Mail, Ticket, Download } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { formatDate } from "@/lib/utils";
@@ -37,12 +37,20 @@ export default async function CustomersPage() {
             {rows.length} {rows.length === 1 ? "cliente" : "clienti"} registrati
           </p>
         </div>
-        <Link href="/customers/new">
-          <Button className="gap-2 w-full sm:w-auto">
-            <Plus className="h-4 w-4" />
-            Nuovo cliente
-          </Button>
-        </Link>
+        <div className="flex gap-2">
+          <a href="/api/customers/export-csv" download>
+            <Button variant="outline" className="gap-1.5">
+              <Download className="h-4 w-4" />
+              <span className="hidden sm:inline">CSV</span>
+            </Button>
+          </a>
+          <Link href="/customers/new">
+            <Button className="gap-2 w-full sm:w-auto">
+              <Plus className="h-4 w-4" />
+              Nuovo cliente
+            </Button>
+          </Link>
+        </div>
       </div>
 
       {rows.length === 0 ? (
@@ -78,7 +86,11 @@ export default async function CustomersPage() {
             <tbody>
               {rows.map((c) => (
                 <tr key={c.id} className="border-b last:border-0 hover:bg-slate-50/50">
-                  <td className="px-4 py-3 font-medium text-foreground">{c.name}</td>
+                  <td className="px-4 py-3 font-medium text-foreground">
+                    <Link href={`/customers/${c.id}`} className="hover:text-primary hover:underline">
+                      {c.name}
+                    </Link>
+                  </td>
                   <td className="px-4 py-3 text-muted-foreground">
                     <div className="flex flex-col gap-0.5">
                       {c.phone && (
@@ -105,10 +117,8 @@ export default async function CustomersPage() {
                     {formatDate(c.createdAt)}
                   </td>
                   <td className="px-4 py-3 text-right">
-                    <Link href={`/tickets?customer=${c.id}`}>
-                      <Button variant="outline" size="sm">
-                        Ticket
-                      </Button>
+                    <Link href={`/customers/${c.id}`}>
+                      <Button variant="outline" size="sm">Dettaglio</Button>
                     </Link>
                   </td>
                 </tr>

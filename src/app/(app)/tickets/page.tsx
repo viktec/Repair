@@ -105,10 +105,16 @@ export default async function TicketsPage({
           <Suspense>
             <ViewToggle current={isKanban ? "kanban" : "list"} />
           </Suspense>
+          <a href="/api/tickets/export-csv" download>
+            <Button variant="outline" className="gap-1.5">
+              <Download className="h-4 w-4" />
+              <span className="hidden sm:inline">CSV</span>
+            </Button>
+          </a>
           <a href={`/api/tickets/export${year ? `?year=${year}` : ""}`} download>
             <Button variant="outline" className="gap-1.5">
               <Download className="h-4 w-4" />
-              <span className="hidden sm:inline">Esporta ZIP</span>
+              <span className="hidden sm:inline">ZIP</span>
             </Button>
           </a>
           <Link href="/tickets/new">

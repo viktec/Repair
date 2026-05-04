@@ -5,7 +5,7 @@ import { eq, desc } from "drizzle-orm";
 import { redirect } from "next/navigation";
 import { can } from "@/lib/permissions";
 import Link from "next/link";
-import { Plus, BookOpen } from "lucide-react";
+import { Plus, BookOpen, Download } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { formatCurrency } from "@/lib/utils";
@@ -37,9 +37,17 @@ export default async function RegistryPage() {
             Registro acquisto/vendita articoli usati (Art. 126-128 TULPS)
           </p>
         </div>
-        <Link href="/registry/new">
-          <Button className="gap-2 w-full sm:w-auto"><Plus className="h-4 w-4" />Nuova registrazione</Button>
-        </Link>
+        <div className="flex gap-2">
+          <a href="/api/registry/export-csv" download>
+            <Button variant="outline" className="gap-1.5">
+              <Download className="h-4 w-4" />
+              <span className="hidden sm:inline">Esporta CSV</span>
+            </Button>
+          </a>
+          <Link href="/registry/new">
+            <Button className="gap-2 w-full sm:w-auto"><Plus className="h-4 w-4" />Nuova registrazione</Button>
+          </Link>
+        </div>
       </div>
 
       <div className="rounded-md border bg-amber-50 border-amber-200 px-4 py-3 text-sm text-amber-800">

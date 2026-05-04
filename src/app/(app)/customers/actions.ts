@@ -75,6 +75,29 @@ export async function createCustomerInlineAction(data: {
   return created;
 }
 
+export async function updateCustomerAction(customerId: string, formData: FormData) {
+  const session = await auth();
+  if (!session?.user?.organizationId) redirect("/login");
+
+  const parsed = customerSchema.safeParse(Object.fromEntries(formData));
+  if (!parsed.success) return;
+
+  const { name, phone, email, notes } = parsed.data;
+
+  await db
+    .update(customers)
+    .set({
+      name,
+      phone: phone || null,
+      email: email || null,
+      notes: notes || null,
+    })
+    .where(and(eq(customers.id, customerId), eq(customers.organizationId, session.user.organizationId)));
+
+  revalidatePath("/customers");
+  revalidatePath(`/customers/${customerId}`);
+}
+
 export async function deleteCustomerAction(customerId: string) {
   const session = await auth();
   if (!session?.user?.organizationId) redirect("/login");
