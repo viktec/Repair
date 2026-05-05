@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useRef, useTransition } from "react";
-import { Loader2, Send, Paperclip, X, CheckCircle2 } from "lucide-react";
+import { Loader2, Send, Paperclip, X, CheckCircle2, Clock } from "lucide-react";
 
 type Props = {
   token: string;
@@ -82,7 +82,16 @@ export function ClientPortalForm({ token, primaryColor }: Props) {
 
   return (
     <div className="rounded-2xl bg-white p-5 shadow-sm">
-      <p className="mb-4 text-sm font-semibold text-foreground">Apri nuova richiesta</p>
+      <p className="mb-3 text-sm font-semibold text-foreground">Apri nuova richiesta</p>
+
+      <div className="mb-4 flex items-start gap-2.5 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2.5">
+        <Clock className="mt-0.5 h-4 w-4 shrink-0 text-amber-600" />
+        <p className="text-xs text-amber-800 leading-relaxed">
+          Le richieste vengono prese in carico entro <strong>24–72 ore</strong> dalla ricezione.
+          Il primo tecnico disponibile ti contatterà per procedere con l&apos;assistenza.
+        </p>
+      </div>
+
       <form onSubmit={handleSubmit} className="space-y-3">
         {/* Titolo */}
         <div className="space-y-1.5">
