@@ -18,7 +18,8 @@ export default async function EditInterventionPage({
   if (!session?.user?.organizationId) redirect("/login");
 
   const role = session.user.role ?? "";
-  if (!["admin", "owner"].includes(role)) redirect(`/support/interventions/${id}`);
+  const canEdit = session.user.isSuperAdmin || ["admin", "owner"].includes(role);
+  if (!canEdit) redirect(`/support/interventions/${id}`);
 
   const orgId = session.user.organizationId;
 

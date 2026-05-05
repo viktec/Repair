@@ -24,8 +24,8 @@ const createSchema = z.object({
   description: z.string().optional(),
   notes: z.string().optional(),
   type: z.enum(["onsite", "remote", "phone", "email", "lab", "other"]),
-  isUrgent: z.coerce.boolean(),
-  applyCallFee: z.coerce.boolean(),
+  isUrgent: z.string().optional().transform(v => v === "true"),
+  applyCallFee: z.string().optional().transform(v => v === "true"),
   rawMinutes: z.coerce.number().int().min(1, "Durata obbligatoria"),
   occurredAt: z.string().optional(),
 });
@@ -173,8 +173,8 @@ const updateSchema = z.object({
   description: z.string().optional(),
   notes: z.string().optional(),
   type: z.enum(["onsite", "remote", "phone", "email", "lab", "other"]),
-  isUrgent: z.coerce.boolean(),
-  applyCallFee: z.coerce.boolean(),
+  isUrgent: z.string().optional().transform(v => v === "true"),
+  applyCallFee: z.string().optional().transform(v => v === "true"),
   rawMinutes: z.coerce.number().int().min(1, "Durata obbligatoria"),
   occurredAt: z.string().optional(),
 });
@@ -191,7 +191,7 @@ export async function updateInterventionAction(
   const orgId = session.user.organizationId;
 
   const role = session.user.role ?? "";
-  if (!["admin", "owner"].includes(role)) return { error: "Non autorizzato" };
+  if (!session.user.isSuperAdmin && !["admin", "owner"].includes(role)) return { error: "Non autorizzato" };
 
   const raw = Object.fromEntries(formData);
   raw.isUrgent = raw.isUrgent === "on" ? "true" : "false";
@@ -299,7 +299,7 @@ export async function deleteInterventionAction(
   const orgId = session.user.organizationId;
 
   const role = session.user.role ?? "";
-  if (!["admin", "owner"].includes(role)) return { error: "Non autorizzato" };
+  if (!session.user.isSuperAdmin && !["admin", "owner"].includes(role)) return { error: "Non autorizzato" };
 
   const [intervention] = await db
     .select({
