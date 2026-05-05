@@ -287,28 +287,17 @@ export default async function ClientPortalPage({
         )}
 
         {/* Contatti */}
-        {(org?.phone || org?.email) && (
+        {org?.phone && (
           <div className="rounded-2xl bg-white p-5 shadow-sm">
             <p className="mb-2 text-sm font-semibold text-foreground">Contatti</p>
             <div className="space-y-1.5 text-sm text-muted-foreground">
-              {org.phone && (
-                <a
-                  href={`tel:${org.phone}`}
-                  className="block font-medium"
-                  style={{ color: primaryColor }}
-                >
-                  {org.phone}
-                </a>
-              )}
-              {org.email && (
-                <a
-                  href={`mailto:${org.email}`}
-                  className="block"
-                  style={{ color: primaryColor }}
-                >
-                  {org.email}
-                </a>
-              )}
+              <a
+                href={`tel:${org.phone}`}
+                className="block font-medium"
+                style={{ color: primaryColor }}
+              >
+                {org.phone}
+              </a>
             </div>
           </div>
         )}
