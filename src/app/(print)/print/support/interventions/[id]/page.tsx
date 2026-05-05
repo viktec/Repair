@@ -120,7 +120,6 @@ export default async function PrintVerbale({
       city: organizations.city,
       postalCode: organizations.postalCode,
       phone: organizations.phone,
-      email: organizations.email,
       brandingLogoUrl: organizations.brandingLogoUrl,
       brandingPrimaryColor: organizations.brandingPrimaryColor,
     })
@@ -452,8 +451,6 @@ export default async function PrintVerbale({
           </p>
           <p style={{ margin: 0, color: "#777" }}>
             {org?.phone && <>CONTATTI: {org.phone}</>}
-            {org?.phone && org?.email && <>&nbsp;&nbsp;|&nbsp;&nbsp;</>}
-            {org?.email && <>EMAIL: {org.email}</>}
           </p>
         </div>
 
