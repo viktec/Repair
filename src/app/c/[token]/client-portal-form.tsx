@@ -6,12 +6,11 @@ import { Loader2, Send, Paperclip, X, CheckCircle2, Clock, Zap } from "lucide-re
 type Props = {
   token: string;
   primaryColor: string;
-  urgencySurchargePercent: number;
 };
 
 type SuccessResult = { interventionId: string; interventionNumber: string };
 
-export function ClientPortalForm({ token, primaryColor, urgencySurchargePercent }: Props) {
+export function ClientPortalForm({ token, primaryColor }: Props) {
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [isUrgent, setIsUrgent] = useState(false);
@@ -146,13 +145,11 @@ export function ClientPortalForm({ token, primaryColor, urgencySurchargePercent 
           {isUrgent ? (
             <div className="ml-7 rounded-md bg-amber-50 border border-amber-200 px-2.5 py-2 text-xs text-amber-800 leading-relaxed">
               <strong>Presa in carico entro 24 ore.</strong>
-              {urgencySurchargePercent > 0
-                ? ` Le ore di intervento verranno maggiorate del ${urgencySurchargePercent}% per la gestione urgente.`
-                : " Comporta una maggiorazione sulle ore di intervento."}
+              {" "}Le ore di intervento verranno conteggiate con una maggiorazione per la gestione urgente.
             </div>
           ) : (
             <p className="ml-7 text-xs text-muted-foreground">
-              Spunta solo se il problema blocca l&apos;operatività. Le richieste urgenti hanno una maggiorazione{urgencySurchargePercent > 0 ? ` del ${urgencySurchargePercent}%` : ""} sulle ore.
+              Spunta solo se il problema blocca l&apos;operatività. Le richieste urgenti comportano una maggiorazione sulle ore.
             </p>
           )}
         </div>

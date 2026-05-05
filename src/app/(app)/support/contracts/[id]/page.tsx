@@ -1,6 +1,6 @@
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
-import { customerContracts, customers, supportPackages, supportInterventions, contractCheckVisits } from "@/db/schema";
+import { customerContracts, customers, supportPackages, supportInterventions, contractCheckVisits, organizations } from "@/db/schema";
 import { eq, and, desc } from "drizzle-orm";
 import { redirect, notFound } from "next/navigation";
 import Link from "next/link";
@@ -12,7 +12,7 @@ import { formatMinutes } from "@/lib/support-utils";
 import { formatDate } from "@/lib/utils";
 import { hasMinRole } from "@/lib/permissions";
 import { ContractActions } from "./contract-actions";
-import { CopyLinkButton } from "./copy-link-button";
+import { CopyLinkButton, WhatsAppContractButton } from "./copy-link-button";
 import { VisitCard } from "./visit-actions";
 
 const STATUS_LABELS: Record<string, string> = {
@@ -65,10 +65,12 @@ export default async function ContractDetailPage({ params }: { params: Promise<{
       notes: customerContracts.notes,
       customerName: customers.name,
       packageName: supportPackages.name,
+      orgName: organizations.name,
     })
     .from(customerContracts)
     .innerJoin(customers, eq(customers.id, customerContracts.customerId))
     .leftJoin(supportPackages, eq(supportPackages.id, customerContracts.packageId))
+    .innerJoin(organizations, eq(organizations.id, customerContracts.organizationId))
     .where(and(eq(customerContracts.id, id), eq(customerContracts.organizationId, orgId)))
     .limit(1);
 
@@ -195,6 +197,12 @@ export default async function ContractDetailPage({ params }: { params: Promise<{
                   </Button>
                 </a>
               </div>
+              <WhatsAppContractButton
+                customerName={contract.customerName}
+                contractNumber={contract.contractNumber}
+                orgName={contract.orgName}
+                portalUrl={portalUrl}
+              />
             </CardContent>
           </Card>
 
