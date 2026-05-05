@@ -37,6 +37,7 @@ type Props = {
     rawMinutes: number;
     startTime: Date | string | null;
     location: string | null;
+    technicianName: string | null;
   };
   packageSnapshot: PackageSnapshot | null;
   contractRemainingMinutes: number;
@@ -158,12 +159,14 @@ export function InterventionEditForm({
           id="rawMinutes"
           name="rawMinutes"
           type="number"
-          min={1}
+          min={0}
           step={1}
           value={rawMinutes}
-          onChange={(e) => setRawMinutes(Math.max(1, parseInt(e.target.value) || 1))}
-          required
+          onChange={(e) => setRawMinutes(Math.max(0, parseInt(e.target.value) || 0))}
         />
+        {rawMinutes === 0 && (
+          <p className="text-xs text-amber-600">0 minuti — nessuna ora verrà scalata dal contratto.</p>
+        )}
         {errors.rawMinutes && <p className="text-xs text-destructive">{errors.rawMinutes[0]}</p>}
       </div>
 
@@ -201,6 +204,12 @@ export function InterventionEditForm({
           )}
         </div>
       )}
+
+      {/* Tecnico */}
+      <div className="space-y-2">
+        <Label htmlFor="technicianName">Tecnico</Label>
+        <Input id="technicianName" name="technicianName" defaultValue={defaultValues.technicianName ?? ""} placeholder="Nome del tecnico che ha eseguito l'intervento" maxLength={100} />
+      </div>
 
       {/* Data/ora */}
       <div className="space-y-2">

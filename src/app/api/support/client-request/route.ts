@@ -103,6 +103,7 @@ export async function POST(req: NextRequest) {
       status: "open",
       openedBy: "client",
       photos: uploadedKeys,
+      clientSignatureToken: randomUUID().replace(/-/g, ""),
     })
     .returning({ id: supportInterventions.id });
 

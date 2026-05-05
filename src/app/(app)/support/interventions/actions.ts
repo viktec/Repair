@@ -180,9 +180,10 @@ const updateSchema = z.object({
   type: z.enum(["onsite", "remote", "phone", "email", "lab", "other"]),
   isUrgent: z.string().optional().transform(v => v === "true"),
   applyCallFee: z.string().optional().transform(v => v === "true"),
-  rawMinutes: z.coerce.number().int().min(1, "Durata obbligatoria"),
+  rawMinutes: z.coerce.number().int().min(0),
   occurredAt: z.string().optional(),
   location: z.string().max(200).optional(),
+  technicianName: z.string().max(100).optional(),
 });
 
 export type UpdateInterventionState = { errors?: Record<string, string[]>; error?: string } | null;
@@ -205,13 +206,14 @@ export async function updateInterventionAction(
   const parsed = updateSchema.safeParse(raw);
   if (!parsed.success) return { errors: parsed.error.flatten().fieldErrors };
 
-  const { title, description, notes, type, isUrgent, applyCallFee, rawMinutes, occurredAt, location } = parsed.data;
+  const { title, description, notes, type, isUrgent, applyCallFee, rawMinutes, occurredAt, location, technicianName } = parsed.data;
 
   const [intervention] = await db
     .select({
       id: supportInterventions.id,
       contractId: supportInterventions.contractId,
       billableMinutes: supportInterventions.billableMinutes,
+      clientSignatureToken: supportInterventions.clientSignatureToken,
     })
     .from(supportInterventions)
     .where(and(eq(supportInterventions.id, id), eq(supportInterventions.organizationId, orgId)))
@@ -257,6 +259,11 @@ export async function updateInterventionAction(
       rawMinutes,
       billableMinutes: newBillable,
       location: location || null,
+      technicianName: technicianName || null,
+      // genera token se mancante (interventi creati dal cliente prima di questa versione)
+      ...(!intervention.clientSignatureToken
+        ? { clientSignatureToken: randomUUID().replace(/-/g, "") }
+        : {}),
       ...(occurredAt
         ? {
             startTime: new Date(occurredAt),
