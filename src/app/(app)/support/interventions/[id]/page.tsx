@@ -15,7 +15,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { formatDate } from "@/lib/utils";
-import { formatMinutes, roundUp, type PackageSnapshot } from "@/lib/support-utils";
+import { formatMinutes, calcBillableBreakdown, type PackageSnapshot } from "@/lib/support-utils";
 import { getPresignedDownloadUrl } from "@/lib/storage";
 import { InterventionMessage } from "./intervention-message";
 import { StatusButton } from "./status-button";
@@ -70,6 +70,7 @@ export default async function InterventionDetailPage({
       clientPortalToken: customerContracts.clientPortalToken,
       customerId: customerContracts.customerId,
       packageId: customerContracts.packageId,
+      packageSnapshot: customerContracts.packageSnapshot,
     })
     .from(customerContracts)
     .where(eq(customerContracts.id, intervention.contractId))
@@ -88,6 +89,20 @@ export default async function InterventionDetailPage({
     .from(organizations)
     .where(eq(organizations.id, orgId))
     .limit(1);
+
+  const snap = (contract.packageSnapshot as PackageSnapshot | null) ?? {
+    phoneRoundingMinutes: 5,
+    remoteRoundingMinutes: 10,
+    emailRoundingMinutes: 10,
+    callFeeMinutes: 10,
+    urgencySurchargePercent: 0,
+  };
+  const breakdown = calcBillableBreakdown(
+    intervention.rawMinutes,
+    intervention.type,
+    snap,
+    intervention.isUrgent,
+  );
 
   const appUrl = process.env.APP_URL ?? "https://app.my-repair.it";
   const portalUrl = `${appUrl}/c/${contract.clientPortalToken}`;
@@ -200,14 +215,32 @@ ${org?.phone ?? ""}`.trim();
                   </Badge>
                 )}
               </div>
-              <div className="border-t pt-3 space-y-1">
+              <div className="border-t pt-3 space-y-1.5 text-xs">
                 <div className="flex justify-between">
-                  <span className="text-muted-foreground">Minuti effettivi</span>
-                  <span className="font-medium">{formatMinutes(intervention.rawMinutes)}</span>
+                  <span className="text-muted-foreground">Tempo effettivo</span>
+                  <span className="font-medium">{formatMinutes(breakdown.raw)}</span>
                 </div>
-                <div className="flex justify-between">
-                  <span className="text-muted-foreground">Minuti fatturati</span>
-                  <span className="font-bold text-primary">{billableFormatted}</span>
+                {breakdown.roundingStep > 0 && breakdown.rounded !== breakdown.raw && (
+                  <div className="flex justify-between text-amber-700">
+                    <span>Arrotondamento (ogni {breakdown.roundingStep} min)</span>
+                    <span>→ {formatMinutes(breakdown.rounded)}</span>
+                  </div>
+                )}
+                {breakdown.callFee > 0 && (
+                  <div className="flex justify-between text-amber-700">
+                    <span>Dir. chiamata/connessione</span>
+                    <span>+{formatMinutes(breakdown.callFee)}</span>
+                  </div>
+                )}
+                {breakdown.urgencyAdd > 0 && (
+                  <div className="flex justify-between text-red-600">
+                    <span>Maggiorazione urgenza ({snap.urgencySurchargePercent}%)</span>
+                    <span>+{formatMinutes(breakdown.urgencyAdd)}</span>
+                  </div>
+                )}
+                <div className="flex justify-between border-t pt-1.5 mt-0.5">
+                  <span className="text-muted-foreground font-semibold">Totale scalato</span>
+                  <span className="font-bold text-primary text-sm">{billableFormatted}</span>
                 </div>
               </div>
             </CardContent>
