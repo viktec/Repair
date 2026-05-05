@@ -111,7 +111,8 @@ export default async function ContractDetailPage({ params }: { params: Promise<{
   const pct = contract.totalMinutes > 0 ? Math.max(0, (remaining / contract.totalMinutes) * 100) : 0;
   const now = new Date();
   const daysLeft = Math.ceil((new Date(contract.endDate).getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
-  const portalUrl = `${process.env.NEXT_PUBLIC_APP_URL ?? ""}/c/${contract.clientPortalToken}`;
+  const appUrl = process.env.APP_URL ?? process.env.NEXT_PUBLIC_APP_URL ?? "https://app.my-repair.it";
+  const portalUrl = `${appUrl}/c/${contract.clientPortalToken}`;
 
   const barColor = pct < 10 ? "bg-red-500" : pct < 25 ? "bg-amber-400" : "bg-primary";
 
