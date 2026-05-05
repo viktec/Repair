@@ -1,6 +1,6 @@
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
-import { customerContracts, customers, supportPackages, supportInterventions } from "@/db/schema";
+import { customerContracts, customers, supportPackages, supportInterventions, contractCheckVisits } from "@/db/schema";
 import { eq, and, desc } from "drizzle-orm";
 import { redirect, notFound } from "next/navigation";
 import Link from "next/link";
@@ -13,6 +13,7 @@ import { formatDate } from "@/lib/utils";
 import { hasMinRole } from "@/lib/permissions";
 import { ContractActions } from "./contract-actions";
 import { CopyLinkButton } from "./copy-link-button";
+import { VisitCard } from "./visit-actions";
 
 const STATUS_LABELS: Record<string, string> = {
   active: "Attivo",
@@ -88,6 +89,21 @@ export default async function ContractDetailPage({ params }: { params: Promise<{
     .where(and(eq(supportInterventions.contractId, id), eq(supportInterventions.organizationId, orgId)))
     .orderBy(desc(supportInterventions.createdAt))
     .limit(10);
+
+  const checkVisits = await db
+    .select({
+      id: contractCheckVisits.id,
+      status: contractCheckVisits.status,
+      preferredDate1: contractCheckVisits.preferredDate1,
+      preferredDate2: contractCheckVisits.preferredDate2,
+      scheduledAt: contractCheckVisits.scheduledAt,
+      clientNotes: contractCheckVisits.clientNotes,
+      adminNotes: contractCheckVisits.adminNotes,
+      createdAt: contractCheckVisits.createdAt,
+    })
+    .from(contractCheckVisits)
+    .where(and(eq(contractCheckVisits.contractId, id), eq(contractCheckVisits.organizationId, orgId)))
+    .orderBy(desc(contractCheckVisits.createdAt));
 
   const remaining = contract.totalMinutes - contract.usedMinutes;
   const pct = contract.totalMinutes > 0 ? Math.max(0, (remaining / contract.totalMinutes) * 100) : 0;
@@ -195,7 +211,7 @@ export default async function ContractDetailPage({ params }: { params: Promise<{
           )}
         </div>
 
-        {/* Right column — interventi */}
+        {/* Right column — interventi + visite */}
         <div className="lg:col-span-2 space-y-4">
           <div className="flex items-center justify-between">
             <h2 className="text-base font-semibold">Ultimi interventi</h2>
@@ -235,7 +251,11 @@ export default async function ContractDetailPage({ params }: { params: Promise<{
                       {interventions.map((iv) => (
                         <tr key={iv.id} className="border-b last:border-0 hover:bg-slate-50/50">
                           <td className="px-4 py-3 text-xs text-muted-foreground whitespace-nowrap">{formatDate(iv.createdAt)}</td>
-                          <td className="px-4 py-3 font-medium text-foreground max-w-[160px] truncate">{iv.title}</td>
+                          <td className="px-4 py-3 font-medium text-foreground max-w-[160px] truncate">
+                            <Link href={`/support/interventions/${iv.id}`} className="hover:underline">
+                              {iv.title}
+                            </Link>
+                          </td>
                           <td className="px-4 py-3 text-muted-foreground text-xs">{INTERVENTION_TYPE_LABELS[iv.type] ?? iv.type}</td>
                           <td className="px-4 py-3 text-muted-foreground text-xs">{iv.technicianName ?? "—"}</td>
                           <td className="px-4 py-3 text-right font-medium">{iv.billableMinutes}</td>
@@ -256,6 +276,23 @@ export default async function ContractDetailPage({ params }: { params: Promise<{
                 </div>
               </CardContent>
             </Card>
+          )}
+          {/* Visite di controllo */}
+          {checkVisits.length > 0 && (
+            <div className="space-y-3">
+              <h2 className="text-base font-semibold">Visite di controllo</h2>
+              <Card>
+                <CardContent className="p-4 space-y-2">
+                  {checkVisits.map((v) => (
+                    <VisitCard
+                      key={v.id}
+                      visit={v}
+                      customerName={contract.customerName}
+                    />
+                  ))}
+                </CardContent>
+              </Card>
+            </div>
           )}
         </div>
       </div>

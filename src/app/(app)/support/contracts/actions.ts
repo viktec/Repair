@@ -15,6 +15,9 @@ const contractSchema = z.object({
   packageId: z.string().min(1, "Seleziona un pacchetto"),
   startDate: z.string().min(1, "La data di inizio è obbligatoria"),
   endDate: z.string().min(1, "La data di fine è obbligatoria"),
+  freeVisitsEnabled: z.string().optional().transform(v => v === "on"),
+  freeVisitsPerPeriod: z.coerce.number().int().min(1).max(12).optional().default(1),
+  freeVisitPeriodMonths: z.coerce.number().int().min(1).max(12).optional().default(6),
   notes: z.string().optional(),
 });
 
@@ -36,7 +39,7 @@ export async function createContractAction(
   const parsed = contractSchema.safeParse(raw);
   if (!parsed.success) return { errors: parsed.error.flatten().fieldErrors };
 
-  const { customerId, packageId, startDate, endDate, notes } = parsed.data;
+  const { customerId, packageId, startDate, endDate, notes, freeVisitsEnabled, freeVisitsPerPeriod, freeVisitPeriodMonths } = parsed.data;
 
   const [pkg] = await db
     .select()
@@ -65,6 +68,9 @@ export async function createContractAction(
     usedMinutes: 0,
     status: "active",
     clientPortalToken,
+    freeVisitsEnabled,
+    freeVisitsPerPeriod,
+    freeVisitPeriodMonths,
     packageSnapshot: {
       id: pkg.id,
       name: pkg.name,

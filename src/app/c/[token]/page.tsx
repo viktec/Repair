@@ -1,10 +1,11 @@
 import { db } from "@/lib/db";
-import { customerContracts, customers, organizations, supportInterventions } from "@/db/schema";
-import { eq, desc } from "drizzle-orm";
+import { customerContracts, customers, organizations, supportInterventions, contractCheckVisits } from "@/db/schema";
+import { eq, desc, and, gte, ne } from "drizzle-orm";
 import { notFound } from "next/navigation";
 import { Wrench, Clock, CheckCircle2, AlertCircle, FileText } from "lucide-react";
 import { formatMinutes } from "@/lib/support-utils";
 import { ClientPortalForm } from "./client-portal-form";
+import { CheckVisitForm } from "./check-visit-form";
 
 const TYPE_LABELS: Record<string, string> = {
   onsite: "In presenza",
@@ -47,6 +48,9 @@ export default async function ClientPortalPage({
       endDate: customerContracts.endDate,
       organizationId: customerContracts.organizationId,
       customerName: customers.name,
+      freeVisitsEnabled: customerContracts.freeVisitsEnabled,
+      freeVisitsPerPeriod: customerContracts.freeVisitsPerPeriod,
+      freeVisitPeriodMonths: customerContracts.freeVisitPeriodMonths,
     })
     .from(customerContracts)
     .leftJoin(customers, eq(customers.id, customerContracts.customerId))
@@ -81,6 +85,49 @@ export default async function ClientPortalPage({
     .from(supportInterventions)
     .where(eq(supportInterventions.contractId, contract.id))
     .orderBy(desc(supportInterventions.createdAt));
+
+  // Visite gratuite: calcola eligibilità
+  let isVisitEligible = false;
+  let nextEligibleDate: Date | null = null;
+  let pendingVisit: { preferredDate1: Date; preferredDate2: Date | null } | null = null;
+
+  if (contract.freeVisitsEnabled) {
+    const periodStart = new Date();
+    periodStart.setMonth(periodStart.getMonth() - contract.freeVisitPeriodMonths);
+
+    const recentVisits = await db
+      .select({
+        id: contractCheckVisits.id,
+        status: contractCheckVisits.status,
+        preferredDate1: contractCheckVisits.preferredDate1,
+        preferredDate2: contractCheckVisits.preferredDate2,
+        createdAt: contractCheckVisits.createdAt,
+      })
+      .from(contractCheckVisits)
+      .where(
+        and(
+          eq(contractCheckVisits.contractId, contract.id),
+          gte(contractCheckVisits.createdAt, periodStart),
+          ne(contractCheckVisits.status, "cancelled"),
+        ),
+      )
+      .orderBy(desc(contractCheckVisits.createdAt));
+
+    const usedThisPeriod = recentVisits.length;
+    isVisitEligible = usedThisPeriod < contract.freeVisitsPerPeriod;
+
+    const pending = recentVisits.find(v => v.status === "pending");
+    if (pending) {
+      pendingVisit = { preferredDate1: pending.preferredDate1, preferredDate2: pending.preferredDate2 };
+    }
+
+    if (!isVisitEligible && recentVisits.length > 0) {
+      const oldest = recentVisits[recentVisits.length - 1];
+      const next = new Date(oldest.createdAt);
+      next.setMonth(next.getMonth() + contract.freeVisitPeriodMonths);
+      nextEligibleDate = next;
+    }
+  }
 
   const primaryColor = org?.primaryColor ?? "#0D8F7A";
   const remaining = contract.totalMinutes - contract.usedMinutes;
@@ -234,6 +281,19 @@ export default async function ClientPortalPage({
         {/* Form nuova richiesta */}
         {isActive && (
           <ClientPortalForm token={token} primaryColor={primaryColor} />
+        )}
+
+        {/* Visita di controllo gratuita */}
+        {contract.freeVisitsEnabled && (
+          <CheckVisitForm
+            token={token}
+            primaryColor={primaryColor}
+            freeVisitsPerPeriod={contract.freeVisitsPerPeriod}
+            freeVisitPeriodMonths={contract.freeVisitPeriodMonths}
+            isEligible={isVisitEligible}
+            nextEligibleDate={nextEligibleDate}
+            pendingVisit={pendingVisit}
+          />
         )}
 
         {/* Storico interventi completati */}

@@ -644,6 +644,9 @@ export const customerContracts = pgTable("customer_contracts", {
   status: varchar("status", { length: 20 }).notNull().default("active"),
   clientPortalToken: varchar("client_portal_token", { length: 64 }).notNull().unique(),
   packageSnapshot: jsonb("package_snapshot"),
+  freeVisitsEnabled: boolean("free_visits_enabled").notNull().default(false),
+  freeVisitsPerPeriod: integer("free_visits_per_period").notNull().default(1),
+  freeVisitPeriodMonths: integer("free_visit_period_months").notNull().default(6),
   notes: text("notes"),
   signedAt: timestamp("signed_at"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
@@ -674,6 +677,27 @@ export const supportInterventions = pgTable("support_interventions", {
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });
 
+export const contractCheckVisits = pgTable("contract_check_visits", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  organizationId: uuid("organization_id").notNull().references(() => organizations.id, { onDelete: "cascade" }),
+  contractId: uuid("contract_id").notNull().references(() => customerContracts.id, { onDelete: "cascade" }),
+  preferredDate1: timestamp("preferred_date1").notNull(),
+  preferredDate2: timestamp("preferred_date2"),
+  scheduledAt: timestamp("scheduled_at"),
+  status: varchar("status", { length: 20 }).notNull().default("pending"),
+  clientNotes: text("client_notes"),
+  adminNotes: text("admin_notes"),
+  openedBy: varchar("opened_by", { length: 20 }).notNull().default("client"),
+  confirmedByClient: boolean("confirmed_by_client").notNull().default(false),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+export const contractCheckVisitsRelations = relations(contractCheckVisits, ({ one }) => ({
+  organization: one(organizations, { fields: [contractCheckVisits.organizationId], references: [organizations.id] }),
+  contract: one(customerContracts, { fields: [contractCheckVisits.contractId], references: [customerContracts.id] }),
+}));
+
 export const supportPackagesRelations = relations(supportPackages, ({ one, many }) => ({
   organization: one(organizations, { fields: [supportPackages.organizationId], references: [organizations.id] }),
   contracts: many(customerContracts),
@@ -684,6 +708,7 @@ export const customerContractsRelations = relations(customerContracts, ({ one, m
   customer: one(customers, { fields: [customerContracts.customerId], references: [customers.id] }),
   package: one(supportPackages, { fields: [customerContracts.packageId], references: [supportPackages.id] }),
   interventions: many(supportInterventions),
+  checkVisits: many(contractCheckVisits),
 }));
 
 export const supportInterventionsRelations = relations(supportInterventions, ({ one }) => ({

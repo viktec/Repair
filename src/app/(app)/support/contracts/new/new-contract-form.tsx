@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState } from "react";
+import { useActionState, useState } from "react";
 import { createContractAction } from "../actions";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
@@ -25,6 +25,7 @@ export function NewContractForm({
   nextYear: string;
 }) {
   const [state, action, pending] = useActionState(createContractAction, null);
+  const [freeVisitsEnabled, setFreeVisitsEnabled] = useState(false);
 
   return (
     <div className="mx-auto max-w-lg space-y-6">
@@ -116,6 +117,54 @@ export function NewContractForm({
                 />
                 {state?.errors?.endDate && <p className="text-xs text-destructive">{state.errors.endDate[0]}</p>}
               </div>
+            </div>
+
+            {/* Visite gratuite */}
+            <div className="rounded-lg border p-3 space-y-3">
+              <div className="flex items-center gap-3">
+                <input
+                  id="freeVisitsEnabled"
+                  name="freeVisitsEnabled"
+                  type="checkbox"
+                  className="h-4 w-4 rounded border-input"
+                  checked={freeVisitsEnabled}
+                  onChange={(e) => setFreeVisitsEnabled(e.target.checked)}
+                />
+                <label htmlFor="freeVisitsEnabled" className="text-sm font-medium cursor-pointer">
+                  Includi visite di controllo gratuite
+                </label>
+              </div>
+              {freeVisitsEnabled && (
+                <div className="grid grid-cols-2 gap-3 pt-1">
+                  <div className="space-y-1.5">
+                    <Label htmlFor="freeVisitsPerPeriod" className="text-xs">Visite per periodo</Label>
+                    <input
+                      id="freeVisitsPerPeriod"
+                      name="freeVisitsPerPeriod"
+                      type="number"
+                      min={1}
+                      max={12}
+                      defaultValue={1}
+                      className="w-full rounded-md border border-input bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+                    />
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label htmlFor="freeVisitPeriodMonths" className="text-xs">Ogni (mesi)</Label>
+                    <input
+                      id="freeVisitPeriodMonths"
+                      name="freeVisitPeriodMonths"
+                      type="number"
+                      min={1}
+                      max={12}
+                      defaultValue={6}
+                      className="w-full rounded-md border border-input bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+                    />
+                  </div>
+                  <p className="col-span-2 text-xs text-muted-foreground">
+                    Es. 1 visita ogni 6 mesi = il cliente può prenotare 1 visita gratuita ogni semestre.
+                  </p>
+                </div>
+              )}
             </div>
 
             <div className="space-y-1.5">
