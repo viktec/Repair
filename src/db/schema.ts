@@ -673,6 +673,10 @@ export const supportInterventions = pgTable("support_interventions", {
   openedBy: varchar("opened_by", { length: 20 }).notNull().default("technician"),
   photos: text("photos").array().default([]),
   notes: text("notes"),
+  location: varchar("location", { length: 200 }),
+  clientSignatureToken: varchar("client_signature_token", { length: 64 }).unique(),
+  clientSignedAt: timestamp("client_signed_at"),
+  clientSignatureData: text("client_signature_data"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });

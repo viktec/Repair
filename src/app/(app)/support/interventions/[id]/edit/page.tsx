@@ -76,6 +76,7 @@ export default async function EditInterventionPage({
             applyCallFee: intervention.applyCallFee,
             rawMinutes: intervention.rawMinutes,
             startTime: intervention.startTime,
+            location: intervention.location,
           }}
           packageSnapshot={contract?.packageSnapshot as PackageSnapshot | null}
           contractRemainingMinutes={contractRemainingMinutes}

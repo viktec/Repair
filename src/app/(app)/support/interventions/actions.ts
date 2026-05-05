@@ -28,6 +28,7 @@ const createSchema = z.object({
   applyCallFee: z.string().optional().transform(v => v === "true"),
   rawMinutes: z.coerce.number().int().min(1, "Durata obbligatoria"),
   occurredAt: z.string().optional(),
+  location: z.string().max(200).optional(),
 });
 
 export type CreateInterventionState = {
@@ -54,8 +55,9 @@ export async function createInterventionAction(
     return { errors: parsed.error.flatten().fieldErrors };
   }
 
-  const { contractId, title, description, notes, type, isUrgent, applyCallFee, rawMinutes } = parsed.data;
+  const { contractId, title, description, notes, type, isUrgent, applyCallFee, rawMinutes, location } = parsed.data;
   const occurredAt = parsed.data.occurredAt ? new Date(parsed.data.occurredAt) : new Date();
+  const computedEndTime = new Date(occurredAt.getTime() + rawMinutes * 60 * 1000);
 
   // Verifica contratto appartiene all'org
   const [contract] = await db
@@ -145,6 +147,9 @@ export async function createInterventionAction(
       openedBy: "technician",
       photos: uploadedKeys,
       startTime: occurredAt,
+      endTime: computedEndTime,
+      location: location || null,
+      clientSignatureToken: randomUUID().replace(/-/g, ""),
     })
     .returning({ id: supportInterventions.id });
 
@@ -177,6 +182,7 @@ const updateSchema = z.object({
   applyCallFee: z.string().optional().transform(v => v === "true"),
   rawMinutes: z.coerce.number().int().min(1, "Durata obbligatoria"),
   occurredAt: z.string().optional(),
+  location: z.string().max(200).optional(),
 });
 
 export type UpdateInterventionState = { errors?: Record<string, string[]>; error?: string } | null;
@@ -199,7 +205,7 @@ export async function updateInterventionAction(
   const parsed = updateSchema.safeParse(raw);
   if (!parsed.success) return { errors: parsed.error.flatten().fieldErrors };
 
-  const { title, description, notes, type, isUrgent, applyCallFee, rawMinutes, occurredAt } = parsed.data;
+  const { title, description, notes, type, isUrgent, applyCallFee, rawMinutes, occurredAt, location } = parsed.data;
 
   const [intervention] = await db
     .select({
@@ -250,7 +256,13 @@ export async function updateInterventionAction(
       applyCallFee,
       rawMinutes,
       billableMinutes: newBillable,
-      startTime: occurredAt ? new Date(occurredAt) : undefined,
+      location: location || null,
+      ...(occurredAt
+        ? {
+            startTime: new Date(occurredAt),
+            endTime: new Date(new Date(occurredAt).getTime() + rawMinutes * 60 * 1000),
+          }
+        : {}),
       updatedAt: new Date(),
     })
     .where(and(eq(supportInterventions.id, id), eq(supportInterventions.organizationId, orgId)));

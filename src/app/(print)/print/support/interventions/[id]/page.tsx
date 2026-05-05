@@ -58,6 +58,9 @@ export default async function PrintVerbale({
       rawMinutes: supportInterventions.rawMinutes,
       billableMinutes: supportInterventions.billableMinutes,
       technicianName: supportInterventions.technicianName,
+      location: supportInterventions.location,
+      clientSignedAt: supportInterventions.clientSignedAt,
+      clientSignatureData: supportInterventions.clientSignatureData,
       status: supportInterventions.status,
       notes: supportInterventions.notes,
       createdAt: supportInterventions.createdAt,
@@ -140,6 +143,12 @@ export default async function PrintVerbale({
 
   const interventionDateRaw = intervention.startTime ?? intervention.createdAt;
   const interventionDateFormatted = formatInterventionDate(interventionDateRaw);
+
+  // Ora fine: usa endTime salvato oppure calcola da startTime + rawMinutes
+  const computedEndTime = intervention.endTime ??
+    (intervention.startTime
+      ? new Date(new Date(intervention.startTime).getTime() + intervention.rawMinutes * 60 * 1000)
+      : null);
 
   const oreResidue = contract.totalMinutes - contract.usedMinutes;
 
@@ -290,10 +299,20 @@ export default async function PrintVerbale({
               ORA FINE INTERVENTO
             </p>
             <p style={{ fontSize: 14, fontWeight: 600, margin: 0 }}>
-              {formatTime(intervention.endTime)}
+              {formatTime(computedEndTime)}
             </p>
           </div>
         </div>
+
+        {/* ── LUOGO ── */}
+        {intervention.location && (
+          <div style={{ marginBottom: 16, fontFamily: "sans-serif" }}>
+            <p style={{ fontSize: 10, fontWeight: 600, textTransform: "uppercase", letterSpacing: 2, color: "#888", margin: "0 0 2px" }}>
+              LUOGO INTERVENTO
+            </p>
+            <p style={{ fontSize: 14, fontWeight: 600, margin: 0 }}>{intervention.location}</p>
+          </div>
+        )}
 
         {/* ── INTERVENTO ESEGUITO ── */}
         <div style={{ marginBottom: 16 }}>
@@ -351,18 +370,38 @@ export default async function PrintVerbale({
         {/* ── FIRME ── */}
         <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "0 40px", marginBottom: 24, fontFamily: "sans-serif" }}>
           <div>
-            <p style={{ fontSize: 10, fontWeight: 600, textTransform: "uppercase", letterSpacing: 2, color: "#888", margin: "0 0 32px" }}>
+            <p style={{ fontSize: 10, fontWeight: 600, textTransform: "uppercase", letterSpacing: 2, color: "#888", margin: "0 0 6px" }}>
               LUOGO E DATA
             </p>
+            {intervention.location ? (
+              <p style={{ fontSize: 13, fontWeight: 600, margin: "0 0 4px" }}>{intervention.location}</p>
+            ) : null}
+            <p style={{ fontSize: 12, margin: "0 0 20px" }}>{interventionDateFormatted}</p>
             <div style={{ borderBottom: "1px solid #999", marginBottom: 4 }} />
             <p style={{ fontSize: 10, color: "#888", margin: 0 }}>___________________</p>
           </div>
           <div>
-            <p style={{ fontSize: 10, fontWeight: 600, textTransform: "uppercase", letterSpacing: 2, color: "#888", margin: "0 0 32px" }}>
+            <p style={{ fontSize: 10, fontWeight: 600, textTransform: "uppercase", letterSpacing: 2, color: "#888", margin: "0 0 6px" }}>
               FIRMA CLIENTE
             </p>
-            <div style={{ borderBottom: "1px solid #999", marginBottom: 4 }} />
-            <p style={{ fontSize: 10, color: "#888", margin: 0 }}>___________________</p>
+            {intervention.clientSignatureData ? (
+              <>
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={intervention.clientSignatureData}
+                  alt="Firma cliente"
+                  style={{ height: 60, maxWidth: "100%", objectFit: "contain", display: "block", marginBottom: 4 }}
+                />
+                <p style={{ fontSize: 9, color: "#666", margin: 0 }}>
+                  Firmato digitalmente il {new Intl.DateTimeFormat("it-IT", { day: "2-digit", month: "2-digit", year: "numeric", hour: "2-digit", minute: "2-digit" }).format(new Date(intervention.clientSignedAt!))}
+                </p>
+              </>
+            ) : (
+              <>
+                <div style={{ height: 60, borderBottom: "1px solid #999", marginBottom: 4 }} />
+                <p style={{ fontSize: 10, color: "#888", margin: 0 }}>___________________</p>
+              </>
+            )}
           </div>
         </div>
 

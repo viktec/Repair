@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Check, Wrench, QrCode, Package, Zap, Shield, ArrowRight, Star } from "lucide-react";
+import { Check, Wrench, QrCode, Package, Zap, Shield, ArrowRight, Star, FileSignature } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
@@ -34,6 +34,11 @@ const features = [
     icon: Star,
     title: "Branding tuo",
     desc: "Logo, colori e dati del negozio su ogni ricevuta, ogni tracking page. Il cliente vede te, non il software.",
+  },
+  {
+    icon: FileSignature,
+    title: "Contratti di assistenza Business",
+    desc: "Gestisci pacchetti ore mensili per clienti business. Portale dedicato con storico interventi, prenotazione visite gratuite e firma digitale del verbale direttamente sul telefono del cliente.",
   },
 ];
 
@@ -99,6 +104,10 @@ const plans = [
       "Trasferimenti stock tra sedi",
       "Registro Usato Art.36",
       "Ruoli e permessi granulari",
+      "Contratti di assistenza clienti Business",
+      "Portale cliente con magic link",
+      "Firma digitale verbali intervento",
+      "Visite di controllo gratuite",
       "Supporto prioritario",
     ],
     cta: "Scegli Business",

@@ -53,7 +53,27 @@ export default async function InterventionDetailPage({
   const orgId = session.user.organizationId;
 
   const [intervention] = await db
-    .select()
+    .select({
+      id: supportInterventions.id,
+      contractId: supportInterventions.contractId,
+      interventionNumber: supportInterventions.interventionNumber,
+      title: supportInterventions.title,
+      description: supportInterventions.description,
+      type: supportInterventions.type,
+      isUrgent: supportInterventions.isUrgent,
+      applyCallFee: supportInterventions.applyCallFee,
+      rawMinutes: supportInterventions.rawMinutes,
+      billableMinutes: supportInterventions.billableMinutes,
+      technicianName: supportInterventions.technicianName,
+      status: supportInterventions.status,
+      startTime: supportInterventions.startTime,
+      openedBy: supportInterventions.openedBy,
+      notes: supportInterventions.notes,
+      location: supportInterventions.location,
+      clientSignatureToken: supportInterventions.clientSignatureToken,
+      clientSignedAt: supportInterventions.clientSignedAt,
+      createdAt: supportInterventions.createdAt,
+    })
     .from(supportInterventions)
     .where(and(eq(supportInterventions.id, id), eq(supportInterventions.organizationId, orgId)))
     .limit(1);
@@ -108,6 +128,9 @@ export default async function InterventionDetailPage({
   const appUrl = process.env.APP_URL ?? "https://app.my-repair.it";
   const portalUrl = `${appUrl}/c/${contract.clientPortalToken}`;
   const verbaleUrl = `/print/support/interventions/${id}`;
+  const signUrl = intervention.clientSignatureToken
+    ? `${appUrl}/sign/interventions/${intervention.clientSignatureToken}`
+    : null;
 
   const interventionDate = intervention.startTime ?? intervention.createdAt;
   const dateFormatted = formatDateTime(interventionDate);
@@ -290,13 +313,24 @@ ${org?.phone ?? ""}`.trim();
           )}
 
           <Card>
-            <CardHeader><CardTitle className="text-base">Messaggio per il cliente</CardTitle></CardHeader>
+            <CardHeader>
+              <div className="flex items-center justify-between">
+                <CardTitle className="text-base">Messaggio per il cliente</CardTitle>
+                {intervention.clientSignedAt && (
+                  <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-50 border border-emerald-200 px-2.5 py-1 text-xs font-medium text-emerald-700">
+                    Firmato digitalmente
+                  </span>
+                )}
+              </div>
+            </CardHeader>
             <CardContent>
               <InterventionMessage
                 whatsappText={whatsappText}
                 emailText={emailText}
                 verbaleUrl={verbaleUrl}
                 whatsappPhone={customer?.phone ?? null}
+                signUrl={signUrl}
+                clientSignedAt={intervention.clientSignedAt}
               />
             </CardContent>
           </Card>

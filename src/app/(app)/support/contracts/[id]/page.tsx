@@ -64,6 +64,7 @@ export default async function ContractDetailPage({ params }: { params: Promise<{
       clientPortalToken: customerContracts.clientPortalToken,
       notes: customerContracts.notes,
       customerName: customers.name,
+      customerPhone: customers.phone,
       packageName: supportPackages.name,
       orgName: organizations.name,
     })
@@ -200,6 +201,7 @@ export default async function ContractDetailPage({ params }: { params: Promise<{
               </div>
               <WhatsAppContractButton
                 customerName={contract.customerName}
+                customerPhone={contract.customerPhone}
                 contractNumber={contract.contractNumber}
                 orgName={contract.orgName}
                 portalUrl={portalUrl}
@@ -297,6 +299,7 @@ export default async function ContractDetailPage({ params }: { params: Promise<{
                       key={v.id}
                       visit={v}
                       customerName={contract.customerName}
+                      customerPhone={contract.customerPhone}
                     />
                   ))}
                 </CardContent>

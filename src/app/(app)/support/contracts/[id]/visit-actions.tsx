@@ -30,9 +30,11 @@ const STATUS_LABELS: Record<string, { label: string; cls: string }> = {
 export function VisitCard({
   visit,
   customerName,
+  customerPhone,
 }: {
   visit: Visit;
   customerName: string;
+  customerPhone: string | null;
 }) {
   const [scheduledDate, setScheduledDate] = useState(
     visit.scheduledAt ? new Date(visit.scheduledAt).toISOString().split("T")[0] : "",
@@ -55,7 +57,9 @@ export function VisitCard({
     const d2 = visit.preferredDate2 ? ` o ${fmt(visit.preferredDate2)}` : "";
     const sched = scheduledDate ? fmt(scheduledDate) : "[DATA DA CONFERMARE]";
     const text = `Buongiorno ${customerName},\n\nle scriviamo riguardo alla richiesta di visita di controllo gratuita inclusa nel suo contratto di assistenza.\n\nHa indicato come date preferite: ${d1}${d2}.\n\nAbbiamo fissato la visita per il *${sched}*.\n\nPuò confermare rispondendo a questo messaggio? La ringraziamo.`;
-    window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, "_blank");
+    const phone = customerPhone ? customerPhone.replace(/\D/g, "") : "";
+    const base = phone ? `https://wa.me/${phone}` : "https://wa.me/";
+    window.open(`${base}?text=${encodeURIComponent(text)}`, "_blank");
   }
 
   return (

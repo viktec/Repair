@@ -36,6 +36,7 @@ type Props = {
     applyCallFee: boolean;
     rawMinutes: number;
     startTime: Date | string | null;
+    location: string | null;
   };
   packageSnapshot: PackageSnapshot | null;
   contractRemainingMinutes: number;
@@ -203,8 +204,15 @@ export function InterventionEditForm({
 
       {/* Data/ora */}
       <div className="space-y-2">
-        <Label htmlFor="occurredAt">Data e ora intervento</Label>
+        <Label htmlFor="occurredAt">Data e ora inizio intervento</Label>
         <Input id="occurredAt" name="occurredAt" type="datetime-local" defaultValue={startTimeValue} />
+        <p className="text-xs text-muted-foreground">L&apos;ora di fine viene calcolata automaticamente sommando la durata.</p>
+      </div>
+
+      {/* Luogo */}
+      <div className="space-y-2">
+        <Label htmlFor="location">Luogo intervento</Label>
+        <Input id="location" name="location" defaultValue={defaultValues.location ?? ""} placeholder="Es: Sede cliente, Via Roma 1 — Milano" maxLength={200} />
       </div>
 
       <div className="space-y-2">
