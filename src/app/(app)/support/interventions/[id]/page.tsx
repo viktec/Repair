@@ -9,7 +9,7 @@ import {
 import { eq, and } from "drizzle-orm";
 import { redirect, notFound } from "next/navigation";
 import Link from "next/link";
-import { ArrowLeft, Clock, User, AlertTriangle } from "lucide-react";
+import { ArrowLeft, Clock, User, AlertTriangle, Pencil, FileText } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -142,18 +142,36 @@ Cordiali saluti,
 ${org?.name ?? ""}
 ${org?.phone ?? ""}`.trim();
 
+  const canEdit = ["admin", "owner"].includes(session.user.role ?? "");
+
   return (
     <div className="space-y-6">
-      <div className="flex items-center gap-3">
+      <div className="flex items-start gap-3">
         <Link href={`/support/contracts/${intervention.contractId}`}>
-          <Button variant="outline" size="sm" className="gap-1.5 shrink-0">
+          <Button variant="outline" size="sm" className="gap-1.5 shrink-0 mt-0.5">
             <ArrowLeft className="h-3.5 w-3.5" />
             Contratto
           </Button>
         </Link>
-        <div className="min-w-0">
+        <div className="min-w-0 flex-1">
           <h1 className="text-xl font-bold truncate">{intervention.title}</h1>
           <p className="text-sm text-muted-foreground font-mono">{intervention.interventionNumber}</p>
+        </div>
+        <div className="flex gap-2 shrink-0">
+          <Link href={verbaleUrl} target="_blank">
+            <Button variant="outline" size="sm" className="gap-1.5">
+              <FileText className="h-3.5 w-3.5" />
+              Verbale PDF
+            </Button>
+          </Link>
+          {canEdit && (
+            <Link href={`/support/interventions/${id}/edit`}>
+              <Button variant="outline" size="sm" className="gap-1.5">
+                <Pencil className="h-3.5 w-3.5" />
+                Modifica
+              </Button>
+            </Link>
+          )}
         </div>
       </div>
 

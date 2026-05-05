@@ -164,6 +164,103 @@ export async function createInterventionAction(
   };
 }
 
+// ─── updateInterventionAction ─────────────────────────────────────────────────
+
+const updateSchema = z.object({
+  title: z.string().min(1, "Titolo obbligatorio").max(200),
+  description: z.string().optional(),
+  notes: z.string().optional(),
+  type: z.enum(["onsite", "remote", "phone", "email", "lab", "other"]),
+  isUrgent: z.coerce.boolean(),
+  rawMinutes: z.coerce.number().int().min(1, "Durata obbligatoria"),
+  occurredAt: z.string().optional(),
+});
+
+export type UpdateInterventionState = { errors?: Record<string, string[]>; error?: string } | null;
+
+export async function updateInterventionAction(
+  id: string,
+  _prev: UpdateInterventionState,
+  formData: FormData,
+): Promise<UpdateInterventionState> {
+  const session = await auth();
+  if (!session?.user?.organizationId) redirect("/login");
+  const orgId = session.user.organizationId;
+
+  const role = session.user.role ?? "";
+  if (!["admin", "owner"].includes(role)) return { error: "Non autorizzato" };
+
+  const raw = Object.fromEntries(formData);
+  raw.isUrgent = raw.isUrgent === "on" ? "true" : "false";
+  const parsed = updateSchema.safeParse(raw);
+  if (!parsed.success) return { errors: parsed.error.flatten().fieldErrors };
+
+  const { title, description, notes, type, isUrgent, rawMinutes, occurredAt } = parsed.data;
+
+  const [intervention] = await db
+    .select({
+      id: supportInterventions.id,
+      contractId: supportInterventions.contractId,
+      billableMinutes: supportInterventions.billableMinutes,
+    })
+    .from(supportInterventions)
+    .where(and(eq(supportInterventions.id, id), eq(supportInterventions.organizationId, orgId)))
+    .limit(1);
+
+  if (!intervention) return { error: "Intervento non trovato" };
+
+  const [contract] = await db
+    .select({
+      id: customerContracts.id,
+      usedMinutes: customerContracts.usedMinutes,
+      totalMinutes: customerContracts.totalMinutes,
+      packageSnapshot: customerContracts.packageSnapshot,
+    })
+    .from(customerContracts)
+    .where(eq(customerContracts.id, intervention.contractId))
+    .limit(1);
+
+  if (!contract) return { error: "Contratto non trovato" };
+
+  const snap = (contract.packageSnapshot as PackageSnapshot | null) ?? {
+    phoneRoundingMinutes: 5,
+    remoteRoundingMinutes: 10,
+    emailRoundingMinutes: 10,
+    callFeeMinutes: 10,
+    urgencySurchargePercent: 0,
+  };
+
+  const newBillable = calcBillableMinutes(rawMinutes, type, snap, isUrgent);
+  const diff = newBillable - intervention.billableMinutes;
+  const newUsed = Math.max(0, contract.usedMinutes + diff);
+  const newStatus = newUsed >= contract.totalMinutes ? "exhausted" : "active";
+
+  await db
+    .update(supportInterventions)
+    .set({
+      title,
+      description: description || null,
+      notes: notes || null,
+      type,
+      isUrgent,
+      rawMinutes,
+      billableMinutes: newBillable,
+      startTime: occurredAt ? new Date(occurredAt) : undefined,
+      updatedAt: new Date(),
+    })
+    .where(and(eq(supportInterventions.id, id), eq(supportInterventions.organizationId, orgId)));
+
+  await db
+    .update(customerContracts)
+    .set({ usedMinutes: newUsed, status: newStatus, updatedAt: new Date() })
+    .where(eq(customerContracts.id, contract.id));
+
+  revalidatePath(`/support/interventions/${id}`);
+  revalidatePath(`/support/contracts/${intervention.contractId}`);
+  revalidatePath("/support");
+  redirect(`/support/interventions/${id}`);
+}
+
 // ─── updateInterventionStatusAction ──────────────────────────────────────────
 
 export async function updateInterventionStatusAction(
