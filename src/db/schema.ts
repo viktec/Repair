@@ -610,3 +610,83 @@ export const ticketTagAssignmentsRelations = relations(ticketTagAssignments, ({ 
   ticket: one(tickets, { fields: [ticketTagAssignments.ticketId], references: [tickets.id] }),
   tag: one(ticketTags, { fields: [ticketTagAssignments.tagId], references: [ticketTags.id] }),
 }));
+
+// ── Support / Assistenza Business ────────────────────────────────────────────
+
+export const supportPackages = pgTable("support_packages", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  organizationId: uuid("organization_id").notNull().references(() => organizations.id, { onDelete: "cascade" }),
+  name: varchar("name", { length: 100 }).notNull(),
+  totalMinutes: integer("total_minutes").notNull(),
+  priceCents: integer("price_cents").notNull().default(0),
+  urgencySurchargePercent: integer("urgency_surcharge_percent").notNull().default(0),
+  priorityLevel: integer("priority_level").notNull().default(4),
+  phoneRoundingMinutes: integer("phone_rounding_minutes").notNull().default(5),
+  remoteRoundingMinutes: integer("remote_rounding_minutes").notNull().default(10),
+  emailRoundingMinutes: integer("email_rounding_minutes").notNull().default(10),
+  callFeeMinutes: integer("call_fee_minutes").notNull().default(10),
+  deliveryFeeMinutes: integer("delivery_fee_minutes").notNull().default(0),
+  description: text("description"),
+  isActive: boolean("is_active").notNull().default(true),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+export const customerContracts = pgTable("customer_contracts", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  organizationId: uuid("organization_id").notNull().references(() => organizations.id, { onDelete: "cascade" }),
+  customerId: uuid("customer_id").notNull().references(() => customers.id, { onDelete: "cascade" }),
+  packageId: uuid("package_id").references(() => supportPackages.id),
+  contractNumber: varchar("contract_number", { length: 20 }).notNull(),
+  startDate: timestamp("start_date").notNull(),
+  endDate: timestamp("end_date").notNull(),
+  totalMinutes: integer("total_minutes").notNull(),
+  usedMinutes: integer("used_minutes").notNull().default(0),
+  status: varchar("status", { length: 20 }).notNull().default("active"),
+  clientPortalToken: varchar("client_portal_token", { length: 64 }).notNull().unique(),
+  packageSnapshot: jsonb("package_snapshot"),
+  notes: text("notes"),
+  signedAt: timestamp("signed_at"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+export const supportInterventions = pgTable("support_interventions", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  organizationId: uuid("organization_id").notNull().references(() => organizations.id, { onDelete: "cascade" }),
+  contractId: uuid("contract_id").notNull().references(() => customerContracts.id, { onDelete: "cascade" }),
+  interventionNumber: varchar("intervention_number", { length: 20 }).notNull(),
+  title: varchar("title", { length: 200 }).notNull(),
+  description: text("description"),
+  type: varchar("type", { length: 20 }).notNull().default("onsite"),
+  isUrgent: boolean("is_urgent").notNull().default(false),
+  startTime: timestamp("start_time"),
+  endTime: timestamp("end_time"),
+  rawMinutes: integer("raw_minutes").notNull().default(0),
+  billableMinutes: integer("billable_minutes").notNull().default(0),
+  technicianId: uuid("technician_id").references(() => users.id),
+  technicianName: varchar("technician_name", { length: 100 }),
+  status: varchar("status", { length: 20 }).notNull().default("completed"),
+  openedBy: varchar("opened_by", { length: 20 }).notNull().default("technician"),
+  photos: text("photos").array().default([]),
+  notes: text("notes"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+export const supportPackagesRelations = relations(supportPackages, ({ one, many }) => ({
+  organization: one(organizations, { fields: [supportPackages.organizationId], references: [organizations.id] }),
+  contracts: many(customerContracts),
+}));
+
+export const customerContractsRelations = relations(customerContracts, ({ one, many }) => ({
+  organization: one(organizations, { fields: [customerContracts.organizationId], references: [organizations.id] }),
+  customer: one(customers, { fields: [customerContracts.customerId], references: [customers.id] }),
+  package: one(supportPackages, { fields: [customerContracts.packageId], references: [supportPackages.id] }),
+  interventions: many(supportInterventions),
+}));
+
+export const supportInterventionsRelations = relations(supportInterventions, ({ one }) => ({
+  organization: one(organizations, { fields: [supportInterventions.organizationId], references: [organizations.id] }),
+  contract: one(customerContracts, { fields: [supportInterventions.contractId], references: [customerContracts.id] }),
+  technician: one(users, { fields: [supportInterventions.technicianId], references: [users.id] }),
+}));

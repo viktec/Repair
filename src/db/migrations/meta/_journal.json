@@ -127,6 +127,13 @@
       "when": 1777924933529,
       "tag": "0017_harsh_obadiah_stane",
       "breakpoints": true
+    },
+    {
+      "idx": 18,
+      "version": "7",
+      "when": 1777968855138,
+      "tag": "0018_overrated_talon",
+      "breakpoints": true
     }
   ]
 }
