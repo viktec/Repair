@@ -3,7 +3,7 @@
 import { useState, useTransition } from "react";
 import { updateCheckVisitStatusAction } from "../check-visits-actions";
 import { Button } from "@/components/ui/button";
-import { Check, CheckCircle2, X, Calendar, Loader2, Copy, ChevronDown, ChevronUp } from "lucide-react";
+import { CheckCircle2, X, Calendar, Loader2, MessageCircle, ChevronDown, ChevronUp } from "lucide-react";
 
 type Visit = {
   id: string;
@@ -39,7 +39,6 @@ export function VisitCard({
   );
   const [adminNotes, setAdminNotes] = useState(visit.adminNotes ?? "");
   const [expanded, setExpanded] = useState(visit.status === "pending");
-  const [copied, setCopied] = useState(false);
   const [isPending, startTransition] = useTransition();
 
   const s = STATUS_LABELS[visit.status] ?? STATUS_LABELS.pending;
@@ -51,15 +50,12 @@ export function VisitCard({
     });
   }
 
-  function copyWhatsApp() {
+  function openWhatsApp() {
     const d1 = fmt(visit.preferredDate1);
     const d2 = visit.preferredDate2 ? ` o ${fmt(visit.preferredDate2)}` : "";
     const sched = scheduledDate ? fmt(scheduledDate) : "[DATA DA CONFERMARE]";
     const text = `Buongiorno ${customerName},\n\nle scriviamo riguardo alla richiesta di visita di controllo gratuita inclusa nel suo contratto di assistenza.\n\nHa indicato come date preferite: ${d1}${d2}.\n\nAbbiamo fissato la visita per il *${sched}*.\n\nPuò confermare rispondendo a questo messaggio? La ringraziamo.`;
-    navigator.clipboard.writeText(text).then(() => {
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
-    });
+    window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, "_blank");
   }
 
   return (
@@ -125,11 +121,11 @@ export function VisitCard({
 
               <button
                 type="button"
-                onClick={copyWhatsApp}
+                onClick={openWhatsApp}
                 className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors"
               >
-                {copied ? <Check className="h-3.5 w-3.5 text-emerald-600" /> : <Copy className="h-3.5 w-3.5" />}
-                {copied ? "Copiato!" : "Copia messaggio WhatsApp"}
+                <MessageCircle className="h-3.5 w-3.5" />
+                Apri in WhatsApp
               </button>
 
               <div className="flex gap-2 pt-1">
