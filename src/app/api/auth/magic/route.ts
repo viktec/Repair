@@ -47,9 +47,10 @@ export async function POST(req: NextRequest) {
 
 // GET /api/auth/magic?token=... — verifica token, redirect alla pagina di callback
 export async function GET(req: NextRequest) {
+  const appUrl = process.env.APP_URL ?? "https://app.my-repair.it";
   const token = req.nextUrl.searchParams.get("token");
   if (!token) {
-    return NextResponse.redirect(new URL("/login?error=token_mancante", req.url));
+    return NextResponse.redirect(new URL("/login?error=token_mancante", appUrl));
   }
 
   // Verifica rapida che il token esista (la verifica definitiva avviene nel provider "magic")
@@ -61,7 +62,7 @@ export async function GET(req: NextRequest) {
     .limit(1);
 
   if (!user) {
-    return NextResponse.redirect(new URL("/login?error=link_scaduto", req.url));
+    return NextResponse.redirect(new URL("/login?error=link_scaduto", appUrl));
   }
 
   const [membership] = await db
@@ -76,7 +77,7 @@ export async function GET(req: NextRequest) {
   return NextResponse.redirect(
     new URL(
       `/auth/magic-callback?token=${encodeURIComponent(token)}&next=${encodeURIComponent(next)}`,
-      req.url
+      appUrl
     )
   );
 }
