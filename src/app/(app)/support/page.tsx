@@ -1,7 +1,7 @@
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { customerContracts, customers, supportPackages, supportInterventions } from "@/db/schema";
-import { eq, and, sql, or } from "drizzle-orm";
+import { eq, and, sql, or, gte } from "drizzle-orm";
 import { redirect } from "next/navigation";
 import Link from "next/link";
 import { Plus, Headset } from "lucide-react";
@@ -34,7 +34,7 @@ export default async function SupportPage() {
         .where(
           and(
             eq(supportInterventions.organizationId, orgId),
-            sql`${supportInterventions.createdAt} >= ${startOfMonth}`,
+            gte(supportInterventions.createdAt, startOfMonth),
           ),
         ),
 
