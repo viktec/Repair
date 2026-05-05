@@ -192,24 +192,26 @@ export function WorkflowPanel({
         {/* ── Step 3: Firmato ── */}
         {status === "completed" && isSigned && (
           <div className="space-y-3 pt-1">
-            <div className="flex items-center gap-3 rounded-lg bg-emerald-50 border border-emerald-200 px-4 py-3">
-              <CheckCircle2 className="h-5 w-5 text-emerald-600 shrink-0" />
-              <div>
-                <p className="text-sm font-semibold text-emerald-800">Verbale firmato dal cliente</p>
-                <p className="text-xs text-emerald-700">
-                  {new Intl.DateTimeFormat("it-IT", {
-                    day: "2-digit", month: "2-digit", year: "numeric",
-                    hour: "2-digit", minute: "2-digit",
-                  }).format(new Date(clientSignedAt!))}
-                </p>
+            <div className="flex items-center justify-between gap-3 rounded-lg bg-emerald-50 border border-emerald-200 px-4 py-3">
+              <div className="flex items-center gap-3">
+                <CheckCircle2 className="h-5 w-5 text-emerald-600 shrink-0" />
+                <div>
+                  <p className="text-sm font-semibold text-emerald-800">Verbale firmato dal cliente</p>
+                  <p className="text-xs text-emerald-700">
+                    {new Intl.DateTimeFormat("it-IT", {
+                      day: "2-digit", month: "2-digit", year: "numeric",
+                      hour: "2-digit", minute: "2-digit",
+                    }).format(new Date(clientSignedAt!))}
+                  </p>
+                </div>
               </div>
+              <a href={verbaleUrl} target="_blank" rel="noopener noreferrer">
+                <Button variant="outline" size="sm" className="gap-1.5 shrink-0">
+                  <FileText className="h-3.5 w-3.5" />
+                  Scarica verbale
+                </Button>
+              </a>
             </div>
-            <a href={verbaleUrl} target="_blank" rel="noopener noreferrer">
-              <Button variant="outline" size="sm" className="gap-1.5">
-                <FileText className="h-3.5 w-3.5" />
-                Scarica verbale firmato
-              </Button>
-            </a>
           </div>
         )}
 
