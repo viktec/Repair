@@ -1,18 +1,20 @@
 "use client";
 
 import { useState, useRef, useTransition } from "react";
-import { Loader2, Send, Paperclip, X, CheckCircle2, Clock } from "lucide-react";
+import { Loader2, Send, Paperclip, X, CheckCircle2, Clock, Zap } from "lucide-react";
 
 type Props = {
   token: string;
   primaryColor: string;
+  urgencySurchargePercent: number;
 };
 
 type SuccessResult = { interventionId: string; interventionNumber: string };
 
-export function ClientPortalForm({ token, primaryColor }: Props) {
+export function ClientPortalForm({ token, primaryColor, urgencySurchargePercent }: Props) {
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
+  const [isUrgent, setIsUrgent] = useState(false);
   const [photos, setPhotos] = useState<File[]>([]);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState<SuccessResult | null>(null);
@@ -41,6 +43,7 @@ export function ClientPortalForm({ token, primaryColor }: Props) {
       formData.set("token", token);
       formData.set("title", title.trim());
       formData.set("description", description.trim());
+      formData.set("isUrgent", isUrgent ? "true" : "false");
       for (const photo of photos) formData.append("photos", photo);
 
       const res = await fetch("/api/support/client-request", {
@@ -124,6 +127,34 @@ export function ClientPortalForm({ token, primaryColor }: Props) {
             className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 resize-none"
             style={{ "--tw-ring-color": primaryColor } as React.CSSProperties}
           />
+        </div>
+
+        {/* Urgenza */}
+        <div className="rounded-lg border border-slate-200 p-3 space-y-2">
+          <label className="flex items-center gap-3 cursor-pointer">
+            <input
+              type="checkbox"
+              checked={isUrgent}
+              onChange={(e) => setIsUrgent(e.target.checked)}
+              className="h-4 w-4 rounded border-slate-300"
+            />
+            <div className="flex items-center gap-1.5">
+              <Zap className="h-4 w-4 text-amber-500" />
+              <span className="text-sm font-medium">Richiesta urgente</span>
+            </div>
+          </label>
+          {isUrgent ? (
+            <div className="ml-7 rounded-md bg-amber-50 border border-amber-200 px-2.5 py-2 text-xs text-amber-800 leading-relaxed">
+              <strong>Presa in carico entro 24 ore.</strong>
+              {urgencySurchargePercent > 0
+                ? ` Le ore di intervento verranno maggiorate del ${urgencySurchargePercent}% per la gestione urgente.`
+                : " Comporta una maggiorazione sulle ore di intervento."}
+            </div>
+          ) : (
+            <p className="ml-7 text-xs text-muted-foreground">
+              Spunta solo se il problema blocca l&apos;operatività. Le richieste urgenti hanno una maggiorazione{urgencySurchargePercent > 0 ? ` del ${urgencySurchargePercent}%` : ""} sulle ore.
+            </p>
+          )}
         </div>
 
         {/* Foto allegate */}

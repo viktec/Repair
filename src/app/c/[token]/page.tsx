@@ -48,6 +48,7 @@ export default async function ClientPortalPage({
       endDate: customerContracts.endDate,
       organizationId: customerContracts.organizationId,
       customerName: customers.name,
+      packageSnapshot: customerContracts.packageSnapshot,
       freeVisitsEnabled: customerContracts.freeVisitsEnabled,
       freeVisitsPerPeriod: customerContracts.freeVisitsPerPeriod,
       freeVisitPeriodMonths: customerContracts.freeVisitPeriodMonths,
@@ -128,6 +129,10 @@ export default async function ClientPortalPage({
       nextEligibleDate = next;
     }
   }
+
+  const urgencySurchargePercent =
+    (contract.packageSnapshot as { urgencySurchargePercent?: number } | null)
+      ?.urgencySurchargePercent ?? 0;
 
   const primaryColor = org?.primaryColor ?? "#0D8F7A";
   const remaining = contract.totalMinutes - contract.usedMinutes;
@@ -280,7 +285,11 @@ export default async function ClientPortalPage({
 
         {/* Form nuova richiesta */}
         {isActive && (
-          <ClientPortalForm token={token} primaryColor={primaryColor} />
+          <ClientPortalForm
+            token={token}
+            primaryColor={primaryColor}
+            urgencySurchargePercent={urgencySurchargePercent}
+          />
         )}
 
         {/* Visita di controllo gratuita */}

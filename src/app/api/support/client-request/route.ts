@@ -13,6 +13,7 @@ export async function POST(req: NextRequest) {
   const token = formData.get("token");
   const title = (formData.get("title") as string | null)?.trim();
   const description = (formData.get("description") as string | null)?.trim();
+  const isUrgent = formData.get("isUrgent") === "true";
 
   if (!token || typeof token !== "string") {
     return NextResponse.json({ error: "Token mancante" }, { status: 400 });
@@ -95,7 +96,7 @@ export async function POST(req: NextRequest) {
       title,
       description: description || null,
       type: "other",
-      isUrgent: false,
+      isUrgent,
       rawMinutes: 0,
       billableMinutes: 0,
       technicianName: null,
