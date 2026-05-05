@@ -157,7 +157,7 @@ export default async function PrintVerbale({
   return (
     <>
       <style>{`
-        @page { size: A4; margin: 20mm; }
+        @page { size: A4; margin: 14mm 16mm; }
         body { font-family: Georgia, 'Times New Roman', serif; }
         @media print {
           .no-print { display: none !important; }
@@ -205,20 +205,20 @@ export default async function PrintVerbale({
         </div>
 
         {/* ── TITOLO DOCUMENTO ── */}
-        <div style={{ marginTop: 20, marginBottom: 20 }}>
-          <p style={{ fontFamily: "sans-serif", fontSize: 18, fontWeight: 700, letterSpacing: 1, margin: 0 }}>
+        <div style={{ marginTop: 12, marginBottom: 12 }}>
+          <p style={{ fontFamily: "sans-serif", fontSize: 17, fontWeight: 700, letterSpacing: 1, margin: 0 }}>
             VERBALE PRESTAZIONE
           </p>
-          <p style={{ fontFamily: "sans-serif", fontSize: 12, color: "#555", margin: "2px 0 0" }}>
+          <p style={{ fontFamily: "sans-serif", fontSize: 11, color: "#555", margin: "2px 0 0" }}>
             Contratti di assistenza
           </p>
         </div>
 
         {/* ── SEPARATORE ── */}
-        <hr style={{ border: "none", borderTop: `1px solid ${primary}`, margin: "0 0 16px" }} />
+        <hr style={{ border: "none", borderTop: `1px solid ${primary}`, margin: "0 0 10px" }} />
 
         {/* ── DESCRIZIONE / TIPO INTERVENTO ── */}
-        <div style={{ marginBottom: 16 }}>
+        <div style={{ marginBottom: 10 }}>
           <p style={{ fontFamily: "sans-serif", fontSize: 10, fontWeight: 600, textTransform: "uppercase", letterSpacing: 2, color: "#888", margin: "0 0 6px" }}>
             DESCRIZIONE
           </p>
@@ -257,12 +257,12 @@ export default async function PrintVerbale({
         </div>
 
         {/* ── GRIGLIA AZIENDA / CONTRATTO / DATA ── */}
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px 24px", marginBottom: 16, fontFamily: "sans-serif" }}>
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: "8px 24px", marginBottom: 10, fontFamily: "sans-serif" }}>
           <div>
             <p style={{ fontSize: 10, fontWeight: 600, textTransform: "uppercase", letterSpacing: 2, color: "#888", margin: "0 0 2px" }}>
               AZIENDA
             </p>
-            <p style={{ fontSize: 14, fontWeight: 600, margin: 0 }}>
+            <p style={{ fontSize: 13, fontWeight: 600, margin: 0 }}>
               {customer?.name ?? "—"}
             </p>
           </div>
@@ -270,7 +270,7 @@ export default async function PrintVerbale({
             <p style={{ fontSize: 10, fontWeight: 600, textTransform: "uppercase", letterSpacing: 2, color: "#888", margin: "0 0 2px" }}>
               CONTRATTO
             </p>
-            <p style={{ fontSize: 14, fontWeight: 600, margin: 0 }}>
+            <p style={{ fontSize: 13, fontWeight: 600, margin: 0 }}>
               {contract.contractNumber}
             </p>
           </div>
@@ -278,27 +278,27 @@ export default async function PrintVerbale({
             <p style={{ fontSize: 10, fontWeight: 600, textTransform: "uppercase", letterSpacing: 2, color: "#888", margin: "0 0 2px" }}>
               DATA
             </p>
-            <p style={{ fontSize: 14, fontWeight: 600, margin: 0 }}>
+            <p style={{ fontSize: 13, fontWeight: 600, margin: 0 }}>
               {interventionDateFormatted}
             </p>
           </div>
         </div>
 
         {/* ── ORARI ── */}
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px 24px", marginBottom: 16, fontFamily: "sans-serif" }}>
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "8px 24px", marginBottom: 10, fontFamily: "sans-serif" }}>
           <div>
             <p style={{ fontSize: 10, fontWeight: 600, textTransform: "uppercase", letterSpacing: 2, color: "#888", margin: "0 0 2px" }}>
-              ORA INIZIO INTERVENTO
+              ORA INIZIO
             </p>
-            <p style={{ fontSize: 14, fontWeight: 600, margin: 0 }}>
+            <p style={{ fontSize: 13, fontWeight: 600, margin: 0 }}>
               {formatTime(intervention.startTime)}
             </p>
           </div>
           <div>
             <p style={{ fontSize: 10, fontWeight: 600, textTransform: "uppercase", letterSpacing: 2, color: "#888", margin: "0 0 2px" }}>
-              ORA FINE INTERVENTO
+              ORA FINE
             </p>
-            <p style={{ fontSize: 14, fontWeight: 600, margin: 0 }}>
+            <p style={{ fontSize: 13, fontWeight: 600, margin: 0 }}>
               {formatTime(computedEndTime)}
             </p>
           </div>
@@ -306,28 +306,28 @@ export default async function PrintVerbale({
 
         {/* ── LUOGO ── */}
         {intervention.location && (
-          <div style={{ marginBottom: 16, fontFamily: "sans-serif" }}>
+          <div style={{ marginBottom: 10, fontFamily: "sans-serif" }}>
             <p style={{ fontSize: 10, fontWeight: 600, textTransform: "uppercase", letterSpacing: 2, color: "#888", margin: "0 0 2px" }}>
               LUOGO INTERVENTO
             </p>
-            <p style={{ fontSize: 14, fontWeight: 600, margin: 0 }}>{intervention.location}</p>
+            <p style={{ fontSize: 13, fontWeight: 600, margin: 0 }}>{intervention.location}</p>
           </div>
         )}
 
         {/* ── INTERVENTO ESEGUITO ── */}
-        <div style={{ marginBottom: 16 }}>
-          <p style={{ fontFamily: "sans-serif", fontSize: 10, fontWeight: 600, textTransform: "uppercase", letterSpacing: 2, color: "#888", margin: "0 0 6px" }}>
+        <div style={{ marginBottom: 10 }}>
+          <p style={{ fontFamily: "sans-serif", fontSize: 10, fontWeight: 600, textTransform: "uppercase", letterSpacing: 2, color: "#888", margin: "0 0 4px" }}>
             INTERVENTO ESEGUITO
           </p>
           <div
             style={{
               border: "1px solid #ddd",
               borderRadius: 4,
-              padding: "10px 14px",
+              padding: "8px 12px",
               backgroundColor: "#fafafa",
-              minHeight: 60,
-              fontSize: 13,
-              lineHeight: 1.6,
+              minHeight: 44,
+              fontSize: 12,
+              lineHeight: 1.5,
               whiteSpace: "pre-wrap",
             }}
           >
@@ -336,12 +336,12 @@ export default async function PrintVerbale({
         </div>
 
         {/* ── ORE DA SCALARE / TECNICO ── */}
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px 24px", marginBottom: 20, fontFamily: "sans-serif" }}>
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "8px 24px", marginBottom: 12, fontFamily: "sans-serif" }}>
           <div>
             <p style={{ fontSize: 10, fontWeight: 600, textTransform: "uppercase", letterSpacing: 2, color: "#888", margin: "0 0 2px" }}>
               ORE DA SCALARE
             </p>
-            <p style={{ fontSize: 16, fontWeight: 700, color: primary, margin: 0 }}>
+            <p style={{ fontSize: 15, fontWeight: 700, color: primary, margin: 0 }}>
               {formatMinutes(intervention.billableMinutes)}
             </p>
           </div>
@@ -349,18 +349,18 @@ export default async function PrintVerbale({
             <p style={{ fontSize: 10, fontWeight: 600, textTransform: "uppercase", letterSpacing: 2, color: "#888", margin: "0 0 2px" }}>
               NOME TECNICO
             </p>
-            <p style={{ fontSize: 14, fontWeight: 600, margin: 0 }}>
+            <p style={{ fontSize: 13, fontWeight: 600, margin: 0 }}>
               {intervention.technicianName ?? "—"}
             </p>
           </div>
         </div>
 
         {/* ── SEPARATORE ── */}
-        <hr style={{ border: "none", borderTop: `1px solid ${primary}`, margin: "0 0 16px" }} />
+        <hr style={{ border: "none", borderTop: `1px solid ${primary}`, margin: "0 0 10px" }} />
 
         {/* ── DICHIARAZIONE ── */}
-        <div style={{ marginBottom: 20 }}>
-          <p style={{ fontSize: 12, lineHeight: 1.7, margin: 0 }}>
+        <div style={{ marginBottom: 12 }}>
+          <p style={{ fontSize: 11, lineHeight: 1.6, margin: 0 }}>
             CON LA PRESENTE, L&apos;AZIENDA CLIENTE CONFERMA CHE L&apos;INTERVENTO È STATO EFFETTUATO COME
             DESCRITTO E CHE LE ORE INDICATE DI CUI SOPRA, VERRANNO SCALATE DAL MONTE ORE TOTALE
             COME DA CONTRATTO STIPULATO.
@@ -368,20 +368,20 @@ export default async function PrintVerbale({
         </div>
 
         {/* ── FIRME ── */}
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "0 40px", marginBottom: 24, fontFamily: "sans-serif" }}>
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "0 40px", marginBottom: 12, fontFamily: "sans-serif" }}>
           <div>
-            <p style={{ fontSize: 10, fontWeight: 600, textTransform: "uppercase", letterSpacing: 2, color: "#888", margin: "0 0 6px" }}>
+            <p style={{ fontSize: 10, fontWeight: 600, textTransform: "uppercase", letterSpacing: 2, color: "#888", margin: "0 0 4px" }}>
               LUOGO E DATA
             </p>
             {intervention.location ? (
-              <p style={{ fontSize: 13, fontWeight: 600, margin: "0 0 4px" }}>{intervention.location}</p>
+              <p style={{ fontSize: 12, fontWeight: 600, margin: "0 0 2px" }}>{intervention.location}</p>
             ) : null}
-            <p style={{ fontSize: 12, margin: "0 0 20px" }}>{interventionDateFormatted}</p>
+            <p style={{ fontSize: 12, margin: "0 0 14px" }}>{interventionDateFormatted}</p>
             <div style={{ borderBottom: "1px solid #999", marginBottom: 4 }} />
             <p style={{ fontSize: 10, color: "#888", margin: 0 }}>___________________</p>
           </div>
           <div>
-            <p style={{ fontSize: 10, fontWeight: 600, textTransform: "uppercase", letterSpacing: 2, color: "#888", margin: "0 0 6px" }}>
+            <p style={{ fontSize: 10, fontWeight: 600, textTransform: "uppercase", letterSpacing: 2, color: "#888", margin: "0 0 4px" }}>
               FIRMA CLIENTE
             </p>
             {intervention.clientSignatureData ? (
@@ -390,7 +390,7 @@ export default async function PrintVerbale({
                 <img
                   src={intervention.clientSignatureData}
                   alt="Firma cliente"
-                  style={{ height: 60, maxWidth: "100%", objectFit: "contain", display: "block", marginBottom: 4 }}
+                  style={{ height: 52, maxWidth: "100%", objectFit: "contain", display: "block", marginBottom: 4 }}
                 />
                 <p style={{ fontSize: 9, color: "#666", margin: 0 }}>
                   Firmato digitalmente il {new Intl.DateTimeFormat("it-IT", { day: "2-digit", month: "2-digit", year: "numeric", hour: "2-digit", minute: "2-digit" }).format(new Date(intervention.clientSignedAt!))}
@@ -398,7 +398,7 @@ export default async function PrintVerbale({
               </>
             ) : (
               <>
-                <div style={{ height: 60, borderBottom: "1px solid #999", marginBottom: 4 }} />
+                <div style={{ height: 52, borderBottom: "1px solid #999", marginBottom: 4 }} />
                 <p style={{ fontSize: 10, color: "#888", margin: 0 }}>___________________</p>
               </>
             )}
@@ -406,16 +406,16 @@ export default async function PrintVerbale({
         </div>
 
         {/* ── NOTE PER VARIANTI ── */}
-        <div style={{ marginBottom: 20, fontFamily: "sans-serif" }}>
-          <p style={{ fontSize: 10, fontWeight: 600, textTransform: "uppercase", letterSpacing: 2, color: "#888", margin: "0 0 6px" }}>
+        <div style={{ marginBottom: 12, fontFamily: "sans-serif" }}>
+          <p style={{ fontSize: 10, fontWeight: 600, textTransform: "uppercase", letterSpacing: 2, color: "#888", margin: "0 0 4px" }}>
             NOTE PER EVENTUALI VARIANTI
           </p>
           <div
             style={{
               border: "1px solid #ddd",
               borderRadius: 4,
-              minHeight: 50,
-              padding: "8px 12px",
+              minHeight: 32,
+              padding: "6px 10px",
               backgroundColor: "#fafafa",
             }}
           />
@@ -426,12 +426,12 @@ export default async function PrintVerbale({
           style={{
             border: "1px solid #ddd",
             borderRadius: 4,
-            padding: "10px 14px",
+            padding: "8px 12px",
             backgroundColor: "#f8f8f8",
-            marginBottom: 20,
+            marginBottom: 12,
           }}
         >
-          <p style={{ fontFamily: "sans-serif", fontSize: 9, color: "#777", lineHeight: 1.6, margin: 0 }}>
+          <p style={{ fontFamily: "sans-serif", fontSize: 8.5, color: "#777", lineHeight: 1.5, margin: 0 }}>
             Il presente contratto si rinnova tacitamente allo scadere di un anno dalla data di stipula, salvo disdetta scritta da inviare almeno 30 giorni prima della scadenza.
             Le ore in eccedenza rispetto al monte ore contrattuale non potranno essere cumulate e saranno fatturate separatamente alle condizioni in vigore al momento dell&apos;erogazione.
             In caso di mancato utilizzo del monte ore entro la scadenza contrattuale, le ore residue non daranno diritto a rimborso né a compensazione.
@@ -443,29 +443,29 @@ export default async function PrintVerbale({
           style={{
             border: `1px solid ${primary}40`,
             borderRadius: 6,
-            padding: "14px 18px",
+            padding: "10px 14px",
             backgroundColor: `${primary}08`,
-            marginBottom: 24,
+            marginBottom: 14,
             fontFamily: "sans-serif",
           }}
         >
-          <p style={{ fontSize: 11, fontWeight: 700, textTransform: "uppercase", letterSpacing: 1, color: primary, margin: "0 0 10px" }}>
+          <p style={{ fontSize: 10, fontWeight: 700, textTransform: "uppercase", letterSpacing: 1, color: primary, margin: "0 0 6px" }}>
             Riepilogo monte ore
           </p>
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: "0 16px" }}>
             <div>
-              <p style={{ fontSize: 10, color: "#888", margin: "0 0 2px" }}>Ore totali contratto</p>
-              <p style={{ fontSize: 14, fontWeight: 600, margin: 0 }}>{formatMinutes(contract.totalMinutes)}</p>
+              <p style={{ fontSize: 9, color: "#888", margin: "0 0 1px" }}>Ore totali contratto</p>
+              <p style={{ fontSize: 13, fontWeight: 600, margin: 0 }}>{formatMinutes(contract.totalMinutes)}</p>
             </div>
             <div>
-              <p style={{ fontSize: 10, color: "#888", margin: "0 0 2px" }}>Ore utilizzate</p>
-              <p style={{ fontSize: 14, fontWeight: 600, margin: 0 }}>{formatMinutes(contract.usedMinutes)}</p>
+              <p style={{ fontSize: 9, color: "#888", margin: "0 0 1px" }}>Ore utilizzate</p>
+              <p style={{ fontSize: 13, fontWeight: 600, margin: 0 }}>{formatMinutes(contract.usedMinutes)}</p>
             </div>
             <div>
-              <p style={{ fontSize: 10, color: "#888", margin: "0 0 2px" }}>Ore residue</p>
+              <p style={{ fontSize: 9, color: "#888", margin: "0 0 1px" }}>Ore residue</p>
               <p
                 style={{
-                  fontSize: 14,
+                  fontSize: 13,
                   fontWeight: 700,
                   margin: 0,
                   color: oreResidue <= 0 ? "#dc2626" : primary,
@@ -478,7 +478,7 @@ export default async function PrintVerbale({
         </div>
 
         {/* ── SEPARATORE ── */}
-        <hr style={{ border: "none", borderTop: `1px solid ${primary}`, margin: "0 0 14px" }} />
+        <hr style={{ border: "none", borderTop: `1px solid ${primary}`, margin: "0 0 10px" }} />
 
         {/* ── FOOTER ORGANIZZAZIONE ── */}
         <div style={{ textAlign: "center", fontFamily: "sans-serif", fontSize: 11, color: "#555" }}>
