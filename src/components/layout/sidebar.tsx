@@ -17,6 +17,7 @@ import {
   BookOpen,
   Gift,
   MapPin,
+  Headset,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { can, hasPlan } from "@/lib/permissions";
@@ -40,6 +41,7 @@ const navItems: NavItem[] = [
   { href: "/reports",    icon: BarChart3,       label: "Report",          visible: can.accessReports, planRequired: "pro" },
   { href: "/registry",   icon: BookOpen,        label: "Registro Usato",  visible: can.accessRegistry, planRequired: "business" },
   { href: "/stores",     icon: MapPin,          label: "Sedi",            visible: () => true, planRequired: "business" },
+  { href: "/support",    icon: Headset,         label: "Assistenza",      visible: () => true },
   { href: "/settings",   icon: Settings,        label: "Impostazioni",    visible: () => true },
 ];
 

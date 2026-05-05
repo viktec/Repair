@@ -47,8 +47,10 @@ export default auth((req) => {
     pathname.startsWith("/privacy") ||
     pathname.startsWith("/terms") ||
     pathname.startsWith("/t/") ||
+    pathname.startsWith("/c/") ||
     pathname.startsWith("/api/auth") ||
     pathname.startsWith("/api/t/") ||
+    pathname.startsWith("/api/support/client-request") ||
     (!isAppHost && pathname === "/"); // landing pubblica solo in dev
 
   const isSuperAdmin = (req.auth?.user as { isSuperAdmin?: boolean })?.isSuperAdmin;

@@ -346,6 +346,51 @@ export async function sendMagicLinkEmail({ to, token }: { to: string; token: str
   }
 }
 
+export async function sendNewClientRequestEmail({
+  to,
+  customerName,
+  contractNumber,
+  title,
+  portalUrl,
+}: {
+  to: string;
+  customerName: string;
+  contractNumber: string;
+  title: string;
+  portalUrl: string;
+}) {
+  const transport = getTransport();
+  if (!transport) return { ok: false, error: "SMTP non configurato" };
+
+  const html = `${BASE_HEADER("Nuova richiesta cliente")}
+    <p style="margin:0 0 16px;font-size:15px;color:#1e293b">Nuova richiesta di assistenza ricevuta:</p>
+    <table style="width:100%;border-collapse:collapse;margin:0 0 24px;font-size:14px">
+      <tr><td style="padding:8px 12px;background:#f8fafc;font-weight:600;color:#475569;border-radius:6px 0 0 0;width:140px">Cliente</td>
+          <td style="padding:8px 12px;color:#1e293b">${customerName}</td></tr>
+      <tr><td style="padding:8px 12px;background:#f8fafc;font-weight:600;color:#475569">Contratto</td>
+          <td style="padding:8px 12px;color:#1e293b">${contractNumber}</td></tr>
+      <tr><td style="padding:8px 12px;background:#f8fafc;font-weight:600;color:#475569;border-radius:0 0 0 6px">Richiesta</td>
+          <td style="padding:8px 12px;color:#1e293b">${title}</td></tr>
+    </table>
+    <a href="${portalUrl}" style="display:inline-block;background:#0D8F7A;color:#fff;text-decoration:none;font-weight:600;font-size:14px;padding:12px 24px;border-radius:8px">
+      Vai al contratto →
+    </a>
+  ${BASE_FOOTER}`;
+
+  try {
+    await transport.sendMail({
+      from: process.env.EMAIL_FROM ?? "My-Repair <noreply@my-repair.it>",
+      to,
+      subject: `Nuova richiesta da ${customerName}: ${title}`,
+      html,
+    });
+    return { ok: true };
+  } catch (err) {
+    console.error("[email]", err);
+    return { ok: false, error: String(err) };
+  }
+}
+
 export async function sendRejectionEmail({
   to,
   name,
