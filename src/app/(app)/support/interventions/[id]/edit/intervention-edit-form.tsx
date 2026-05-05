@@ -5,7 +5,6 @@ import { updateInterventionAction, type UpdateInterventionState } from "../../ac
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
 import { Loader2, AlertTriangle } from "lucide-react";
 import { calcBillableMinutes, formatMinutes, type PackageSnapshot } from "@/lib/support-utils";
 
@@ -85,7 +84,7 @@ export function InterventionEditForm({
 
       <div className="space-y-2">
         <Label htmlFor="description">Descrizione</Label>
-        <Textarea id="description" name="description" defaultValue={defaultValues.description ?? ""} rows={3} />
+        <textarea id="description" name="description" defaultValue={defaultValues.description ?? ""} rows={3} className="flex min-h-[80px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2" />
       </div>
 
       {/* Tipo */}
@@ -190,7 +189,7 @@ export function InterventionEditForm({
 
       <div className="space-y-2">
         <Label htmlFor="notes">Note interne</Label>
-        <Textarea id="notes" name="notes" defaultValue={defaultValues.notes ?? ""} rows={2} />
+        <textarea id="notes" name="notes" defaultValue={defaultValues.notes ?? ""} rows={2} className="flex min-h-[60px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2" />
       </div>
 
       <div className="flex gap-3 pt-2">
