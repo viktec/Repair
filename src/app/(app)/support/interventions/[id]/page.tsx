@@ -18,7 +18,7 @@ import { formatDate } from "@/lib/utils";
 import { formatMinutes, calcBillableBreakdown, type PackageSnapshot } from "@/lib/support-utils";
 import { getPresignedDownloadUrl } from "@/lib/storage";
 import { InterventionMessage } from "./intervention-message";
-import { StatusButton } from "./status-button";
+import { WorkflowPanel } from "./workflow-panel";
 import { DeleteInterventionButton } from "./delete-button";
 import { can } from "@/lib/permissions";
 
@@ -137,6 +137,10 @@ export default async function InterventionDetailPage({
 
   const remaining = Math.max(0, contract.totalMinutes - contract.usedMinutes);
   const customerLabel = customer?.name ?? "Cliente";
+
+  const signWaText = signUrl
+    ? `Gentile ${customerLabel},\n\nle chiediamo di firmare digitalmente il verbale dell'intervento appena completato aprendo il link qui sotto:\n\n${signUrl}\n\nGrazie per la collaborazione.`
+    : "";
 
   const descSnippet = intervention.description
     ? intervention.description.length > 100
@@ -294,6 +298,18 @@ ${org?.phone ?? ""}`.trim();
 
         {/* Main content */}
         <div className="lg:col-span-2 space-y-4">
+          <WorkflowPanel
+            interventionId={id}
+            initialStatus={intervention.status}
+            rawMinutes={intervention.rawMinutes}
+            editUrl={`/support/interventions/${id}/edit`}
+            signUrl={signUrl}
+            clientSignedAt={intervention.clientSignedAt}
+            signWaText={signWaText}
+            whatsappPhone={customer?.phone ?? null}
+            verbaleUrl={verbaleUrl}
+          />
+
           {intervention.description && (
             <Card>
               <CardHeader><CardTitle className="text-base">Descrizione</CardTitle></CardHeader>
@@ -314,14 +330,7 @@ ${org?.phone ?? ""}`.trim();
 
           <Card>
             <CardHeader>
-              <div className="flex items-center justify-between">
-                <CardTitle className="text-base">Messaggio per il cliente</CardTitle>
-                {intervention.clientSignedAt && (
-                  <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-50 border border-emerald-200 px-2.5 py-1 text-xs font-medium text-emerald-700">
-                    Firmato digitalmente
-                  </span>
-                )}
-              </div>
+              <CardTitle className="text-base">Comunicazioni cliente</CardTitle>
             </CardHeader>
             <CardContent>
               <InterventionMessage
@@ -329,8 +338,6 @@ ${org?.phone ?? ""}`.trim();
                 emailText={emailText}
                 verbaleUrl={verbaleUrl}
                 whatsappPhone={customer?.phone ?? null}
-                signUrl={signUrl}
-                clientSignedAt={intervention.clientSignedAt}
               />
             </CardContent>
           </Card>
