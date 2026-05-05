@@ -32,7 +32,7 @@ const createSchema = z.object({
 export type CreateInterventionState = {
   errors?: Record<string, string[]>;
   error?: string;
-} | null;
+} | { interventionId: string; remainingMinutes: number } | null;
 
 // ─── createInterventionAction ─────────────────────────────────────────────────
 
