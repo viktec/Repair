@@ -25,6 +25,7 @@ const createSchema = z.object({
   notes: z.string().optional(),
   type: z.enum(["onsite", "remote", "phone", "email", "lab", "other"]),
   isUrgent: z.coerce.boolean(),
+  applyCallFee: z.coerce.boolean(),
   rawMinutes: z.coerce.number().int().min(1, "Durata obbligatoria"),
   occurredAt: z.string().optional(),
 });
@@ -45,15 +46,15 @@ export async function createInterventionAction(
   const orgId = session.user.organizationId;
 
   const raw = Object.fromEntries(formData);
-  // isUrgent arriva come "on" da checkbox o mancante
   raw.isUrgent = raw.isUrgent === "on" ? "true" : "false";
+  raw.applyCallFee = raw.applyCallFee === "on" ? "true" : "false";
 
   const parsed = createSchema.safeParse(raw);
   if (!parsed.success) {
     return { errors: parsed.error.flatten().fieldErrors };
   }
 
-  const { contractId, title, description, notes, type, isUrgent, rawMinutes } = parsed.data;
+  const { contractId, title, description, notes, type, isUrgent, applyCallFee, rawMinutes } = parsed.data;
   const occurredAt = parsed.data.occurredAt ? new Date(parsed.data.occurredAt) : new Date();
 
   // Verifica contratto appartiene all'org
@@ -81,7 +82,7 @@ export async function createInterventionAction(
     urgencySurchargePercent: 0,
   };
 
-  const billableMinutes = calcBillableMinutes(rawMinutes, type, snap, isUrgent);
+  const billableMinutes = calcBillableMinutes(rawMinutes, type, snap, isUrgent, applyCallFee);
 
   // Numero sequenziale interventi per org: I-0001, I-0002…
   const [maxRow] = await db
@@ -135,6 +136,7 @@ export async function createInterventionAction(
       notes: notes || null,
       type,
       isUrgent,
+      applyCallFee,
       rawMinutes,
       billableMinutes,
       technicianId: session.user.id,
@@ -172,6 +174,7 @@ const updateSchema = z.object({
   notes: z.string().optional(),
   type: z.enum(["onsite", "remote", "phone", "email", "lab", "other"]),
   isUrgent: z.coerce.boolean(),
+  applyCallFee: z.coerce.boolean(),
   rawMinutes: z.coerce.number().int().min(1, "Durata obbligatoria"),
   occurredAt: z.string().optional(),
 });
@@ -192,10 +195,11 @@ export async function updateInterventionAction(
 
   const raw = Object.fromEntries(formData);
   raw.isUrgent = raw.isUrgent === "on" ? "true" : "false";
+  raw.applyCallFee = raw.applyCallFee === "on" ? "true" : "false";
   const parsed = updateSchema.safeParse(raw);
   if (!parsed.success) return { errors: parsed.error.flatten().fieldErrors };
 
-  const { title, description, notes, type, isUrgent, rawMinutes, occurredAt } = parsed.data;
+  const { title, description, notes, type, isUrgent, applyCallFee, rawMinutes, occurredAt } = parsed.data;
 
   const [intervention] = await db
     .select({
@@ -230,7 +234,7 @@ export async function updateInterventionAction(
     urgencySurchargePercent: 0,
   };
 
-  const newBillable = calcBillableMinutes(rawMinutes, type, snap, isUrgent);
+  const newBillable = calcBillableMinutes(rawMinutes, type, snap, isUrgent, applyCallFee);
   const diff = newBillable - intervention.billableMinutes;
   const newUsed = Math.max(0, contract.usedMinutes + diff);
   const newStatus = newUsed >= contract.totalMinutes ? "exhausted" : "active";
@@ -243,6 +247,7 @@ export async function updateInterventionAction(
       notes: notes || null,
       type,
       isUrgent,
+      applyCallFee,
       rawMinutes,
       billableMinutes: newBillable,
       startTime: occurredAt ? new Date(occurredAt) : undefined,

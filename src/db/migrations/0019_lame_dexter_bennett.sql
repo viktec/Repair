@@ -1,0 +1,1 @@
+ALTER TABLE "support_interventions" ADD COLUMN "apply_call_fee" boolean DEFAULT true NOT NULL;

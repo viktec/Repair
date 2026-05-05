@@ -9,7 +9,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Loader2, ArrowRight, ImagePlus, X, AlertTriangle } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { calcBillableMinutes, formatMinutes, type PackageSnapshot } from "@/lib/support-utils";
+import { calcBillableBreakdown, formatMinutes, type PackageSnapshot } from "@/lib/support-utils";
 
 // ─── Tipi ────────────────────────────────────────────────────────────────────
 
@@ -51,51 +51,40 @@ function MinutesPreview({
   rawMinutes,
   type,
   isUrgent,
+  applyCallFee,
   snapshot,
   remainingBefore,
 }: {
   rawMinutes: number;
   type: string;
   isUrgent: boolean;
+  applyCallFee: boolean;
   snapshot: PackageSnapshot;
   remainingBefore: number;
 }) {
   if (rawMinutes <= 0) return null;
 
-  let rounded = rawMinutes;
-  let roundingStep = 0;
-  if (type === "phone") { roundingStep = snapshot.phoneRoundingMinutes; rounded = Math.ceil(rawMinutes / roundingStep) * roundingStep; }
-  else if (type === "remote") { roundingStep = snapshot.remoteRoundingMinutes; rounded = Math.ceil(rawMinutes / roundingStep) * roundingStep; }
-  else if (type === "email") { roundingStep = snapshot.emailRoundingMinutes; rounded = Math.ceil(rawMinutes / roundingStep) * roundingStep; }
-
-  const withCallFee = rounded + snapshot.callFeeMinutes;
-  let urgencyAdd = 0;
-  let total = withCallFee;
-  if (isUrgent && snapshot.urgencySurchargePercent > 0) {
-    total = Math.ceil(withCallFee * (1 + snapshot.urgencySurchargePercent / 100));
-    urgencyAdd = total - withCallFee;
-  }
-
-  const remainingAfter = Math.max(0, remainingBefore - total);
-  const isOverBudget = total > remainingBefore;
+  const bd = calcBillableBreakdown(rawMinutes, type, snapshot, isUrgent, applyCallFee);
+  const remainingAfter = Math.max(0, remainingBefore - bd.total);
+  const isOverBudget = bd.total > remainingBefore;
 
   return (
     <div className={`rounded-lg border p-3 space-y-1.5 text-sm ${isOverBudget ? "border-red-300 bg-red-50" : "border-amber-300 bg-amber-50"}`}>
       <p className="text-xs font-semibold uppercase tracking-wide text-amber-800 mb-2">
         Riepilogo minuti
       </p>
-      <Row label="Durata effettiva" value={formatMinutes(rawMinutes)} />
-      {roundingStep > 0 && rounded !== rawMinutes && (
-        <Row label={`Dopo arrotondamento (ogni ${roundingStep} min)`} value={formatMinutes(rounded)} />
+      <Row label="Durata effettiva" value={formatMinutes(bd.raw)} />
+      {bd.roundingStep > 0 && bd.rounded !== bd.raw && (
+        <Row label={`Dopo arrotondamento (ogni ${bd.roundingStep} min)`} value={formatMinutes(bd.rounded)} />
       )}
-      {snapshot.callFeeMinutes > 0 && (
-        <Row label="Diritto di chiamata" value={`+${formatMinutes(snapshot.callFeeMinutes)}`} />
+      {bd.callFee > 0 && (
+        <Row label="Dir. chiamata/connessione" value={`+${formatMinutes(bd.callFee)}`} />
       )}
-      {isUrgent && urgencyAdd > 0 && (
-        <Row label={`Maggiorazione urgenza (+${snapshot.urgencySurchargePercent}%)`} value={`+${formatMinutes(urgencyAdd)}`} />
+      {isUrgent && bd.urgencyAdd > 0 && (
+        <Row label={`Maggiorazione urgenza (+${snapshot.urgencySurchargePercent}%)`} value={`+${formatMinutes(bd.urgencyAdd)}`} />
       )}
       <div className="border-t border-amber-300 pt-1.5 mt-1.5">
-        <Row label="Totale da scalare" value={formatMinutes(total)} bold />
+        <Row label="Totale da scalare" value={formatMinutes(bd.total)} bold />
       </div>
       {isOverBudget ? (
         <p className="flex items-center gap-1 text-xs text-red-700 font-medium mt-1">
@@ -127,6 +116,7 @@ export function InterventionForm({ contracts, preselectedContractId }: Props) {
   const [contractId, setContractId] = useState(preselectedContractId ?? "");
   const [type, setType] = useState<string>("onsite");
   const [isUrgent, setIsUrgent] = useState(false);
+  const [applyCallFee, setApplyCallFee] = useState(true);
   const [durationMode, setDurationMode] = useState<"minutes" | "time">("minutes");
   const [rawMinutesInput, setRawMinutesInput] = useState("");
   const [startTime, setStartTime] = useState("");
@@ -342,12 +332,31 @@ export function InterventionForm({ contracts, preselectedContractId }: Props) {
             <p className="text-xs text-destructive">{(state as { errors: Record<string, string[]> }).errors.rawMinutes[0]}</p>
           )}
 
+          {/* Diritto di chiamata */}
+          {["phone", "remote", "email"].includes(type) && snapshot.callFeeMinutes > 0 && (
+            <div className="flex items-center gap-3">
+              <input
+                id="applyCallFee"
+                name="applyCallFee"
+                type="checkbox"
+                className="h-4 w-4 rounded border-input"
+                checked={applyCallFee}
+                onChange={(e) => setApplyCallFee(e.target.checked)}
+              />
+              <label htmlFor="applyCallFee" className="text-sm cursor-pointer">
+                Applica diritto di chiamata
+                <span className="ml-1.5 text-xs text-muted-foreground">(+{formatMinutes(snapshot.callFeeMinutes)})</span>
+              </label>
+            </div>
+          )}
+
           {/* Preview minuti */}
           {contractId && rawMinutes > 0 && (
             <MinutesPreview
               rawMinutes={rawMinutes}
               type={type}
               isUrgent={isUrgent}
+              applyCallFee={applyCallFee}
               snapshot={snapshot}
               remainingBefore={remainingBefore}
             />

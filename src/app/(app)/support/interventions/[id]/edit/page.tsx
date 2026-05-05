@@ -72,6 +72,7 @@ export default async function EditInterventionPage({
             notes: intervention.notes,
             type: intervention.type,
             isUrgent: intervention.isUrgent,
+            applyCallFee: intervention.applyCallFee,
             rawMinutes: intervention.rawMinutes,
             startTime: intervention.startTime,
           }}

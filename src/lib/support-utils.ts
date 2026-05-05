@@ -28,6 +28,7 @@ export function calcBillableBreakdown(
   type: string,
   snapshot: PackageSnapshot,
   isUrgent: boolean,
+  applyCallFee = true,
 ): BillableBreakdown {
   let rounded = rawMinutes;
   let roundingStep = 0;
@@ -43,8 +44,8 @@ export function calcBillableBreakdown(
     rounded = roundUp(rawMinutes, roundingStep);
   }
 
-  // Diritto di chiamata solo per phone/remote/email
-  const callFee = CALL_FEE_TYPES.includes(type) ? (snapshot.callFeeMinutes ?? 0) : 0;
+  // Diritto di chiamata solo per phone/remote/email e se non rimosso manualmente
+  const callFee = (applyCallFee && CALL_FEE_TYPES.includes(type)) ? (snapshot.callFeeMinutes ?? 0) : 0;
   const afterCallFee = rounded + callFee;
 
   let urgencyAdd = 0;
@@ -62,8 +63,9 @@ export function calcBillableMinutes(
   type: string,
   snapshot: PackageSnapshot,
   isUrgent: boolean,
+  applyCallFee = true,
 ): number {
-  return calcBillableBreakdown(rawMinutes, type, snapshot, isUrgent).total;
+  return calcBillableBreakdown(rawMinutes, type, snapshot, isUrgent, applyCallFee).total;
 }
 
 export function formatMinutes(minutes: number): string {

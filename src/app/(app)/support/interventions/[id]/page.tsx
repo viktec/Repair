@@ -102,6 +102,7 @@ export default async function InterventionDetailPage({
     intervention.type,
     snap,
     intervention.isUrgent,
+    intervention.applyCallFee,
   );
 
   const appUrl = process.env.APP_URL ?? "https://app.my-repair.it";

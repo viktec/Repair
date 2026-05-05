@@ -659,6 +659,7 @@ export const supportInterventions = pgTable("support_interventions", {
   description: text("description"),
   type: varchar("type", { length: 20 }).notNull().default("onsite"),
   isUrgent: boolean("is_urgent").notNull().default(false),
+  applyCallFee: boolean("apply_call_fee").notNull().default(true),
   startTime: timestamp("start_time"),
   endTime: timestamp("end_time"),
   rawMinutes: integer("raw_minutes").notNull().default(0),

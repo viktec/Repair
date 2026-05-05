@@ -134,6 +134,13 @@
       "when": 1777968855138,
       "tag": "0018_overrated_talon",
       "breakpoints": true
+    },
+    {
+      "idx": 19,
+      "version": "7",
+      "when": 1777973759431,
+      "tag": "0019_lame_dexter_bennett",
+      "breakpoints": true
     }
   ]
 }

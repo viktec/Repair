@@ -33,6 +33,7 @@ type Props = {
     notes: string | null;
     type: string;
     isUrgent: boolean;
+    applyCallFee: boolean;
     rawMinutes: number;
     startTime: Date | string | null;
   };
@@ -55,8 +56,9 @@ export function InterventionEditForm({
   const [rawMinutes, setRawMinutes] = useState(defaultValues.rawMinutes);
   const [type, setType] = useState(defaultValues.type);
   const [isUrgent, setIsUrgent] = useState(defaultValues.isUrgent);
+  const [applyCallFee, setApplyCallFee] = useState(defaultValues.applyCallFee);
 
-  const newBillable = calcBillableMinutes(rawMinutes, type, snap, isUrgent);
+  const newBillable = calcBillableMinutes(rawMinutes, type, snap, isUrgent, applyCallFee);
   const diff = newBillable - currentBillableMinutes;
   const newRemaining = contractRemainingMinutes - diff;
   const isOverBudget = newRemaining < 0;
@@ -111,6 +113,24 @@ export function InterventionEditForm({
           ))}
         </div>
       </div>
+
+      {/* Diritto di chiamata */}
+      {["phone", "remote", "email"].includes(type) && snap.callFeeMinutes > 0 && (
+        <div className="flex items-center gap-3">
+          <input
+            id="applyCallFee"
+            name="applyCallFee"
+            type="checkbox"
+            className="h-4 w-4 rounded border-input"
+            checked={applyCallFee}
+            onChange={(e) => setApplyCallFee(e.target.checked)}
+          />
+          <label htmlFor="applyCallFee" className="text-sm cursor-pointer">
+            Applica diritto di chiamata
+            <span className="ml-1.5 text-xs text-muted-foreground">(+{formatMinutes(snap.callFeeMinutes)})</span>
+          </label>
+        </div>
+      )}
 
       {/* Urgenza */}
       <div className="flex items-center gap-3">
