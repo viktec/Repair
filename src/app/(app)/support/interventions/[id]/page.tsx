@@ -142,7 +142,7 @@ Cordiali saluti,
 ${org?.name ?? ""}
 ${org?.phone ?? ""}`.trim();
 
-  const canEdit = ["admin", "owner"].includes(session.user.role ?? "");
+  const canEdit = true; // accesso controllato server-side nell'action
 
   return (
     <div className="space-y-6">
