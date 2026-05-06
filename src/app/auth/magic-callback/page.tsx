@@ -16,11 +16,11 @@ export default async function MagicCallbackPage({ searchParams }: Props) {
 
   try {
     await signIn("magic", { token, redirectTo });
-  } catch {
-    // signIn lancia un redirect — se arriviamo qui c'è un errore
+  } catch (e) {
+    // Next.js usa un'eccezione interna per i redirect — va rilanciata
+    if ((e as { digest?: string })?.digest?.startsWith("NEXT_REDIRECT")) throw e;
     redirect("/login?error=link_scaduto");
   }
 
-  // Non raggiunto — signIn redirige sempre
   redirect(redirectTo);
 }
