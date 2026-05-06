@@ -17,6 +17,7 @@ export function AppShell({
   trialDaysLeft,
   isPastDue,
   hasStripeCustomer,
+  allowedModules,
 }: {
   children: React.ReactNode;
   userName?: string | null;
@@ -27,6 +28,7 @@ export function AppShell({
   trialDaysLeft?: number | null;
   isPastDue?: boolean;
   hasStripeCustomer?: boolean;
+  allowedModules?: string[];
 }) {
   const [open, setOpen] = useState(false);
   const pathname = usePathname();
@@ -59,7 +61,7 @@ export function AppShell({
           open ? "translate-x-0" : "-translate-x-full lg:translate-x-0"
         }`}
       >
-        <Sidebar role={role} plan={plan} subscriptionStatus={subscriptionStatus} trialDaysLeft={trialDaysLeft} />
+        <Sidebar role={role} plan={plan} subscriptionStatus={subscriptionStatus} trialDaysLeft={trialDaysLeft} allowedModules={allowedModules} />
       </div>
 
       {/* Main */}

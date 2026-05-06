@@ -88,6 +88,7 @@ export const organizations = pgTable("organizations", {
   stripeCancelAtPeriodEnd: boolean("stripe_cancel_at_period_end").notNull().default(false),
   stripeCurrentPeriodEnd: timestamp("stripe_current_period_end"),
   onboardingCompletedAt: timestamp("onboarding_completed_at"),
+  rolePermissions: jsonb("role_permissions"),
   createdAt: timestamp("created_at").notNull().defaultNow(),
   updatedAt: timestamp("updated_at").notNull().defaultNow(),
 });
@@ -116,6 +117,22 @@ export const organizationInvites = pgTable("organization_invites", {
   role: roleEnum("role").notNull().default("technician"),
   token: varchar("token", { length: 64 }).notNull().unique(),
   expiresAt: timestamp("expires_at").notNull(),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+});
+
+export const activityLogs = pgTable("activity_logs", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  orgId: uuid("org_id")
+    .notNull()
+    .references(() => organizations.id, { onDelete: "cascade" }),
+  userId: uuid("user_id").references(() => users.id, { onDelete: "set null" }),
+  userName: varchar("user_name", { length: 255 }),
+  userEmail: varchar("user_email", { length: 255 }),
+  action: varchar("action", { length: 100 }).notNull(),
+  entityType: varchar("entity_type", { length: 50 }),
+  entityId: varchar("entity_id", { length: 255 }),
+  entityLabel: varchar("entity_label", { length: 255 }),
+  metadata: jsonb("metadata"),
   createdAt: timestamp("created_at").notNull().defaultNow(),
 });
 

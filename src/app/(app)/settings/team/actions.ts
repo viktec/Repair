@@ -9,6 +9,7 @@ import { revalidatePath } from "next/cache";
 import { can, type Role } from "@/lib/permissions";
 import { sendInviteEmail } from "@/lib/email";
 import { randomBytes } from "crypto";
+import { logActivity } from "@/lib/activity";
 
 function assertOwner(role: string | null | undefined) {
   if (!can.manageTeam(role)) throw new Error("Solo il proprietario può gestire il team.");
@@ -24,6 +25,8 @@ export async function updateMemberRoleAction(userId: string, newRole: Role) {
   const validRoles: Role[] = ["owner", "admin", "technician", "front_desk"];
   if (!validRoles.includes(newRole)) throw new Error("Ruolo non valido.");
 
+  const [target] = await db.select({ name: users.name, email: users.email }).from(users).where(eq(users.id, userId)).limit(1);
+
   await db
     .update(memberships)
     .set({ role: newRole })
@@ -33,6 +36,14 @@ export async function updateMemberRoleAction(userId: string, newRole: Role) {
         eq(memberships.organizationId, session.user.organizationId),
       ),
     );
+
+  logActivity({
+    orgId: session.user.organizationId,
+    action: "team.role_change",
+    entityType: "member",
+    entityLabel: target?.name ?? target?.email ?? userId,
+    metadata: { newRole },
+  }).catch(() => {});
 
   revalidatePath("/settings/team");
 }
@@ -44,6 +55,8 @@ export async function removeMemberAction(userId: string) {
 
   if (userId === session.user.id) throw new Error("Non puoi rimuovere te stesso.");
 
+  const [target] = await db.select({ name: users.name, email: users.email }).from(users).where(eq(users.id, userId)).limit(1);
+
   await db
     .delete(memberships)
     .where(
@@ -52,6 +65,13 @@ export async function removeMemberAction(userId: string) {
         eq(memberships.organizationId, session.user.organizationId),
       ),
     );
+
+  logActivity({
+    orgId: session.user.organizationId,
+    action: "team.remove",
+    entityType: "member",
+    entityLabel: target?.name ?? target?.email ?? userId,
+  }).catch(() => {});
 
   revalidatePath("/settings/team");
 }
@@ -116,6 +136,14 @@ export async function inviteMemberAction(
     role,
     inviteUrl: `${appUrl}/invite/${token}`,
   });
+
+  logActivity({
+    orgId,
+    action: "team.invite",
+    entityType: "member",
+    entityLabel: email,
+    metadata: { role },
+  }).catch(() => {});
 
   revalidatePath("/settings/team");
   return { success: true };

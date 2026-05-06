@@ -4,7 +4,7 @@ import { organizations, customDeviceModels } from "@/db/schema";
 import { eq } from "drizzle-orm";
 import { redirect } from "next/navigation";
 import Link from "next/link";
-import { Users, CreditCard, CheckCircle, Tag } from "lucide-react";
+import { Users, CreditCard, CheckCircle, Tag, ShieldCheck, Activity } from "lucide-react";
 import { SettingsForm } from "./settings-form";
 import { CustomModelsTable } from "./custom-models-table";
 import { ChangePasswordForm } from "./change-password-form";
@@ -111,11 +111,40 @@ export default async function SettingsPage({
                 <p className="text-xs text-muted-foreground">Visualizza e gestisci i membri del tuo centro</p>
               </div>
             </div>
-            <Link
-              href="/settings/team"
-              className="text-sm font-medium text-primary hover:underline"
-            >
+            <Link href="/settings/team" className="text-sm font-medium text-primary hover:underline">
               Vai al team →
+            </Link>
+          </div>
+
+          {/* Permissions link */}
+          <div className="rounded-lg border p-4 flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="rounded-lg bg-primary/10 p-2">
+                <ShieldCheck className="h-5 w-5 text-primary" />
+              </div>
+              <div>
+                <p className="font-medium text-sm">Permessi per ruolo</p>
+                <p className="text-xs text-muted-foreground">Configura quali sezioni sono visibili per tecnici e reception</p>
+              </div>
+            </div>
+            <Link href="/settings/permissions" className="text-sm font-medium text-primary hover:underline">
+              Configura →
+            </Link>
+          </div>
+
+          {/* Activity log link */}
+          <div className="rounded-lg border p-4 flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="rounded-lg bg-primary/10 p-2">
+                <Activity className="h-5 w-5 text-primary" />
+              </div>
+              <div>
+                <p className="font-medium text-sm">Log attività</p>
+                <p className="text-xs text-muted-foreground">Monitora le azioni recenti del tuo team</p>
+              </div>
+            </div>
+            <Link href="/settings/activity" className="text-sm font-medium text-primary hover:underline">
+              Visualizza →
             </Link>
           </div>
         </>

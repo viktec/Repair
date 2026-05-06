@@ -4,6 +4,7 @@ import { db } from "@/lib/db";
 import { organizations } from "@/db/schema";
 import { eq } from "drizzle-orm";
 import { AppShell } from "@/components/layout/app-shell";
+import { getModulesForRole, type RolePermissions } from "@/lib/permissions";
 
 export default async function AppLayout({ children }: { children: React.ReactNode }) {
   const session = await auth();
@@ -21,6 +22,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
       subscriptionStatus: organizations.subscriptionStatus,
       trialEndsAt: organizations.trialEndsAt,
       stripeCustomerId: organizations.stripeCustomerId,
+      rolePermissions: organizations.rolePermissions,
     })
     .from(organizations)
     .where(eq(organizations.id, orgId))
@@ -45,6 +47,11 @@ export default async function AppLayout({ children }: { children: React.ReactNod
       ? Math.max(0, Math.ceil((new Date(org.trialEndsAt).getTime() - now) / (1000 * 60 * 60 * 24)))
       : null;
 
+  const allowedModules = getModulesForRole(
+    session.user.role,
+    org.rolePermissions as RolePermissions | null,
+  );
+
   return (
     <AppShell
       userName={session.user.name}
@@ -55,6 +62,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
       trialDaysLeft={trialDaysLeft}
       isPastDue={isPastDue}
       hasStripeCustomer={!!org.stripeCustomerId}
+      allowedModules={allowedModules}
     >
       {children}
     </AppShell>

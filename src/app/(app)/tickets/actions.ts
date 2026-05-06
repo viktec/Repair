@@ -10,6 +10,7 @@ import { revalidatePath } from "next/cache";
 import { generateQrToken } from "@/lib/utils";
 import { DEVICE_MODELS } from "@/lib/devices";
 import { sendStatusEmail } from "@/lib/email";
+import { logActivity } from "@/lib/activity";
 
 const ticketSchema = z.object({
   customerId: z.string().uuid().optional().or(z.literal("")),
@@ -114,6 +115,14 @@ export async function createTicketAction(
         .onConflictDoNothing();
     }
   }
+
+  logActivity({
+    orgId,
+    action: "ticket.create",
+    entityType: "ticket",
+    entityId: ticket.id,
+    entityLabel: `#${nextNumber}`,
+  }).catch(() => {});
 
   revalidatePath("/tickets");
   return { ticketId: ticket.id };
@@ -321,10 +330,24 @@ export async function deleteTicketAction(ticketId: string) {
   if (!session?.user?.organizationId) redirect("/login");
   const orgId = session.user.organizationId;
 
+  const [t] = await db
+    .select({ ticketNumber: tickets.ticketNumber })
+    .from(tickets)
+    .where(and(eq(tickets.id, ticketId), eq(tickets.organizationId, orgId)))
+    .limit(1);
+
   await db
     .update(tickets)
     .set({ deletedAt: new Date() })
     .where(and(eq(tickets.id, ticketId), eq(tickets.organizationId, orgId)));
+
+  logActivity({
+    orgId,
+    action: "ticket.delete",
+    entityType: "ticket",
+    entityId: ticketId,
+    entityLabel: t ? `#${t.ticketNumber}` : ticketId,
+  }).catch(() => {});
 
   redirect("/tickets");
 }

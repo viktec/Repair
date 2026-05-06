@@ -8,6 +8,7 @@ import { z } from "zod";
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { can } from "@/lib/permissions";
+import { logActivity } from "@/lib/activity";
 
 const customerSchema = z.object({
   name: z.string().min(1, "Il nome è obbligatorio"),
@@ -43,6 +44,13 @@ export async function createCustomerAction(
     notes: notes || null,
     gdprConsentAt: gdprConsent === "on" ? new Date() : null,
   });
+
+  logActivity({
+    orgId: session.user.organizationId,
+    action: "customer.create",
+    entityType: "customer",
+    entityLabel: name,
+  }).catch(() => {});
 
   revalidatePath("/customers");
   redirect("/customers");
