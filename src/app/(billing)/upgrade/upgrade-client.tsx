@@ -10,8 +10,8 @@ const PLANS = [
     id: "start" as const,
     name: "Start",
     tagline: "Per chi al banco è da solo",
-    monthly: 14.9,
-    annual: 149,
+    monthly: 9.9,
+    annual: 99,
     features: [
       "Fino a 5.000 ticket",
       "1 negozio",
@@ -28,8 +28,8 @@ const PLANS = [
     id: "pro" as const,
     name: "Pro",
     tagline: "Aggiunge magazzino, ordini e documenti",
-    monthly: 19.9,
-    annual: 199,
+    monthly: 16.9,
+    annual: 169,
     badge: "Più scelto",
     features: [
       "Fino a 10.000 ticket",
