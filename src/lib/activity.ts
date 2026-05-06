@@ -1,5 +1,3 @@
-"use server";
-
 import { db } from "@/lib/db";
 import { activityLogs } from "@/db/schema";
 import { auth } from "@/lib/auth";
