@@ -46,11 +46,14 @@ export default auth((req) => {
     pathname.startsWith("/reset-password") ||
     pathname.startsWith("/privacy") ||
     pathname.startsWith("/terms") ||
+    pathname.startsWith("/auth/") ||
     pathname.startsWith("/t/") ||
     pathname.startsWith("/c/") ||
+    pathname.startsWith("/sign/") ||
     pathname.startsWith("/api/auth") ||
     pathname.startsWith("/api/t/") ||
     pathname.startsWith("/api/support/client-request") ||
+    pathname.startsWith("/api/support/sign-intervention") ||
     (!isAppHost && pathname === "/"); // landing pubblica solo in dev
 
   const isSuperAdmin = (req.auth?.user as { isSuperAdmin?: boolean })?.isSuperAdmin;
