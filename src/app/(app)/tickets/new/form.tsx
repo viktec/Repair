@@ -15,10 +15,12 @@ import { DEVICE_BRANDS, DEVICE_MODELS } from "@/lib/devices";
 
 type Customer = { id: string; name: string; phone: string | null };
 type Store = { id: string; name: string };
+type TeamMember = { id: string; name: string | null };
 type Props = {
   customers: Customer[];
   statuses: { id: string; name: string }[];
   stores: Store[];
+  teamMembers: TeamMember[];
 };
 
 // ─── Step 2: Firma ──────────────────────────────────────────────────────────
@@ -152,7 +154,7 @@ function SignatureStep({ ticketId }: { ticketId: string }) {
 
 // ─── Step 1: Form ticket ─────────────────────────────────────────────────────
 
-export function NewTicketForm({ customers: initialCustomers, stores }: Props) {
+export function NewTicketForm({ customers: initialCustomers, stores, teamMembers }: Props) {
   const [state, action, pending] = useActionState(createTicketAction, null);
   const [selectedBrand, setSelectedBrand] = useState("");
 
@@ -332,9 +334,26 @@ export function NewTicketForm({ customers: initialCustomers, stores }: Props) {
               className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring" />
             {state?.errors?.faultDescription && <p className="text-xs text-destructive">{state.errors.faultDescription[0]}</p>}
           </div>
-          <div className="space-y-1.5">
-            <Label htmlFor="estimatedCost">Preventivo (€)</Label>
-            <Input id="estimatedCost" name="estimatedCost" type="number" min="0" step="0.01" placeholder="0.00" className="max-w-[160px]" />
+          <div className="grid grid-cols-2 gap-3">
+            <div className="space-y-1.5">
+              <Label htmlFor="estimatedCost">Preventivo (€)</Label>
+              <Input id="estimatedCost" name="estimatedCost" type="number" min="0" step="0.01" placeholder="0.00" />
+            </div>
+            {teamMembers.length > 0 && (
+              <div className="space-y-1.5">
+                <Label htmlFor="assignedUserId">Tecnico assegnato</Label>
+                <select
+                  id="assignedUserId"
+                  name="assignedUserId"
+                  className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+                >
+                  <option value="">— Nessuno —</option>
+                  {teamMembers.map((m) => (
+                    <option key={m.id} value={m.id}>{m.name ?? m.id}</option>
+                  ))}
+                </select>
+              </div>
+            )}
           </div>
         </CardContent>
       </Card>

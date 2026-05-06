@@ -2,7 +2,7 @@
 
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
-import { tickets, ticketStatuses, customDeviceModels, customers, organizations, stores } from "@/db/schema";
+import { tickets, ticketStatuses, customDeviceModels, customers, organizations, stores, users, memberships } from "@/db/schema";
 import { eq, and, max, count, isNull } from "drizzle-orm";
 import { z } from "zod";
 import { redirect } from "next/navigation";
@@ -15,6 +15,7 @@ import { logActivity } from "@/lib/activity";
 const ticketSchema = z.object({
   customerId: z.string().uuid().optional().or(z.literal("")),
   storeId: z.string().uuid().optional().or(z.literal("")),
+  assignedUserId: z.string().uuid().optional().or(z.literal("")),
   deviceBrand: z.string().optional(),
   deviceModel: z.string().optional(),
   deviceImei: z.string().optional(),
@@ -84,6 +85,22 @@ export async function createTicketAction(
     resolvedStoreId = storeRow?.id ?? null;
   }
 
+  // Verifica che assignedUserId appartenga all'org (se fornito)
+  let resolvedAssignedUserId: string | null = null;
+  let resolvedAssignedUserName: string | null = null;
+  if (data.assignedUserId) {
+    const [memberRow] = await db
+      .select({ id: users.id, name: users.name })
+      .from(users)
+      .innerJoin(memberships, and(eq(memberships.userId, users.id), eq(memberships.organizationId, orgId)))
+      .where(eq(users.id, data.assignedUserId))
+      .limit(1);
+    if (memberRow) {
+      resolvedAssignedUserId = memberRow.id;
+      resolvedAssignedUserName = memberRow.name;
+    }
+  }
+
   const [ticket] = await db
     .insert(tickets)
     .values({
@@ -92,6 +109,8 @@ export async function createTicketAction(
       customerId: data.customerId || null,
       statusId: defaultStatus?.id ?? null,
       ticketNumber: nextNumber,
+      assignedUserId: resolvedAssignedUserId,
+      assignedUserName: resolvedAssignedUserName,
       deviceBrand: data.deviceBrand || null,
       deviceModel: data.deviceModel || null,
       deviceImei: data.deviceImei || null,

@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter, usePathname } from "next/navigation";
-import { useTransition } from "react";
+import { useTransition, useState } from "react";
 import { cn } from "@/lib/utils";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
@@ -16,7 +16,13 @@ import {
   type AvgTimeMonthRow,
   type PeriodPoint,
 } from "./charts";
-import { useState } from "react";
+
+export type TechPerfRow = {
+  techName: string;
+  total: number;
+  closed: number;
+  avgDays: number | null;
+};
 
 export type ReportsPeriod = "30d" | "90d" | "180d" | "365d";
 
@@ -28,6 +34,7 @@ type Props = {
   avgByBrand: AvgTimeRow[];
   avgByMonth: AvgTimeMonthRow[];
   periodData: PeriodPoint[];
+  techPerf: TechPerfRow[];
   initialPeriod: ReportsPeriod;
 };
 
@@ -36,6 +43,7 @@ const TABS = [
   { key: "faults",   label: "Top guasti" },
   { key: "avgtime",  label: "Tempo medio" },
   { key: "compare",  label: "Confronto periodi" },
+  { key: "tecnici",  label: "Performance tecnici" },
 ] as const;
 
 type TabKey = (typeof TABS)[number]["key"];
@@ -55,6 +63,7 @@ export function ReportsTabs({
   avgByBrand,
   avgByMonth,
   periodData,
+  techPerf,
   initialPeriod,
 }: Props) {
   const [activeTab, setActiveTab] = useState<TabKey>("margins");
@@ -74,7 +83,7 @@ export function ReportsTabs({
     <div className="space-y-4">
       {/* Tab bar + filtro periodo */}
       <div className="flex items-center justify-between gap-4 flex-wrap">
-        <div className="flex rounded-lg border bg-white p-1 gap-1">
+        <div className="flex flex-wrap rounded-lg border bg-white p-1 gap-1">
           {TABS.map((t) => (
             <button
               key={t.key}
@@ -107,7 +116,6 @@ export function ReportsTabs({
         )}
       </div>
 
-      {/* Tab 1: Margini */}
       {activeTab === "margins" && (
         <Card>
           <CardHeader className="pb-2">
@@ -121,7 +129,6 @@ export function ReportsTabs({
         </Card>
       )}
 
-      {/* Tab 2: Guasti */}
       {activeTab === "faults" && (
         <Card>
           <CardHeader className="pb-2">
@@ -135,7 +142,6 @@ export function ReportsTabs({
         </Card>
       )}
 
-      {/* Tab 3: Tempo medio */}
       {activeTab === "avgtime" && (
         <div className="grid gap-4 lg:grid-cols-2">
           <Card>
@@ -161,7 +167,6 @@ export function ReportsTabs({
         </div>
       )}
 
-      {/* Tab 4: Confronto periodi */}
       {activeTab === "compare" && (
         <div className="space-y-4">
           {yoyDelta !== null && (
@@ -187,6 +192,58 @@ export function ReportsTabs({
             </CardContent>
           </Card>
         </div>
+      )}
+
+      {activeTab === "tecnici" && (
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-medium text-muted-foreground">
+              Performance per tecnico — {PERIOD_LABELS[initialPeriod]}
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            {techPerf.length === 0 ? (
+              <p className="text-sm text-muted-foreground italic py-4 text-center">
+                Nessun dato nel periodo selezionato. Assegna i ticket ai tecnici per vedere le statistiche.
+              </p>
+            ) : (
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="border-b text-left text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                    <th className="pb-2">Tecnico</th>
+                    <th className="pb-2 text-right">Ticket aperti</th>
+                    <th className="pb-2 text-right">Ticket chiusi</th>
+                    <th className="pb-2 text-right">Tasso chiusura</th>
+                    <th className="pb-2 text-right">Tempo medio</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {techPerf.map((row) => {
+                    const rate = row.total > 0 ? Math.round((row.closed / row.total) * 100) : 0;
+                    return (
+                      <tr key={row.techName} className="border-b last:border-0">
+                        <td className="py-2.5 font-medium">{row.techName}</td>
+                        <td className="py-2.5 text-right">{row.total}</td>
+                        <td className="py-2.5 text-right">{row.closed}</td>
+                        <td className="py-2.5 text-right">
+                          <span className={cn(
+                            "font-medium",
+                            rate >= 80 ? "text-emerald-600" : rate >= 50 ? "text-amber-600" : "text-red-600",
+                          )}>
+                            {rate}%
+                          </span>
+                        </td>
+                        <td className="py-2.5 text-right text-muted-foreground">
+                          {row.avgDays != null ? `${row.avgDays} gg` : "—"}
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            )}
+          </CardContent>
+        </Card>
       )}
     </div>
   );

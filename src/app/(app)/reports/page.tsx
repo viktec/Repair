@@ -1,8 +1,6 @@
 import { db } from "@/lib/db";
 import { requirePlan } from "@/lib/require-plan";
-import {
-  tickets, ticketStatuses, ticketParts,
-} from "@/db/schema";
+import { tickets, ticketStatuses, ticketParts } from "@/db/schema";
 import { eq, and, isNull, gte, count, sum, avg, sql } from "drizzle-orm";
 import { redirect } from "next/navigation";
 import { can } from "@/lib/permissions";
@@ -10,6 +8,7 @@ import { formatCurrency } from "@/lib/utils";
 import { Card, CardContent } from "@/components/ui/card";
 import { ReportsTabs } from "./reports-tabs";
 import type { MarginRow, FaultRow, AvgTimeRow, AvgTimeMonthRow, PeriodPoint } from "./charts";
+import type { TechPerfRow } from "./reports-tabs";
 
 type Period = "30d" | "90d" | "180d" | "365d";
 
@@ -128,7 +127,6 @@ export default async function ReportsPage({
   }));
 
   // ─── Tab 3: Tempo medio riparazione ───────────────────────────────────────
-  // deliveredAt come timestamp di chiusura; fallback su updatedAt con stato finale
   const avgByBrandRaw = await db
     .select({
       brand: tickets.deviceBrand,
@@ -223,6 +221,31 @@ export default async function ReportsPage({
     ? Math.round(((curr.curr - curr.prev) / curr.prev) * 100)
     : null;
 
+  // ─── Tab 5: Performance tecnici ───────────────────────────────────────────
+  const techPerfRaw = await db
+    .select({
+      techName: tickets.assignedUserName,
+      total: sql<number>`cast(count(*) as int)`,
+      closed: sql<number>`cast(count(*) filter (where ${ticketStatuses.isFinal} = true) as int)`,
+      avgDays: sql<number>`round(avg(extract(epoch from (coalesce(${tickets.deliveredAt}, ${tickets.updatedAt}) - ${tickets.createdAt})) / 86400) filter (where ${ticketStatuses.isFinal} = true), 1)`,
+    })
+    .from(tickets)
+    .leftJoin(ticketStatuses, eq(ticketStatuses.id, tickets.statusId))
+    .where(and(
+      eq(tickets.organizationId, orgId),
+      isNull(tickets.deletedAt),
+      gte(tickets.createdAt, since),
+    ))
+    .groupBy(tickets.assignedUserName)
+    .orderBy(sql`count(*) desc`);
+
+  const techPerf: TechPerfRow[] = techPerfRaw.map((r) => ({
+    techName: r.techName ?? "Non assegnato",
+    total: Number(r.total),
+    closed: Number(r.closed),
+    avgDays: r.avgDays != null ? Number(r.avgDays) : null,
+  }));
+
   return (
     <div className="space-y-6">
       <div>
@@ -254,7 +277,6 @@ export default async function ReportsPage({
         </Card>
       </div>
 
-      {/* 4 tab avanzati */}
       <ReportsTabs
         currentYear={currentYear}
         yoyDelta={yoyDelta}
@@ -263,6 +285,7 @@ export default async function ReportsPage({
         avgByBrand={avgByBrand}
         avgByMonth={avgByMonth}
         periodData={periodData}
+        techPerf={techPerf}
         initialPeriod={period}
       />
     </div>

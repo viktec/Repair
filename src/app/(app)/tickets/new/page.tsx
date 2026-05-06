@@ -1,7 +1,7 @@
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
-import { customers, ticketStatuses, stores, organizations } from "@/db/schema";
-import { eq } from "drizzle-orm";
+import { customers, ticketStatuses, stores, organizations, memberships, users } from "@/db/schema";
+import { eq, and } from "drizzle-orm";
 import { redirect } from "next/navigation";
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
@@ -22,7 +22,7 @@ export default async function NewTicketPage() {
 
   const isBusiness = hasPlan(org?.plan, "business");
 
-  const [customerList, statusList, storeList] = await Promise.all([
+  const [customerList, statusList, storeList, teamMembers] = await Promise.all([
     db
       .select({ id: customers.id, name: customers.name, phone: customers.phone })
       .from(customers)
@@ -40,6 +40,11 @@ export default async function NewTicketPage() {
           .where(eq(stores.organizationId, orgId))
           .orderBy(stores.name)
       : Promise.resolve([]),
+    db
+      .select({ id: users.id, name: users.name })
+      .from(users)
+      .innerJoin(memberships, and(eq(memberships.userId, users.id), eq(memberships.organizationId, orgId)))
+      .orderBy(users.name),
   ]);
 
   return (
@@ -54,7 +59,7 @@ export default async function NewTicketPage() {
         <h1 className="text-xl font-bold text-foreground">Nuovo ticket</h1>
       </div>
 
-      <NewTicketForm customers={customerList} statuses={statusList} stores={storeList} />
+      <NewTicketForm customers={customerList} statuses={statusList} stores={storeList} teamMembers={teamMembers} />
     </div>
   );
 }

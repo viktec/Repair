@@ -198,6 +198,9 @@ export const tickets = pgTable("tickets", {
   deviceCondition: text("device_condition"),
   faultDescription: text("fault_description").notNull(),
 
+  assignedUserId: uuid("assigned_user_id").references(() => users.id, { onDelete: "set null" }),
+  assignedUserName: varchar("assigned_user_name", { length: 255 }),
+
   internalNotes: text("internal_notes"),
   repairNotes: text("repair_notes"),
   estimatedCost: integer("estimated_cost"),
@@ -256,6 +259,7 @@ export const suppliers = pgTable("suppliers", {
   phone: varchar("phone", { length: 50 }),
   address: text("address"),
   website: varchar("website", { length: 255 }),
+  paymentTerms: text("payment_terms"),
   notes: text("notes"),
   createdAt: timestamp("created_at").notNull().defaultNow(),
   updatedAt: timestamp("updated_at").notNull().defaultNow(),

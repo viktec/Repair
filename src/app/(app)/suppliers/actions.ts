@@ -21,6 +21,7 @@ export async function createSupplierAction(_prev: unknown, formData: FormData) {
     phone: (formData.get("phone") as string) || null,
     address: (formData.get("address") as string) || null,
     website: (formData.get("website") as string) || null,
+    paymentTerms: (formData.get("paymentTerms") as string) || null,
     notes: (formData.get("notes") as string) || null,
   });
 
@@ -40,6 +41,7 @@ export async function updateSupplierAction(id: string, _prev: unknown, formData:
       phone: (formData.get("phone") as string) || null,
       address: (formData.get("address") as string) || null,
       website: (formData.get("website") as string) || null,
+      paymentTerms: (formData.get("paymentTerms") as string) || null,
       notes: (formData.get("notes") as string) || null,
       updatedAt: new Date(),
     })

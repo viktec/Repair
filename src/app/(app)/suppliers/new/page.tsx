@@ -49,8 +49,12 @@ export default function NewSupplierPage() {
               <Input id="address" name="address" />
             </div>
             <div className="space-y-1.5">
+              <Label htmlFor="paymentTerms">Condizioni di pagamento</Label>
+              <textarea id="paymentTerms" name="paymentTerms" rows={2} placeholder="Es. 30 giorni fine mese, bonifico bancario…" className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring" />
+            </div>
+            <div className="space-y-1.5">
               <Label htmlFor="notes">Note</Label>
-              <textarea name="notes" rows={3} className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring" />
+              <textarea id="notes" name="notes" rows={2} className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring" />
             </div>
             <div className="flex justify-end gap-3">
               <Link href="/suppliers"><Button type="button" variant="outline">Annulla</Button></Link>
