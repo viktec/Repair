@@ -82,8 +82,8 @@ export function InviteForm({ pendingInvites }: { pendingInvites: PendingInvite[]
           </p>
         )}
 
-        <div className="flex gap-2 flex-wrap">
-          <div className="flex-1 min-w-48 space-y-1">
+        <div className="flex gap-2 items-end flex-wrap">
+          <div className="flex-1 min-w-48 flex flex-col gap-1">
             <Label htmlFor="invite-email" className="text-xs">Email</Label>
             <Input
               id="invite-email"
@@ -94,7 +94,7 @@ export function InviteForm({ pendingInvites }: { pendingInvites: PendingInvite[]
               className="h-9 text-sm"
             />
           </div>
-          <div className="space-y-1">
+          <div className="flex flex-col gap-1">
             <Label htmlFor="invite-role" className="text-xs">Ruolo</Label>
             <select
               id="invite-role"
@@ -109,12 +109,10 @@ export function InviteForm({ pendingInvites }: { pendingInvites: PendingInvite[]
               ))}
             </select>
           </div>
-          <div className="flex items-end">
-            <Button type="submit" size="sm" disabled={pending} className="gap-1.5 h-9">
-              {pending ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Send className="h-3.5 w-3.5" />}
-              Invia invito
-            </Button>
-          </div>
+          <Button type="submit" size="sm" disabled={pending} className="gap-1.5 h-9">
+            {pending ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Send className="h-3.5 w-3.5" />}
+            Invia invito
+          </Button>
         </div>
       </form>
     </div>
