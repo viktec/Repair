@@ -45,6 +45,7 @@ export default async function InventoryPage({
       costPriceCents: inventoryItems.costPriceCents,
       sellPriceCents: inventoryItems.sellPriceCents,
       location: inventoryItems.location,
+      supplierId: inventoryItems.supplierId,
       supplierName: suppliers.name,
     })
     .from(inventoryItems)

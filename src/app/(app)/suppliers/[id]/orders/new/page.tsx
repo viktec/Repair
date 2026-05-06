@@ -1,15 +1,22 @@
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { suppliers, inventoryItems } from "@/db/schema";
-import { eq, and, isNull } from "drizzle-orm";
+import { eq, and, isNull, inArray } from "drizzle-orm";
 import { redirect, notFound } from "next/navigation";
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { NewOrderForm } from "./new-order-form";
 
-export default async function NewOrderPage({ params }: { params: Promise<{ id: string }> }) {
+export default async function NewOrderPage({
+  params,
+  searchParams,
+}: {
+  params: Promise<{ id: string }>;
+  searchParams: Promise<{ itemIds?: string }>;
+}) {
   const { id } = await params;
+  const { itemIds } = await searchParams;
   const session = await auth();
   if (!session?.user?.organizationId) redirect("/login");
   const orgId = session.user.organizationId;
@@ -21,11 +28,27 @@ export default async function NewOrderPage({ params }: { params: Promise<{ id: s
     .limit(1);
   if (!supplier) notFound();
 
-  const inventoryList = await db
-    .select({ id: inventoryItems.id, name: inventoryItems.name, sku: inventoryItems.sku, costPriceCents: inventoryItems.costPriceCents })
-    .from(inventoryItems)
-    .where(and(eq(inventoryItems.organizationId, orgId), isNull(inventoryItems.deletedAt)))
-    .orderBy(inventoryItems.name);
+  const prefilledIds = itemIds
+    ? itemIds.split(",").map((s) => s.trim()).filter(Boolean)
+    : [];
+
+  const [inventoryList, prefilledItems] = await Promise.all([
+    db
+      .select({ id: inventoryItems.id, name: inventoryItems.name, sku: inventoryItems.sku, costPriceCents: inventoryItems.costPriceCents })
+      .from(inventoryItems)
+      .where(and(eq(inventoryItems.organizationId, orgId), isNull(inventoryItems.deletedAt)))
+      .orderBy(inventoryItems.name),
+    prefilledIds.length > 0
+      ? db
+          .select({ id: inventoryItems.id, name: inventoryItems.name, costPriceCents: inventoryItems.costPriceCents, quantity: inventoryItems.quantity, minQuantity: inventoryItems.minQuantity })
+          .from(inventoryItems)
+          .where(and(
+            eq(inventoryItems.organizationId, orgId),
+            isNull(inventoryItems.deletedAt),
+            inArray(inventoryItems.id, prefilledIds),
+          ))
+      : Promise.resolve([]),
+  ]);
 
   return (
     <div className="mx-auto max-w-2xl space-y-6">
@@ -35,7 +58,21 @@ export default async function NewOrderPage({ params }: { params: Promise<{ id: s
         </Link>
         <h1 className="text-xl font-bold">Nuovo ordine d&apos;acquisto</h1>
       </div>
-      <NewOrderForm supplierId={id} inventoryItems={inventoryList} />
+      {prefilledItems.length > 0 && (
+        <div className="rounded-lg border border-primary/20 bg-primary/5 px-4 py-3 text-sm text-primary">
+          {prefilledItems.length} articoli pre-compilati dal magazzino
+        </div>
+      )}
+      <NewOrderForm
+        supplierId={id}
+        inventoryItems={inventoryList}
+        prefilledItems={prefilledItems.map((it) => ({
+          itemId: it.id,
+          description: it.name,
+          qty: Math.max(1, (it.minQuantity ?? 0) - (it.quantity ?? 0)),
+          unitCost: it.costPriceCents != null ? (it.costPriceCents / 100).toFixed(2) : "",
+        }))}
+      />
     </div>
   );
 }

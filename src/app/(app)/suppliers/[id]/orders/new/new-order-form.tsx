@@ -10,15 +10,28 @@ import { Plus, Trash2, Loader2 } from "lucide-react";
 
 type InventoryItem = { id: string; name: string; sku: string | null; costPriceCents: number | null };
 type OrderLine = { description: string; qty: number; itemId: string; unitCost: string };
+type PrefilledItem = { itemId: string; description: string; qty: number; unitCost: string };
 
 function emptyLine(): OrderLine {
   return { description: "", qty: 1, itemId: "", unitCost: "" };
 }
 
-export function NewOrderForm({ supplierId, inventoryItems }: { supplierId: string; inventoryItems: InventoryItem[] }) {
+export function NewOrderForm({
+  supplierId,
+  inventoryItems,
+  prefilledItems = [],
+}: {
+  supplierId: string;
+  inventoryItems: InventoryItem[];
+  prefilledItems?: PrefilledItem[];
+}) {
   const boundAction = createOrderAction.bind(null, supplierId);
   const [state, action, pending] = useActionState(boundAction, null);
-  const [lines, setLines] = useState<OrderLine[]>([emptyLine()]);
+  const [lines, setLines] = useState<OrderLine[]>(
+    prefilledItems.length > 0
+      ? prefilledItems.map((p) => ({ description: p.description, qty: p.qty, itemId: p.itemId, unitCost: p.unitCost }))
+      : [emptyLine()],
+  );
 
   function addLine() {
     setLines((prev) => [...prev, emptyLine()]);
