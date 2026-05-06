@@ -17,6 +17,19 @@ const registerSchema = z.object({
   email: z.string().email("Email non valida"),
   password: z.string().min(8, "La password deve avere almeno 8 caratteri"),
   shopName: z.string().min(2, "Il nome del negozio deve avere almeno 2 caratteri"),
+  legalName: z.string().optional(),
+  vatNumber: z.string().optional(),
+  sdiCode: z.string().optional(),
+  pec: z.string().optional(),
+  phone: z.string().optional(),
+  address: z.string().optional(),
+  city: z.string().optional(),
+  postalCode: z.string().optional(),
+  province: z.string().optional(),
+  operativeAddress: z.string().optional(),
+  operativeCity: z.string().optional(),
+  operativePostalCode: z.string().optional(),
+  operativeProvince: z.string().optional(),
 });
 
 type RegisterState = {
@@ -29,7 +42,12 @@ export async function registerAction(_prev: RegisterState, formData: FormData): 
     return { errors: parsed.error.flatten().fieldErrors };
   }
 
-  const { name, email, password, shopName } = parsed.data;
+  const {
+    name, email, password, shopName,
+    legalName, vatNumber, sdiCode, pec, phone,
+    address, city, postalCode, province,
+    operativeAddress, operativeCity, operativePostalCode, operativeProvince,
+  } = parsed.data;
 
   const existing = await db
     .select({ id: users.id })
@@ -60,6 +78,19 @@ export async function registerAction(_prev: RegisterState, formData: FormData): 
           registrationStatus: "pending",
           subscriptionStatus: "trial",
           trialEndsAt: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000),
+          legalName: legalName || null,
+          vatNumber: vatNumber || null,
+          sdiCode: sdiCode || null,
+          pec: pec || null,
+          phone: phone || null,
+          address: address || null,
+          city: city || null,
+          postalCode: postalCode || null,
+          province: province || null,
+          operativeAddress: operativeAddress || null,
+          operativeCity: operativeCity || null,
+          operativePostalCode: operativePostalCode || null,
+          operativeProvince: operativeProvince || null,
         })
         .returning({ id: organizations.id });
 
