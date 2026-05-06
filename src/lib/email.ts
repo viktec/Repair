@@ -316,6 +316,52 @@ export async function sendTrialExpiryEmail({
   }
 }
 
+export async function sendInviteEmail({
+  to,
+  orgName,
+  inviterName,
+  role,
+  inviteUrl,
+}: {
+  to: string;
+  orgName: string;
+  inviterName: string;
+  role: string;
+  inviteUrl: string;
+}) {
+  const transport = getTransport();
+  if (!transport) return { ok: false, error: "SMTP non configurato" };
+
+  const roleLabel: Record<string, string> = {
+    owner: "Proprietario",
+    admin: "Amministratore",
+    technician: "Tecnico",
+    front_desk: "Reception",
+  };
+
+  const html = `${BASE_HEADER("Invito al team")}
+    <p style="margin:0 0 8px;font-size:15px;color:#1e293b"><strong>${inviterName}</strong> ti ha invitato a unirti al team <strong>${orgName}</strong> su My-Repair.</p>
+    <p style="margin:0 0 24px;font-size:14px;color:#475569">Ruolo assegnato: <strong>${roleLabel[role] ?? role}</strong></p>
+    <a href="${inviteUrl}" style="display:inline-block;background:#0D8F7A;color:#fff;text-decoration:none;font-weight:600;font-size:14px;padding:12px 24px;border-radius:8px">
+      Accetta invito →
+    </a>
+    <p style="margin:24px 0 0;font-size:12px;color:#94a3b8">Il link scade tra 7 giorni. Se non conosci ${orgName}, ignora questa email.</p>
+  ${BASE_FOOTER}`;
+
+  try {
+    await transport.sendMail({
+      from: process.env.EMAIL_FROM ?? "My-Repair <noreply@my-repair.it>",
+      to,
+      subject: `Sei stato invitato a unirti a ${orgName} su My-Repair`,
+      html,
+    });
+    return { ok: true };
+  } catch (err) {
+    console.error("[email]", err);
+    return { ok: false, error: String(err) };
+  }
+}
+
 export async function sendMagicLinkEmail({ to, token }: { to: string; token: string }) {
   const transport = getTransport();
   if (!transport) return { ok: false, error: "SMTP non configurato" };

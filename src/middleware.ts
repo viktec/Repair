@@ -47,6 +47,7 @@ export default auth((req) => {
     pathname.startsWith("/privacy") ||
     pathname.startsWith("/terms") ||
     pathname.startsWith("/auth/") ||
+    pathname.startsWith("/invite/") ||
     pathname.startsWith("/t/") ||
     pathname.startsWith("/c/") ||
     pathname.startsWith("/sign/") ||

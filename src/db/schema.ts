@@ -99,6 +99,18 @@ export const memberships = pgTable(
   (table) => [primaryKey({ columns: [table.userId, table.organizationId] })],
 );
 
+export const organizationInvites = pgTable("organization_invites", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  organizationId: uuid("organization_id")
+    .notNull()
+    .references(() => organizations.id, { onDelete: "cascade" }),
+  email: varchar("email", { length: 255 }).notNull(),
+  role: roleEnum("role").notNull().default("technician"),
+  token: varchar("token", { length: 64 }).notNull().unique(),
+  expiresAt: timestamp("expires_at").notNull(),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+});
+
 export const stores = pgTable("stores", {
   id: uuid("id").primaryKey().defaultRandom(),
   organizationId: uuid("organization_id")

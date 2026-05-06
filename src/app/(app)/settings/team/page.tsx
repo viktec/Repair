@@ -1,13 +1,14 @@
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
-import { memberships, users } from "@/db/schema";
-import { eq } from "drizzle-orm";
+import { memberships, users, organizationInvites } from "@/db/schema";
+import { eq, gt } from "drizzle-orm";
 import { redirect } from "next/navigation";
 import Link from "next/link";
-import { ArrowLeft, Users } from "lucide-react";
+import { ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { can, ROLE_LABELS, type Role } from "@/lib/permissions";
 import { TeamMemberRow } from "./team-member-row";
+import { InviteForm } from "./invite-form";
 
 export default async function TeamPage() {
   const session = await auth();
@@ -15,17 +16,30 @@ export default async function TeamPage() {
   if (!can.manageTeam(session.user.role)) redirect("/settings");
   const orgId = session.user.organizationId;
 
-  const members = await db
-    .select({
-      userId: memberships.userId,
-      role: memberships.role,
-      name: users.name,
-      email: users.email,
-    })
-    .from(memberships)
-    .innerJoin(users, eq(users.id, memberships.userId))
-    .where(eq(memberships.organizationId, orgId))
-    .orderBy(memberships.role);
+  const [members, pendingInvites] = await Promise.all([
+    db
+      .select({
+        userId: memberships.userId,
+        role: memberships.role,
+        name: users.name,
+        email: users.email,
+      })
+      .from(memberships)
+      .innerJoin(users, eq(users.id, memberships.userId))
+      .where(eq(memberships.organizationId, orgId))
+      .orderBy(memberships.role),
+
+    db
+      .select({
+        id: organizationInvites.id,
+        email: organizationInvites.email,
+        role: organizationInvites.role,
+        expiresAt: organizationInvites.expiresAt,
+      })
+      .from(organizationInvites)
+      .where(eq(organizationInvites.organizationId, orgId) && gt(organizationInvites.expiresAt, new Date()))
+      .orderBy(organizationInvites.createdAt),
+  ]);
 
   return (
     <div className="mx-auto max-w-2xl space-y-6">
@@ -44,6 +58,7 @@ export default async function TeamPage() {
         </div>
       </div>
 
+      {/* Active members */}
       <div className="space-y-2">
         {members.map((m) => (
           <TeamMemberRow
@@ -57,13 +72,12 @@ export default async function TeamPage() {
         ))}
       </div>
 
-      <div className="rounded-lg border border-dashed p-6 text-center text-sm text-muted-foreground space-y-1">
-        <Users className="mx-auto h-8 w-8 text-muted-foreground/50 mb-2" />
-        <p className="font-medium">Invita nuovi membri</p>
-        <p>La funzione di invito via email è in arrivo nella prossima versione.</p>
-        <p className="text-xs">Per ora, contatta il supporto per aggiungere collaboratori al tuo account.</p>
+      {/* Invite section */}
+      <div className="rounded-lg border p-5 space-y-4">
+        <InviteForm pendingInvites={pendingInvites} />
       </div>
 
+      {/* Role summary */}
       <div className="rounded-lg bg-slate-50 border p-4 text-xs text-muted-foreground space-y-1">
         <p className="font-medium text-foreground mb-2">Riepilogo ruoli</p>
         {(Object.entries(ROLE_LABELS) as [Role, string][]).map(([role, label]) => (
