@@ -35,7 +35,7 @@ const navItems: NavItem[] = [
 ];
 
 const bottomItems: NavItem[] = [
-  { href: "/guide",     icon: HelpCircle, label: "Guida",           always: true },
+  { href: "/guide",     icon: HelpCircle, label: "Funzioni",        always: true },
   { href: "/settings",  icon: Settings,   label: "Impostazioni",    always: true },
 ];
 
