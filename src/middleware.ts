@@ -22,13 +22,18 @@ export default auth((req) => {
     return NextResponse.rewrite(url);
   }
 
-  // Marketing site: serve landing, auth callbacks, and legal pages
+  // Marketing site: serve landing, feature pages, blog, changelog, legal
   if (MARKETING_HOSTS.has(host)) {
     if (
       pathname === "/" ||
+      pathname.startsWith("/funzionalita") ||
+      pathname.startsWith("/novita") ||
+      pathname.startsWith("/blog") ||
       pathname.startsWith("/api/auth") ||
       pathname.startsWith("/privacy") ||
-      pathname.startsWith("/terms")
+      pathname.startsWith("/terms") ||
+      pathname.startsWith("/register") ||
+      pathname.startsWith("/login")
     ) {
       return NextResponse.next();
     }
