@@ -75,7 +75,8 @@ export async function submitSurveyAction(
   const hasCharger = formData.get("hasCharger") === "on";
   const hasOriginalBox = formData.get("hasOriginalBox") === "on";
   const expectedRaw = formData.get("customerExpectedCents") as string;
-  const customerExpectedCents = expectedRaw ? Math.round(parseFloat(expectedRaw) * 100) : null;
+  if (!expectedRaw) return { error: "Inserisci l'importo che ti aspetti di ricevere." };
+  const customerExpectedCents = Math.round(parseFloat(expectedRaw) * 100);
   const intent = formData.get("intent") as string;
   const customerNotes = (formData.get("customerNotes") as string)?.trim() || null;
   const purchaseMethod = formData.get("purchaseMethod") as string;

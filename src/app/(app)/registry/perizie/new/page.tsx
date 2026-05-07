@@ -39,16 +39,16 @@ export default function NewAppraisalPage() {
             </div>
             <div className="grid grid-cols-3 gap-3">
               <div className="space-y-1.5">
-                <Label htmlFor="storageGb">Storage</Label>
-                <Input id="storageGb" name="storageGb" placeholder="128GB" />
+                <Label htmlFor="storageGb">Storage <span className="text-destructive">*</span></Label>
+                <Input id="storageGb" name="storageGb" placeholder="128GB" required />
               </div>
               <div className="space-y-1.5">
-                <Label htmlFor="color">Colore</Label>
-                <Input id="color" name="color" placeholder="Nero" />
+                <Label htmlFor="color">Colore <span className="text-destructive">*</span></Label>
+                <Input id="color" name="color" placeholder="Nero" required />
               </div>
               <div className="space-y-1.5">
-                <Label htmlFor="imei">IMEI</Label>
-                <Input id="imei" name="imei" placeholder="350000…" />
+                <Label htmlFor="imei">IMEI <span className="text-destructive">*</span></Label>
+                <Input id="imei" name="imei" placeholder="350000…" required className="font-mono" />
               </div>
             </div>
           </CardContent>

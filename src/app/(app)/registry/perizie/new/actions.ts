@@ -19,6 +19,9 @@ export async function createAppraisalAction(_prev: { error: string } | null, for
   const customerPhone = (formData.get("customerPhone") as string)?.trim() || null;
 
   if (!brand || !model) return { error: "Marca e modello sono obbligatori." };
+  if (!storageGb) return { error: "Lo storage è obbligatorio." };
+  if (!color) return { error: "Il colore è obbligatorio." };
+  if (!imei) return { error: "L'IMEI è obbligatorio." };
 
   const surveyToken = crypto.randomUUID().replace(/-/g, "");
 

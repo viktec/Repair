@@ -268,7 +268,7 @@ export function SurveyForm({ token, brand, model, storageGb, alreadyCompleted, p
       {/* 8. Aspettativa */}
       <section className="space-y-3">
         <h3 className="font-semibold">
-          Quanto ti aspetti di ricevere? <span className="text-sm font-normal text-muted-foreground">(opzionale)</span>
+          Quanto ti aspetti di ricevere? <span className="text-destructive">*</span>
         </h3>
         <div className="relative max-w-[180px]">
           <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">€</span>
@@ -278,6 +278,7 @@ export function SurveyForm({ token, brand, model, storageGb, alreadyCompleted, p
             min="0"
             step="1"
             placeholder="0"
+            required
             className="w-full rounded-lg border border-input bg-background pl-8 pr-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
           />
         </div>

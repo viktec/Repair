@@ -2,7 +2,7 @@ import { db } from "@/lib/db";
 import { deviceAppraisals, organizations } from "@/db/schema";
 import { eq } from "drizzle-orm";
 import { notFound } from "next/navigation";
-import { CheckCircle2, Clock } from "lucide-react";
+import { CheckCircle2, Clock, MessageCircle } from "lucide-react";
 import { PeriziaPublicShell } from "@/components/perizia-public-shell";
 
 function fmt(cents: number) {
@@ -38,6 +38,7 @@ export default async function ValutazionePage({ params }: { params: Promise<{ to
       orgLogoUrl: organizations.brandingLogoUrl,
       orgColor: organizations.brandingPrimaryColor,
       orgPhone: organizations.phone,
+      orgWhatsapp: organizations.whatsappPhone,
     })
     .from(deviceAppraisals)
     .leftJoin(organizations, eq(organizations.id, deviceAppraisals.organizationId))
@@ -123,15 +124,34 @@ export default async function ValutazionePage({ params }: { params: Promise<{ to
               )}
             </div>
 
-            {row.orgPhone && (
-              <a
-                href={`tel:${row.orgPhone}`}
-                className="flex items-center justify-center w-full rounded-xl py-3 text-base font-semibold text-white transition-opacity hover:opacity-90"
-                style={{ backgroundColor: primaryColor }}
-              >
-                Chiamaci per un appuntamento
-              </a>
-            )}
+            <div className="flex flex-col gap-3">
+              {row.orgPhone && (
+                <a
+                  href={`tel:${row.orgPhone}`}
+                  className="flex items-center justify-center gap-2 w-full rounded-xl py-3 text-base font-semibold text-white transition-opacity hover:opacity-90"
+                  style={{ backgroundColor: primaryColor }}
+                >
+                  Chiamaci per un appuntamento
+                </a>
+              )}
+              {(row.orgWhatsapp || row.orgPhone) && (() => {
+                const waNumber = (row.orgWhatsapp ?? row.orgPhone ?? "").replace(/\D/g, "");
+                const waText = encodeURIComponent(
+                  `Ciao, ho visto la valutazione del mio ${deviceName} e sono interessato/a. Quando posso passare?`
+                );
+                return (
+                  <a
+                    href={`https://wa.me/${waNumber}?text=${waText}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center justify-center gap-2 w-full rounded-xl py-3 text-base font-semibold text-white transition-opacity hover:opacity-90 bg-[#25D366]"
+                  >
+                    <MessageCircle className="h-5 w-5" />
+                    Contattaci su WhatsApp
+                  </a>
+                );
+              })()}
+            </div>
           </>
         ) : isRejected ? (
           <div className="rounded-xl bg-red-50 border border-red-200 p-5 text-center space-y-2">
