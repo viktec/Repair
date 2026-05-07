@@ -93,7 +93,9 @@ export function SurveyForm({ token, brand, model, storageGb, alreadyCompleted, p
     );
   }
 
-  const deviceName = [brand, model, storageGb].filter(Boolean).join(" ");
+  const modelStartsWithBrand = brand && (model?.toLowerCase().startsWith(brand.toLowerCase()) ?? false);
+  const deviceName = [!modelStartsWithBrand && brand, model, storageGb].filter(Boolean).join(" ");
+  const isIphone = brand.toLowerCase().includes("iphone") || model.toLowerCase().includes("iphone");
 
   return (
     <form action={action} className="space-y-7">
@@ -169,6 +171,30 @@ export function SurveyForm({ token, brand, model, storageGb, alreadyCompleted, p
         </select>
       </section>
 
+      {/* 4b. Percentuale batteria (solo iPhone) */}
+      {isIphone && (
+        <section className="space-y-3">
+          <h3 className="font-semibold">
+            Percentuale stato batteria <span className="text-sm font-normal text-muted-foreground">(solo iPhone)</span>
+          </h3>
+          <p className="text-xs text-muted-foreground">
+            Vai in <strong>Impostazioni → Batteria → Stato batteria e ricarica</strong> e inserisci la percentuale che vedi.
+          </p>
+          <div className="relative max-w-[140px]">
+            <input
+              type="number"
+              name="batteryPercentage"
+              min="1"
+              max="100"
+              step="1"
+              placeholder="es. 87"
+              className="w-full rounded-lg border border-input bg-background px-3 pr-8 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+            />
+            <span className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground text-sm">%</span>
+          </div>
+        </section>
+      )}
+
       {/* 6. Accessori */}
       <section className="space-y-3">
         <h3 className="font-semibold">Accessori inclusi</h3>
@@ -182,6 +208,48 @@ export function SurveyForm({ token, brand, model, storageGb, alreadyCompleted, p
             <span className="text-sm font-medium">Scatola originale</span>
           </label>
         </div>
+      </section>
+
+      {/* 6b. Metodo di acquisto */}
+      <section className="space-y-3">
+        <h3 className="font-semibold">Come è stato acquistato? <span className="text-destructive">*</span></h3>
+        <RadioGroup
+          name="purchaseMethod"
+          options={[
+            { value: "cash", label: "Contanti" },
+            { value: "card", label: "Carta" },
+            { value: "carrier_plan", label: "Abbonamento operatore" },
+            { value: "financing", label: "Finanziamento" },
+          ]}
+        />
+      </section>
+
+      {/* 6c. Dove è stato acquistato */}
+      <section className="space-y-3">
+        <h3 className="font-semibold">Dove è stato acquistato? <span className="text-destructive">*</span></h3>
+        <RadioGroup
+          name="purchasePlace"
+          options={[
+            { value: "physical", label: "Negozio fisico", sub: "Es. Unieuro, Apple Store…" },
+            { value: "online", label: "Online", sub: "Es. Amazon, sito ufficiale…" },
+          ]}
+        />
+      </section>
+
+      {/* 6d. Prova di acquisto */}
+      <section className="space-y-3">
+        <h3 className="font-semibold">
+          Hai la prova di acquisto? <span className="text-sm font-normal text-muted-foreground">(opzionale)</span>
+        </h3>
+        <p className="text-xs text-muted-foreground">Scontrino, fattura o ricevuta.</p>
+        <RadioGroup
+          name="hasProofOfPurchase"
+          required={false}
+          options={[
+            { value: "yes", label: "Sì, ce l'ho" },
+            { value: "no", label: "No, non ce l'ho" },
+          ]}
+        />
       </section>
 
       {/* 7. Intenzione */}

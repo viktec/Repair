@@ -77,16 +77,26 @@ export async function submitSurveyAction(
   const customerExpectedCents = expectedRaw ? Math.round(parseFloat(expectedRaw) * 100) : null;
   const intent = formData.get("intent") as string;
   const customerNotes = (formData.get("customerNotes") as string)?.trim() || null;
+  const purchaseMethod = formData.get("purchaseMethod") as string;
+  const purchasePlace = formData.get("purchasePlace") as string;
+  const proofRaw = formData.get("hasProofOfPurchase") as string;
+  const hasProofOfPurchase = proofRaw === "yes" ? true : proofRaw === "no" ? false : null;
+  const batteryPctRaw = formData.get("batteryPercentage") as string;
+  const batteryPercentage = batteryPctRaw ? Math.min(100, Math.max(1, parseInt(batteryPctRaw))) : null;
 
   const validScreen = ["perfect", "minor_scratches", "cracked", "shattered"];
   const validBody = ["excellent", "good", "fair", "poor"];
   const validBattery = ["great", "good", "fair", "poor"];
   const validIntent = ["sell", "trade_in", "both"];
+  const validPurchaseMethod = ["cash", "card", "carrier_plan", "financing"];
+  const validPurchasePlace = ["physical", "online"];
 
   if (!validScreen.includes(screenCondition)) return { error: "Seleziona lo stato dello schermo." };
   if (!validBody.includes(bodyCondition)) return { error: "Seleziona lo stato del corpo." };
   if (!validBattery.includes(batteryHealth)) return { error: "Seleziona lo stato della batteria." };
   if (!validIntent.includes(intent)) return { error: "Seleziona l'intenzione." };
+  if (!validPurchaseMethod.includes(purchaseMethod)) return { error: "Seleziona il metodo di acquisto." };
+  if (!validPurchasePlace.includes(purchasePlace)) return { error: "Seleziona dove è stato acquistato." };
 
   await db
     .update(deviceAppraisals)
@@ -101,6 +111,10 @@ export async function submitSurveyAction(
       customerExpectedCents,
       intent: intent as "sell" | "trade_in" | "both",
       customerNotes,
+      purchaseMethod: purchaseMethod as "cash" | "card" | "carrier_plan" | "financing",
+      purchasePlace: purchasePlace as "physical" | "online",
+      hasProofOfPurchase,
+      batteryPercentage,
       surveyCompletedAt: new Date(),
       status: "survey_completed",
       updatedAt: new Date(),

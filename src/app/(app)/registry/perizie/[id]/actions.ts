@@ -54,7 +54,24 @@ export async function evaluateWithAIAction(appraisalId: string): Promise<{ error
 
   const intentMap: Record<string, string> = { sell: "solo vendita", trade_in: "permuta", both: "vendita o permuta" };
 
-  const deviceName = `${appraisal.brand} ${appraisal.model}${appraisal.storageGb ? ` ${appraisal.storageGb}` : ""}${appraisal.color ? ` ${appraisal.color}` : ""}`;
+  const modelStartsWithBrand = appraisal.model?.toLowerCase().startsWith(appraisal.brand.toLowerCase()) ?? false;
+  const deviceName = [
+    !modelStartsWithBrand && appraisal.brand,
+    appraisal.model,
+    appraisal.storageGb,
+    appraisal.color,
+  ].filter(Boolean).join(" ");
+
+  const PURCHASE_METHOD_LABELS: Record<string, string> = {
+    cash: "Contanti",
+    card: "Carta",
+    carrier_plan: "Abbonamento operatore",
+    financing: "Finanziamento",
+  };
+  const PURCHASE_PLACE_LABELS: Record<string, string> = {
+    physical: "Negozio fisico",
+    online: "Online",
+  };
 
   const prompt = `Sei un esperto di compravendita dispositivi usati per centri riparazione italiani.
 
@@ -67,9 +84,13 @@ ${appraisal.imei ? `IMEI: ${appraisal.imei}` : ""}
 Funziona regolarmente: ${appraisal.works ? "Sì" : "No"}
 Schermo: ${appraisal.screenCondition ? SCREEN_LABELS[appraisal.screenCondition] ?? appraisal.screenCondition : "non specificato"}
 Corpo/scocca: ${appraisal.bodyCondition ? BODY_LABELS[appraisal.bodyCondition] ?? appraisal.bodyCondition : "non specificato"}
-Batteria: ${appraisal.batteryHealth ? BATTERY_LABELS[appraisal.batteryHealth] ?? appraisal.batteryHealth : "non specificata"}
+Batteria (livello): ${appraisal.batteryHealth ? BATTERY_LABELS[appraisal.batteryHealth] ?? appraisal.batteryHealth : "non specificata"}
+${appraisal.batteryPercentage != null ? `Batteria (percentuale): ${appraisal.batteryPercentage}%` : ""}
 Anno acquisto approssimativo: ${appraisal.purchaseYear ?? "non specificato"}
 Accessori presenti: ${accessories}
+Metodo di acquisto: ${appraisal.purchaseMethod ? PURCHASE_METHOD_LABELS[appraisal.purchaseMethod] ?? appraisal.purchaseMethod : "non specificato"}
+Luogo di acquisto: ${appraisal.purchasePlace ? PURCHASE_PLACE_LABELS[appraisal.purchasePlace] ?? appraisal.purchasePlace : "non specificato"}
+Prova di acquisto: ${appraisal.hasProofOfPurchase === true ? "Sì" : appraisal.hasProofOfPurchase === false ? "No" : "non specificato"}
 Intenzione cliente: ${appraisal.intent ? intentMap[appraisal.intent] ?? appraisal.intent : "non specificata"}
 Aspettativa cliente: ${appraisal.customerExpectedCents != null ? fmt(appraisal.customerExpectedCents) : "non specificata"}
 Note del cliente: ${appraisal.customerNotes ?? "nessuna"}
@@ -79,7 +100,10 @@ Dopo la ricerca web, calcola il prezzo di acquisto considerando:
 - Il negozio rivende con margine 30-40% (per test, pulizia, garanzia)
 - Se non funziona: 10-20% del valore base
 - Schermo rotto: -25-40%; in frantumi: -50%
-- Batteria scarsa: -10-20%
+- Batteria iPhone <80%: -15-25%; <70%: -30-40%
+- Batteria scarsa (livello): -10-20%
+- Finanziamento/abbonamento operatore: potenziali vincoli di sblocco, valuta con cautela
+- Prova di acquisto presente: +valore di rivendita (certificabile)
 - Sii prudente: meglio valutare leggermente meno che perdere soldi
 
 Rispondi SOLO con JSON valido, niente testo prima o dopo, niente markdown:
@@ -113,7 +137,7 @@ Rispondi SOLO con JSON valido, niente testo prima o dopo, niente markdown:
         model: "claude-sonnet-4-6",
         max_tokens: 1024,
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        tools: [{ type: "web_search_20250305" as any, name: "web_search" }],
+        tools: [{ type: "web_search_20250305" }] as any,
         messages,
       });
 
@@ -141,7 +165,20 @@ Rispondi SOLO con JSON valido, niente testo prima o dopo, niente markdown:
       }
     }
   } catch {
-    return { error: "Errore chiamata AI. Riprova." };
+    // web_search not available — fallback to plain call without tools
+    try {
+      const resp = await anthropic.messages.create({
+        model: "claude-sonnet-4-6",
+        max_tokens: 1024,
+        messages: [{ role: "user", content: userContent }],
+      });
+      raw = resp.content
+        .filter((b): b is Anthropic.TextBlock => b.type === "text")
+        .map((b) => b.text)
+        .join("");
+    } catch {
+      return { error: "Errore chiamata AI. Riprova." };
+    }
   }
 
   let parsed: { valuationCents: number; reasoning: string };
@@ -234,6 +271,23 @@ export async function markSurveySentAction(appraisalId: string): Promise<{ error
   await db
     .update(deviceAppraisals)
     .set({ status: "survey_sent", updatedAt: new Date() })
+    .where(and(eq(deviceAppraisals.id, appraisalId), eq(deviceAppraisals.organizationId, orgId)));
+
+  revalidatePath(`/registry/perizie/${appraisalId}`);
+  return {};
+}
+
+export async function setImeiStatusAction(
+  appraisalId: string,
+  status: "clean" | "blocked" | "unknown",
+): Promise<{ error?: string }> {
+  const session = await auth();
+  if (!session?.user?.organizationId) return { error: "Non autenticato." };
+  const orgId = session.user.organizationId;
+
+  await db
+    .update(deviceAppraisals)
+    .set({ imeiCheckStatus: status, updatedAt: new Date() })
     .where(and(eq(deviceAppraisals.id, appraisalId), eq(deviceAppraisals.organizationId, orgId)));
 
   revalidatePath(`/registry/perizie/${appraisalId}`);

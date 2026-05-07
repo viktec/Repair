@@ -32,8 +32,10 @@ export default async function AppraisalPage({ params }: { params: Promise<{ id: 
           </Button>
         </Link>
         <h1 className="text-xl font-bold">
-          {appraisal.brand} {appraisal.model}
-          {appraisal.storageGb ? ` ${appraisal.storageGb}` : ""}
+          {(() => {
+            const startsWithBrand = appraisal.model?.toLowerCase().startsWith(appraisal.brand.toLowerCase());
+            return [!startsWithBrand && appraisal.brand, appraisal.model, appraisal.storageGb].filter(Boolean).join(" ");
+          })()}
         </h1>
       </div>
       <AppraisalDetail appraisal={appraisal} />

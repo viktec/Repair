@@ -505,6 +505,9 @@ export const appraisalIntentEnum = pgEnum("appraisal_intent", ["sell", "trade_in
 export const screenConditionEnum = pgEnum("screen_condition", ["perfect", "minor_scratches", "cracked", "shattered"]);
 export const bodyConditionEnum = pgEnum("body_condition", ["excellent", "good", "fair", "poor"]);
 export const batteryHealthLevelEnum = pgEnum("battery_health_level", ["great", "good", "fair", "poor"]);
+export const purchaseMethodEnum = pgEnum("purchase_method", ["cash", "card", "carrier_plan", "financing"]);
+export const purchasePlaceEnum = pgEnum("purchase_place", ["physical", "online"]);
+export const imeiCheckStatusEnum = pgEnum("imei_check_status", ["clean", "blocked", "unknown"]);
 
 export const deviceAppraisals = pgTable("device_appraisals", {
   id: uuid("id").primaryKey().defaultRandom(),
@@ -541,6 +544,11 @@ export const deviceAppraisals = pgTable("device_appraisals", {
   customerPhone: varchar("customer_phone", { length: 50 }),
   photoKeys: text("photo_keys"),
   registryEntryId: uuid("registry_entry_id").references(() => usedItemsRegistry.id, { onDelete: "set null" }),
+  purchaseMethod: purchaseMethodEnum("purchase_method"),
+  purchasePlace: purchasePlaceEnum("purchase_place"),
+  hasProofOfPurchase: boolean("has_proof_of_purchase"),
+  batteryPercentage: integer("battery_percentage"),
+  imeiCheckStatus: imeiCheckStatusEnum("imei_check_status"),
   createdAt: timestamp("created_at").notNull().defaultNow(),
   updatedAt: timestamp("updated_at").notNull().defaultNow(),
 });

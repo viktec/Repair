@@ -1,12 +1,13 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import React, { useState, useTransition } from "react";
 import {
   evaluateWithAIAction,
   updateAppraisalAction,
   approveAppraisalAction,
   rejectAppraisalAction,
   markSurveySentAction,
+  setImeiStatusAction,
 } from "./actions";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -16,7 +17,7 @@ import { Badge } from "@/components/ui/badge";
 import Link from "next/link";
 import {
   Sparkles, CheckCircle2, X, Copy, MessageCircle,
-  Send, Loader2, Check, BookOpen,
+  Send, Loader2, Check, BookOpen, ShieldCheck, ShieldX, ShieldQuestion, ExternalLink,
 } from "lucide-react";
 
 const APP_HOST = "app.my-repair.it";
@@ -57,6 +58,21 @@ const INTENT_LABELS: Record<string, string> = {
   trade_in: "Permuta",
   both: "Vendita o permuta",
 };
+const PURCHASE_METHOD_LABELS: Record<string, string> = {
+  cash: "Contanti",
+  card: "Carta",
+  carrier_plan: "Abbonamento operatore",
+  financing: "Finanziamento",
+};
+const PURCHASE_PLACE_LABELS: Record<string, string> = {
+  physical: "Negozio fisico",
+  online: "Online",
+};
+const IMEI_STATUS: Record<string, { label: string; color: string; Icon: React.ElementType }> = {
+  clean: { label: "Libero", color: "text-green-700 bg-green-50 border-green-200", Icon: ShieldCheck },
+  blocked: { label: "Bloccato", color: "text-red-700 bg-red-50 border-red-200", Icon: ShieldX },
+  unknown: { label: "Non verificato", color: "text-slate-600 bg-slate-50 border-slate-200", Icon: ShieldQuestion },
+};
 
 type Appraisal = {
   id: string;
@@ -87,12 +103,19 @@ type Appraisal = {
   adminNotes: string | null;
   approvedAt: Date | null;
   registryEntryId: string | null;
+  purchaseMethod: string | null;
+  purchasePlace: string | null;
+  hasProofOfPurchase: boolean | null;
+  batteryPercentage: number | null;
+  imeiCheckStatus: string | null;
 };
 
 export function AppraisalDetail({ appraisal }: { appraisal: Appraisal }) {
   const [isPending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
-  const [editMode, setEditMode] = useState(false);
+  const [editMode, setEditMode] = useState(
+    !!appraisal.surveyCompletedAt && appraisal.finalValuationCents == null,
+  );
   const [finalVal, setFinalVal] = useState(
     appraisal.finalValuationCents != null ? (appraisal.finalValuationCents / 100).toFixed(2) : "",
   );
@@ -104,7 +127,9 @@ export function AppraisalDetail({ appraisal }: { appraisal: Appraisal }) {
 
   const surveyUrl = `https://${APP_HOST}/perizia/${appraisal.surveyToken}`;
   const resultUrl = `https://${APP_HOST}/perizia/${appraisal.surveyToken}/valutazione`;
-  const deviceName = [appraisal.brand, appraisal.model, appraisal.storageGb].filter(Boolean).join(" ");
+  const brand = appraisal.brand ?? "";
+  const modelStartsWithBrand = brand && (appraisal.model?.toLowerCase().startsWith(brand.toLowerCase()) ?? false);
+  const deviceName = [!modelStartsWithBrand && brand, appraisal.model, appraisal.storageGb].filter(Boolean).join(" ");
 
   const surveyWa = `Ciao${appraisal.customerName ? ` ${appraisal.customerName.split(" ")[0]}` : ""}, per valutare il tuo ${deviceName} ti chiedo di compilare questo breve questionario (2 minuti):\n${surveyUrl}`;
   const resultWa = `Ciao${appraisal.customerName ? ` ${appraisal.customerName.split(" ")[0]}` : ""}, la valutazione del tuo ${deviceName} è pronta! Puoi visualizzare l'offerta qui:\n${resultUrl}`;
@@ -156,6 +181,13 @@ export function AppraisalDetail({ appraisal }: { appraisal: Appraisal }) {
   function handleMarkSent() {
     startTransition(async () => {
       const res = await markSurveySentAction(appraisal.id);
+      if (res.error) setError(res.error);
+    });
+  }
+
+  function handleSetImeiStatus(status: "clean" | "blocked" | "unknown") {
+    startTransition(async () => {
+      const res = await setImeiStatusAction(appraisal.id, status);
       if (res.error) setError(res.error);
     });
   }
@@ -266,7 +298,9 @@ export function AppraisalDetail({ appraisal }: { appraisal: Appraisal }) {
                 <p className="font-medium">{appraisal.bodyCondition ? BODY_LABELS[appraisal.bodyCondition] : "—"}</p>
               </div>
               <div>
-                <p className="text-xs text-muted-foreground">Batteria</p>
+                <p className="text-xs text-muted-foreground">
+                  Batteria{appraisal.batteryPercentage != null ? ` (${appraisal.batteryPercentage}%)` : ""}
+                </p>
                 <p className="font-medium">{appraisal.batteryHealth ? BATTERY_LABELS[appraisal.batteryHealth] : "—"}</p>
               </div>
               <div>
@@ -289,6 +323,24 @@ export function AppraisalDetail({ appraisal }: { appraisal: Appraisal }) {
                   {appraisal.customerExpectedCents != null ? fmt(appraisal.customerExpectedCents) : "—"}
                 </p>
               </div>
+              <div>
+                <p className="text-xs text-muted-foreground">Metodo acquisto</p>
+                <p className="font-medium">
+                  {appraisal.purchaseMethod ? PURCHASE_METHOD_LABELS[appraisal.purchaseMethod] ?? "—" : "—"}
+                </p>
+              </div>
+              <div>
+                <p className="text-xs text-muted-foreground">Luogo acquisto</p>
+                <p className="font-medium">
+                  {appraisal.purchasePlace ? PURCHASE_PLACE_LABELS[appraisal.purchasePlace] ?? "—" : "—"}
+                </p>
+              </div>
+              <div>
+                <p className="text-xs text-muted-foreground">Prova acquisto</p>
+                <p className="font-medium">
+                  {appraisal.hasProofOfPurchase === true ? "Sì" : appraisal.hasProofOfPurchase === false ? "No" : "—"}
+                </p>
+              </div>
             </div>
             {appraisal.customerNotes && (
               <div className="mt-3">
@@ -296,6 +348,84 @@ export function AppraisalDetail({ appraisal }: { appraisal: Appraisal }) {
                 <p className="text-sm mt-0.5 italic">&ldquo;{appraisal.customerNotes}&rdquo;</p>
               </div>
             )}
+          </CardContent>
+        </Card>
+      )}
+
+      {/* IMEI check */}
+      {appraisal.imei && appraisal.surveyCompletedAt && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-base flex items-center gap-2">
+              {appraisal.imeiCheckStatus
+                ? (() => {
+                    const s = IMEI_STATUS[appraisal.imeiCheckStatus];
+                    return s ? <s.Icon className="h-4 w-4" /> : null;
+                  })()
+                : <ShieldQuestion className="h-4 w-4 text-muted-foreground" />}
+              Verifica IMEI
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            <p className="font-mono text-sm tracking-wider">{appraisal.imei}</p>
+            {appraisal.imeiCheckStatus && (
+              <span className={`inline-flex items-center gap-1.5 text-xs font-medium px-2.5 py-1 rounded-full border ${IMEI_STATUS[appraisal.imeiCheckStatus]?.color}`}>
+                {appraisal.imeiCheckStatus === "clean" && <ShieldCheck className="h-3.5 w-3.5" />}
+                {appraisal.imeiCheckStatus === "blocked" && <ShieldX className="h-3.5 w-3.5" />}
+                {appraisal.imeiCheckStatus === "unknown" && <ShieldQuestion className="h-3.5 w-3.5" />}
+                {IMEI_STATUS[appraisal.imeiCheckStatus]?.label ?? appraisal.imeiCheckStatus}
+              </span>
+            )}
+            <div className="flex flex-wrap gap-2">
+              <a
+                href={`https://www.imei.info/?imei=${appraisal.imei}`}
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                <Button size="sm" variant="outline" className="gap-1.5">
+                  <ExternalLink className="h-3.5 w-3.5" />imei.info
+                </Button>
+              </a>
+              <a
+                href={`https://imeipro.info/?imei=${appraisal.imei}`}
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                <Button size="sm" variant="outline" className="gap-1.5">
+                  <ExternalLink className="h-3.5 w-3.5" />imeipro.info
+                </Button>
+              </a>
+            </div>
+            <div className="flex flex-wrap gap-2 pt-1 border-t">
+              <p className="text-xs text-muted-foreground w-full">Dopo aver verificato, segna il risultato:</p>
+              <Button
+                size="sm"
+                variant={appraisal.imeiCheckStatus === "clean" ? "default" : "outline"}
+                className="gap-1.5"
+                disabled={isPending}
+                onClick={() => handleSetImeiStatus("clean")}
+              >
+                <ShieldCheck className="h-3.5 w-3.5" />Libero
+              </Button>
+              <Button
+                size="sm"
+                variant={appraisal.imeiCheckStatus === "blocked" ? "destructive" : "outline"}
+                className="gap-1.5 border-destructive/30 text-destructive hover:bg-destructive/5"
+                disabled={isPending}
+                onClick={() => handleSetImeiStatus("blocked")}
+              >
+                <ShieldX className="h-3.5 w-3.5" />Bloccato
+              </Button>
+              <Button
+                size="sm"
+                variant="outline"
+                className="gap-1.5 text-muted-foreground"
+                disabled={isPending}
+                onClick={() => handleSetImeiStatus("unknown")}
+              >
+                <ShieldQuestion className="h-3.5 w-3.5" />Non verificato
+              </Button>
+            </div>
           </CardContent>
         </Card>
       )}
@@ -334,8 +464,7 @@ export function AppraisalDetail({ appraisal }: { appraisal: Appraisal }) {
             )}
 
             {/* Admin edit */}
-            {(appraisal.aiValuationCents != null || appraisal.finalValuationCents != null) && (
-              editMode ? (
+            {editMode ? (
                 <div className="space-y-3 rounded-md border p-4">
                   <p className="text-sm font-medium">Modifica offerta</p>
                   <div className="grid grid-cols-2 gap-3">
@@ -399,7 +528,7 @@ export function AppraisalDetail({ appraisal }: { appraisal: Appraisal }) {
                   )}
                 </div>
               )
-            )}
+            }
 
             {/* Approva / Rifiuta */}
             {appraisal.finalValuationCents != null && appraisal.status !== "approved" && appraisal.status !== "rejected" && !editMode && (
