@@ -1,9 +1,10 @@
 "use client";
 
-import { useActionState } from "react";
-import { submitSurveyAction } from "./actions";
+import { useActionState, useState, useRef } from "react";
+import { submitSurveyAction, getAppraisalPhotoUploadUrl, saveAppraisalPhoto } from "./actions";
 import { Button } from "@/components/ui/button";
-import { Loader2, CheckCircle2 } from "lucide-react";
+import { Loader2, CheckCircle2, Camera, X, ImagePlus } from "lucide-react";
+import { getPublicUrl } from "@/lib/storage";
 
 type Props = {
   token: string;
@@ -40,6 +41,44 @@ function RadioGroup({
 export function SurveyForm({ token, brand, model, storageGb, alreadyCompleted }: Props) {
   const boundAction = submitSurveyAction.bind(null, token);
   const [state, action, pending] = useActionState(boundAction, null);
+  const [photos, setPhotos] = useState<string[]>([]);
+  const [uploading, setUploading] = useState(false);
+  const [photoError, setPhotoError] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  async function handlePhotoChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (photos.length >= 5) return;
+
+    const allowed = ["image/jpeg", "image/png", "image/webp", "image/heic", "image/heif"];
+    if (!allowed.includes(file.type)) {
+      setPhotoError("Formato non supportato (usa JPG, PNG o WEBP).");
+      return;
+    }
+    if (file.size > 10 * 1024 * 1024) {
+      setPhotoError("Foto troppo grande (max 10MB).");
+      return;
+    }
+
+    setPhotoError(null);
+    setUploading(true);
+    try {
+      const res = await getAppraisalPhotoUploadUrl(token, file.name, file.type);
+      if (res.error || !res.uploadUrl || !res.key) {
+        setPhotoError(res.error ?? "Errore upload.");
+        return;
+      }
+      await fetch(res.uploadUrl, { method: "PUT", body: file, headers: { "Content-Type": file.type } });
+      await saveAppraisalPhoto(token, res.key);
+      setPhotos((prev) => [...prev, res.key!]);
+    } catch {
+      setPhotoError("Errore durante il caricamento. Riprova.");
+    } finally {
+      setUploading(false);
+      if (fileInputRef.current) fileInputRef.current.value = "";
+    }
+  }
 
   if (alreadyCompleted || state?.done) {
     return (
@@ -186,6 +225,64 @@ export function SurveyForm({ token, brand, model, storageGb, alreadyCompleted }:
           placeholder="Eventuali difetti, storia del dispositivo, motivazione della vendita…"
           className="w-full rounded-lg border border-input bg-background px-3 py-2.5 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring"
         />
+      </section>
+
+      {/* Foto dispositivo */}
+      <section className="space-y-3">
+        <h3 className="font-semibold flex items-center gap-2">
+          <Camera className="h-4 w-4" />
+          Foto del dispositivo
+          <span className="text-sm font-normal text-muted-foreground">(opzionale, max 5)</span>
+        </h3>
+        <p className="text-sm text-muted-foreground">
+          Carica foto della scocca, schermo e danni visibili — aiuta a ottenere una valutazione più precisa.
+        </p>
+
+        {photos.length > 0 && (
+          <div className="flex flex-wrap gap-2">
+            {photos.map((key, i) => (
+              <div key={i} className="relative">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={getPublicUrl(key)}
+                  alt={`Foto ${i + 1}`}
+                  className="h-20 w-20 rounded-lg object-cover border"
+                />
+                <button
+                  type="button"
+                  onClick={() => setPhotos((prev) => prev.filter((_, idx) => idx !== i))}
+                  className="absolute -top-1.5 -right-1.5 h-5 w-5 rounded-full bg-destructive text-white flex items-center justify-center shadow"
+                >
+                  <X className="h-3 w-3" />
+                </button>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {photos.length < 5 && (
+          <>
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/jpeg,image/png,image/webp,image/heic,image/heif"
+              className="hidden"
+              onChange={handlePhotoChange}
+            />
+            <Button
+              type="button"
+              variant="outline"
+              disabled={uploading}
+              onClick={() => fileInputRef.current?.click()}
+              className="gap-2"
+            >
+              {uploading ? <Loader2 className="h-4 w-4 animate-spin" /> : <ImagePlus className="h-4 w-4" />}
+              {uploading ? "Caricamento…" : "Aggiungi foto"}
+            </Button>
+          </>
+        )}
+
+        {photoError && <p className="text-sm text-destructive">{photoError}</p>}
       </section>
 
       {state?.error && (

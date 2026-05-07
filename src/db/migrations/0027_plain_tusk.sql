@@ -1,0 +1,1 @@
+ALTER TABLE "device_appraisals" ADD COLUMN "photo_keys" text;

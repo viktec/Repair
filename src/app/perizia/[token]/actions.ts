@@ -3,6 +3,51 @@
 import { db } from "@/lib/db";
 import { deviceAppraisals } from "@/db/schema";
 import { eq } from "drizzle-orm";
+import { getPresignedUploadUrl } from "@/lib/storage";
+import { randomUUID } from "crypto";
+
+export async function getAppraisalPhotoUploadUrl(
+  token: string,
+  fileName: string,
+  contentType: string,
+): Promise<{ error?: string; uploadUrl?: string; key?: string }> {
+  const [appraisal] = await db
+    .select({ id: deviceAppraisals.id, photoKeys: deviceAppraisals.photoKeys })
+    .from(deviceAppraisals)
+    .where(eq(deviceAppraisals.surveyToken, token))
+    .limit(1);
+
+  if (!appraisal) return { error: "Link non valido." };
+
+  const existing: string[] = appraisal.photoKeys ? JSON.parse(appraisal.photoKeys) : [];
+  if (existing.length >= 5) return { error: "Massimo 5 foto." };
+
+  const ext = fileName.split(".").pop() ?? "jpg";
+  const key = `appraisals/${token}/photo_${randomUUID()}.${ext}`;
+  const { url } = await getPresignedUploadUrl(key, true, contentType);
+  return { uploadUrl: url, key };
+}
+
+export async function saveAppraisalPhoto(token: string, key: string): Promise<{ error?: string }> {
+  const [appraisal] = await db
+    .select({ id: deviceAppraisals.id, photoKeys: deviceAppraisals.photoKeys })
+    .from(deviceAppraisals)
+    .where(eq(deviceAppraisals.surveyToken, token))
+    .limit(1);
+
+  if (!appraisal) return { error: "Link non valido." };
+
+  const existing: string[] = appraisal.photoKeys ? JSON.parse(appraisal.photoKeys) : [];
+  if (existing.length >= 5) return { error: "Massimo 5 foto." };
+
+  existing.push(key);
+  await db
+    .update(deviceAppraisals)
+    .set({ photoKeys: JSON.stringify(existing), updatedAt: new Date() })
+    .where(eq(deviceAppraisals.surveyToken, token));
+
+  return {};
+}
 
 export async function submitSurveyAction(
   token: string,

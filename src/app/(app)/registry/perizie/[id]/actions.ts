@@ -6,6 +6,7 @@ import { deviceAppraisals } from "@/db/schema";
 import { eq, and } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import Anthropic from "@anthropic-ai/sdk";
+import { getObjectBuffer } from "@/lib/storage";
 
 function fmt(cents: number) {
   return new Intl.NumberFormat("it-IT", { style: "currency", currency: "EUR" }).format(cents / 100);
@@ -53,11 +54,15 @@ export async function evaluateWithAIAction(appraisalId: string): Promise<{ error
 
   const intentMap: Record<string, string> = { sell: "solo vendita", trade_in: "permuta", both: "vendita o permuta" };
 
+  const deviceName = `${appraisal.brand} ${appraisal.model}${appraisal.storageGb ? ` ${appraisal.storageGb}` : ""}${appraisal.color ? ` ${appraisal.color}` : ""}`;
+
   const prompt = `Sei un esperto di compravendita dispositivi usati per centri riparazione italiani.
 
-Valuta questo dispositivo usato e fornisci un prezzo di acquisto equo (quanto il negozio pagherebbe al cliente):
+Devi valutare questo dispositivo e fornire un prezzo di acquisto equo (quanto il negozio pagherebbe al cliente).
 
-Dispositivo: ${appraisal.brand} ${appraisal.model}${appraisal.storageGb ? ` ${appraisal.storageGb}` : ""}${appraisal.color ? ` ${appraisal.color}` : ""}
+PRIMA di valutare, usa il tool web_search per cercare i prezzi correnti su BackMarket Italia, eBay.it e Subito.it per questo modello specifico (es: query "${appraisal.brand} ${appraisal.model}${appraisal.storageGb ? ` ${appraisal.storageGb}` : ""} usato prezzo Italia"). Questo ti darà dati aggiornati sui prezzi di mercato reali.
+
+Dispositivo: ${deviceName}
 ${appraisal.imei ? `IMEI: ${appraisal.imei}` : ""}
 Funziona regolarmente: ${appraisal.works ? "Sì" : "No"}
 Schermo: ${appraisal.screenCondition ? SCREEN_LABELS[appraisal.screenCondition] ?? appraisal.screenCondition : "non specificato"}
@@ -68,35 +73,82 @@ Accessori presenti: ${accessories}
 Intenzione cliente: ${appraisal.intent ? intentMap[appraisal.intent] ?? appraisal.intent : "non specificata"}
 Aspettativa cliente: ${appraisal.customerExpectedCents != null ? fmt(appraisal.customerExpectedCents) : "non specificata"}
 Note del cliente: ${appraisal.customerNotes ?? "nessuna"}
+${appraisal.photoKeys ? `\nIl cliente ha caricato delle foto del dispositivo — analizzale per verificare le condizioni dichiarate.` : ""}
 
-Considera:
-- Prezzi di mercato usato italiano (BackMarket IT, eBay.it)
-- Il negozio deve rivendere con margine del 30-40% per coprire test/pulizia/garanzia
-- Se non funziona: valore solo come parti (10-20% del valore funzionante)
-- Schermo rotto: riduzione 20-40% sul valore base
-- Batteria scarsa: riduzione 10-20%
-- Sii prudente: meglio una valutazione leggermente bassa che perdere soldi
+Dopo la ricerca web, calcola il prezzo di acquisto considerando:
+- Il negozio rivende con margine 30-40% (per test, pulizia, garanzia)
+- Se non funziona: 10-20% del valore base
+- Schermo rotto: -25-40%; in frantumi: -50%
+- Batteria scarsa: -10-20%
+- Sii prudente: meglio valutare leggermente meno che perdere soldi
 
-Rispondi SOLO con JSON valido, niente markdown:
-{"valuationCents": <intero in centesimi>, "reasoning": "<spiegazione in italiano, max 120 parole>"}`;
+Rispondi SOLO con JSON valido, niente testo prima o dopo, niente markdown:
+{"valuationCents": <intero in centesimi>, "reasoning": "<spiegazione in italiano con riferimento ai prezzi trovati online, max 150 parole>"}`;
+
+  // Load photos for vision
+  const photoKeys: string[] = appraisal.photoKeys ? JSON.parse(appraisal.photoKeys) : [];
+  const photoImages: Anthropic.Base64ImageSource[] = [];
+  for (const key of photoKeys.slice(0, 4)) {
+    const buf = await getObjectBuffer(key, true);
+    if (buf) {
+      const ext = key.split(".").pop()?.toLowerCase() ?? "jpg";
+      const mt =
+        ext === "png" ? "image/png" : ext === "webp" ? "image/webp" : ext === "gif" ? "image/gif" : "image/jpeg";
+      photoImages.push({ type: "base64", media_type: mt as Anthropic.Base64ImageSource["media_type"], data: buf.toString("base64") });
+    }
+  }
+
+  const userContent: Anthropic.MessageParam["content"] = [
+    { type: "text", text: prompt },
+    ...photoImages.map((src): Anthropic.ImageBlockParam => ({ type: "image", source: src })),
+  ];
 
   const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
+  const messages: Anthropic.MessageParam[] = [{ role: "user", content: userContent }];
+  let raw = "";
 
-  let raw: string;
   try {
-    const msg = await anthropic.messages.create({
-      model: "claude-haiku-4-5-20251001",
-      max_tokens: 512,
-      messages: [{ role: "user", content: prompt }],
-    });
-    raw = (msg.content[0] as { text: string }).text.trim();
+    for (let iter = 0; iter < 8; iter++) {
+      const resp = await anthropic.messages.create({
+        model: "claude-sonnet-4-6",
+        max_tokens: 1024,
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        tools: [{ type: "web_search_20250305" as any, name: "web_search" }],
+        messages,
+      });
+
+      const texts = resp.content
+        .filter((b): b is Anthropic.TextBlock => b.type === "text")
+        .map((b) => b.text)
+        .join("");
+      if (texts) raw = texts;
+
+      if (resp.stop_reason === "end_turn" || resp.stop_reason === "max_tokens") break;
+
+      if (resp.stop_reason === "tool_use") {
+        messages.push({ role: "assistant", content: resp.content });
+        const toolUses = resp.content.filter((b): b is Anthropic.ToolUseBlock => b.type === "tool_use");
+        if (toolUses.length > 0) {
+          messages.push({
+            role: "user",
+            content: toolUses.map((b) => ({
+              type: "tool_result" as const,
+              tool_use_id: b.id,
+              content: "Search completed.",
+            })),
+          });
+        }
+      }
+    }
   } catch {
     return { error: "Errore chiamata AI. Riprova." };
   }
 
   let parsed: { valuationCents: number; reasoning: string };
   try {
-    parsed = JSON.parse(raw);
+    const jsonMatch = raw.match(/\{[\s\S]*\}/);
+    if (!jsonMatch) throw new Error("No JSON");
+    parsed = JSON.parse(jsonMatch[0]);
     if (typeof parsed.valuationCents !== "number" || typeof parsed.reasoning !== "string") throw new Error();
   } catch {
     return { error: "Risposta AI non valida. Riprova." };

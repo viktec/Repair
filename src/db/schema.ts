@@ -538,6 +538,7 @@ export const deviceAppraisals = pgTable("device_appraisals", {
   customerId: uuid("customer_id").references(() => customers.id, { onDelete: "set null" }),
   customerName: varchar("customer_name", { length: 255 }),
   customerPhone: varchar("customer_phone", { length: 50 }),
+  photoKeys: text("photo_keys"),
   createdAt: timestamp("created_at").notNull().defaultNow(),
   updatedAt: timestamp("updated_at").notNull().defaultNow(),
 });
