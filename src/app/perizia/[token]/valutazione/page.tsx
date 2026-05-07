@@ -84,8 +84,20 @@ export default async function ValutazionePage({ params }: { params: Promise<{ to
                 </div>
               )}
 
-              <div className="rounded-lg bg-primary/5 border border-primary/20 px-4 py-3 text-sm text-primary">
-                Sei interessato? Recati in negozio con il dispositivo e il tuo documento d&apos;identità. L&apos;offerta è indicativa e sarà confermata dopo verifica fisica.
+              <div className="rounded-lg bg-primary/5 border border-primary/20 px-4 py-3 text-sm text-primary space-y-1">
+                <p>
+                  Sei interessato? Recati in negozio con il dispositivo e il tuo documento d&apos;identità.
+                  L&apos;offerta è indicativa e sarà confermata dopo verifica fisica.
+                </p>
+                {appraisal.approvedAt && (
+                  <p className="font-medium">
+                    Offerta valida fino al{" "}
+                    {new Intl.DateTimeFormat("it-IT", { day: "numeric", month: "long", year: "numeric" }).format(
+                      new Date(new Date(appraisal.approvedAt).getTime() + 7 * 24 * 60 * 60 * 1000),
+                    )}
+                    .
+                  </p>
+                )}
               </div>
             </>
           ) : isRejected ? (

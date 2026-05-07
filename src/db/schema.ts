@@ -516,6 +516,7 @@ export const deviceAppraisals = pgTable("device_appraisals", {
   storageGb: varchar("storage_gb", { length: 20 }),
   color: varchar("color", { length: 50 }),
   imei: varchar("imei", { length: 20 }),
+  serialNumber: varchar("serial_number", { length: 50 }),
   intent: appraisalIntentEnum("intent"),
   works: boolean("works"),
   screenCondition: screenConditionEnum("screen_condition"),

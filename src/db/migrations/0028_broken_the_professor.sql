@@ -1,0 +1,1 @@
+ALTER TABLE "device_appraisals" ADD COLUMN "serial_number" varchar(50);

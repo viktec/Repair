@@ -8,6 +8,7 @@ import Link from "next/link";
 import { Plus, Wrench } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import { SelfServiceLinkBox } from "./self-service-link-box";
 
 const STATUS_LABELS: Record<string, { label: string; color: string }> = {
   draft: { label: "Bozza", color: "bg-slate-100 text-slate-600" },
@@ -48,6 +49,8 @@ export default async function PerizieListPage() {
           </Button>
         </Link>
       </div>
+
+      <SelfServiceLinkBox orgId={orgId} />
 
       {perizie.length === 0 ? (
         <Card className="border-dashed">
