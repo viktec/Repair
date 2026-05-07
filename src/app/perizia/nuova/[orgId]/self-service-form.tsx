@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Loader2 } from "lucide-react";
 
-export function SelfServiceForm({ orgId }: { orgId: string }) {
+export function SelfServiceForm({ orgId, primaryColor = "#0D8F7A" }: { orgId: string; primaryColor?: string }) {
   const bound = createSelfServiceAppraisalAction.bind(null, orgId);
   const [state, action, pending] = useActionState(bound, null);
 
@@ -83,10 +83,15 @@ export function SelfServiceForm({ orgId }: { orgId: string }) {
         <p className="rounded-md bg-destructive/10 px-4 py-2 text-sm text-destructive">{state.error}</p>
       )}
 
-      <Button type="submit" disabled={pending} className="w-full h-12 text-base gap-2">
+      <button
+        type="submit"
+        disabled={pending}
+        className="w-full rounded-xl py-3 text-base font-semibold text-white transition-opacity hover:opacity-90 disabled:opacity-50 flex items-center justify-center gap-2"
+        style={{ backgroundColor: primaryColor }}
+      >
         {pending && <Loader2 className="h-5 w-5 animate-spin" />}
         Continua →
-      </Button>
+      </button>
 
       <p className="text-center text-xs text-muted-foreground">
         I tuoi dati vengono usati esclusivamente per la valutazione del dispositivo.

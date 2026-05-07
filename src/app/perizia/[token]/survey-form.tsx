@@ -12,6 +12,7 @@ type Props = {
   model: string;
   storageGb: string | null;
   alreadyCompleted: boolean;
+  primaryColor?: string;
 };
 
 function RadioGroup({
@@ -38,7 +39,7 @@ function RadioGroup({
   );
 }
 
-export function SurveyForm({ token, brand, model, storageGb, alreadyCompleted }: Props) {
+export function SurveyForm({ token, brand, model, storageGb, alreadyCompleted, primaryColor = "#0D8F7A" }: Props) {
   const boundAction = submitSurveyAction.bind(null, token);
   const [state, action, pending] = useActionState(boundAction, null);
   const [photos, setPhotos] = useState<string[]>([]);
@@ -289,10 +290,15 @@ export function SurveyForm({ token, brand, model, storageGb, alreadyCompleted }:
         <p className="rounded-md bg-destructive/10 px-4 py-2 text-sm text-destructive">{state.error}</p>
       )}
 
-      <Button type="submit" disabled={pending} className="w-full h-12 text-base gap-2">
+      <button
+        type="submit"
+        disabled={pending}
+        className="w-full rounded-xl py-3 text-base font-semibold text-white transition-opacity hover:opacity-90 disabled:opacity-50 flex items-center justify-center gap-2"
+        style={{ backgroundColor: primaryColor }}
+      >
         {pending && <Loader2 className="h-5 w-5 animate-spin" />}
         Invia risposte
-      </Button>
+      </button>
 
       <p className="text-center text-xs text-muted-foreground">
         Le tue risposte vengono utilizzate solo per la valutazione del dispositivo.
