@@ -241,7 +241,7 @@ export default async function TicketDetailPage({ params }: { params: Promise<{ i
         </div>
       </div>
 
-      <div className="grid gap-4 lg:grid-cols-3">
+      <div className="grid gap-4 grid-cols-1 lg:grid-cols-3">
         {/* Colonna principale */}
         <div className="space-y-4 lg:col-span-2">
           {/* Cliente */}
