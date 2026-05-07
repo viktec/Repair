@@ -491,6 +491,57 @@ export const usedItemsRegistry = pgTable("used_items_registry", {
   createdAt: timestamp("created_at").notNull().defaultNow(),
 });
 
+// ─── Phase 2 — Perizie Usato ─────────────────────────────────────────────────
+
+export const appraisalStatusEnum = pgEnum("appraisal_status", [
+  "draft",
+  "survey_sent",
+  "survey_completed",
+  "ai_evaluated",
+  "approved",
+  "rejected",
+]);
+export const appraisalIntentEnum = pgEnum("appraisal_intent", ["sell", "trade_in", "both"]);
+export const screenConditionEnum = pgEnum("screen_condition", ["perfect", "minor_scratches", "cracked", "shattered"]);
+export const bodyConditionEnum = pgEnum("body_condition", ["excellent", "good", "fair", "poor"]);
+export const batteryHealthLevelEnum = pgEnum("battery_health_level", ["great", "good", "fair", "poor"]);
+
+export const deviceAppraisals = pgTable("device_appraisals", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  organizationId: uuid("organization_id").notNull().references(() => organizations.id, { onDelete: "cascade" }),
+  surveyToken: varchar("survey_token", { length: 64 }).notNull().unique(),
+  status: appraisalStatusEnum("status").notNull().default("draft"),
+  brand: varchar("brand", { length: 100 }).notNull(),
+  model: varchar("model", { length: 100 }).notNull(),
+  storageGb: varchar("storage_gb", { length: 20 }),
+  color: varchar("color", { length: 50 }),
+  imei: varchar("imei", { length: 20 }),
+  intent: appraisalIntentEnum("intent"),
+  works: boolean("works"),
+  screenCondition: screenConditionEnum("screen_condition"),
+  bodyCondition: bodyConditionEnum("body_condition"),
+  batteryHealth: batteryHealthLevelEnum("battery_health"),
+  purchaseYear: integer("purchase_year"),
+  hasCharger: boolean("has_charger").notNull().default(false),
+  hasOriginalBox: boolean("has_original_box").notNull().default(false),
+  customerExpectedCents: integer("customer_expected_cents"),
+  customerNotes: text("customer_notes"),
+  surveyCompletedAt: timestamp("survey_completed_at"),
+  aiValuationCents: integer("ai_valuation_cents"),
+  aiReasoning: text("ai_reasoning"),
+  aiEvaluatedAt: timestamp("ai_evaluated_at"),
+  finalValuationCents: integer("final_valuation_cents"),
+  tradeInBonusCents: integer("trade_in_bonus_cents").notNull().default(0),
+  adminNotes: text("admin_notes"),
+  approvedAt: timestamp("approved_at"),
+  approvedBy: uuid("approved_by").references(() => users.id, { onDelete: "set null" }),
+  customerId: uuid("customer_id").references(() => customers.id, { onDelete: "set null" }),
+  customerName: varchar("customer_name", { length: 255 }),
+  customerPhone: varchar("customer_phone", { length: 50 }),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+});
+
 // ─── Phase 3 — Push notifiche ────────────────────────────────────────────────
 
 export const pushSubscriptions = pgTable("push_subscriptions", {

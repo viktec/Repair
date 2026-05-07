@@ -56,6 +56,7 @@ export default auth((req) => {
     pathname.startsWith("/t/") ||
     pathname.startsWith("/c/") ||
     pathname.startsWith("/sign/") ||
+    pathname.startsWith("/perizia/") ||
     pathname.startsWith("/api/auth") ||
     pathname.startsWith("/api/t/") ||
     pathname.startsWith("/api/support/client-request") ||

@@ -30,6 +30,7 @@ const navItems: NavItem[] = [
   { href: "/pos",        icon: ShoppingCart,     label: "Cassa POS",       module: "pos",        planRequired: "pro" },
   { href: "/reports",    icon: BarChart3,        label: "Report",          module: "reports",    planRequired: "pro" },
   { href: "/registry",   icon: BookOpen,         label: "Registro Usato",  module: "registry",   planRequired: "business" },
+  { href: "/registry/perizie", icon: Wrench,      label: "Perizie Usato",   module: "registry",   planRequired: "business" },
   { href: "/stores",     icon: MapPin,           label: "Sedi",            module: "stores",     planRequired: "business" },
   { href: "/support",    icon: Headset,          label: "Assistenza",      module: "support" },
 ];
