@@ -52,11 +52,13 @@ export default async function ValutazionePage({ params }: { params: Promise<{ to
   const isRejected = row.status === "rejected";
   const totalOffer = (row.finalValuationCents ?? 0) + row.tradeInBonusCents;
   const primaryColor = row.orgColor ?? "#0D8F7A";
-  const expiryDate = row.approvedAt
+  const approvedAt = row.approvedAt ? new Date(row.approvedAt) : null;
+  const expiryDate = approvedAt
     ? new Intl.DateTimeFormat("it-IT", { day: "numeric", month: "long", year: "numeric" }).format(
-        addDays(new Date(row.approvedAt), 7),
+        addDays(approvedAt, 7),
       )
     : null;
+  const isExpired = approvedAt ? addDays(approvedAt, 7) < new Date() : false;
 
   return (
     <PeriziaPublicShell
@@ -77,7 +79,27 @@ export default async function ValutazionePage({ params }: { params: Promise<{ to
           )}
         </div>
 
-        {isApproved ? (
+        {isApproved && isExpired ? (
+          <div className="rounded-xl bg-slate-50 border border-slate-200 p-5 text-center space-y-2">
+            <Clock className="h-10 w-10 text-slate-400 mx-auto" />
+            <p className="text-lg font-semibold text-slate-700">Offerta scaduta</p>
+            <p className="text-sm text-slate-500">
+              Questa offerta era valida per 7 giorni ed è scaduta il {expiryDate}.
+              Contattaci per richiedere una nuova valutazione.
+            </p>
+            <div className="pt-2 flex flex-col gap-3">
+              {row.orgPhone && (
+                <a
+                  href={`tel:${row.orgPhone}`}
+                  className="flex items-center justify-center gap-2 w-full rounded-xl py-3 text-base font-semibold text-white transition-opacity hover:opacity-90"
+                  style={{ backgroundColor: primaryColor }}
+                >
+                  Chiamaci
+                </a>
+              )}
+            </div>
+          </div>
+        ) : isApproved ? (
           <>
             {/* Offerta approvata */}
             <div
@@ -135,7 +157,8 @@ export default async function ValutazionePage({ params }: { params: Promise<{ to
                 </a>
               )}
               {(row.orgWhatsapp || row.orgPhone) && (() => {
-                const waNumber = (row.orgWhatsapp ?? row.orgPhone ?? "").replace(/\D/g, "");
+                const raw = (row.orgWhatsapp ?? row.orgPhone ?? "").replace(/\D/g, "").replace(/^00/, "");
+                const waNumber = raw.startsWith("39") ? raw : `39${raw}`;
                 const waText = encodeURIComponent(
                   `Ciao, ho visto la valutazione del mio ${deviceName} e sono interessato/a. Quando posso passare?`
                 );

@@ -20,9 +20,9 @@ function RadioGroup({
 }) {
   return (
     <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
-      {options.map((o) => (
-        <label key={o.value} className="cursor-pointer">
-          <input type="radio" name={name} value={o.value} required={required} className="peer sr-only" />
+      {options.map((o, i) => (
+        <label key={o.value} className="relative cursor-pointer">
+          <input type="radio" name={name} value={o.value} required={required && i === 0} className="peer sr-only" />
           <div className="rounded-lg border-2 border-input px-3 py-2.5 text-center text-sm transition-colors peer-checked:border-primary peer-checked:bg-primary/5 hover:bg-slate-50">
             <p className="font-medium">{o.label}</p>
             {o.sub && <p className="text-[11px] text-muted-foreground mt-0.5">{o.sub}</p>}
