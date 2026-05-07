@@ -13,9 +13,10 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import Link from "next/link";
 import {
   Sparkles, CheckCircle2, X, Copy, MessageCircle,
-  Send, Loader2, Check,
+  Send, Loader2, Check, BookOpen,
 } from "lucide-react";
 
 const APP_HOST = "app.my-repair.it";
@@ -85,6 +86,7 @@ type Appraisal = {
   tradeInBonusCents: number;
   adminNotes: string | null;
   approvedAt: Date | null;
+  registryEntryId: string | null;
 };
 
 export function AppraisalDetail({ appraisal }: { appraisal: Appraisal }) {
@@ -409,6 +411,42 @@ export function AppraisalDetail({ appraisal }: { appraisal: Appraisal }) {
                 <Button onClick={handleReject} disabled={isPending} variant="outline" className="gap-2 text-destructive border-destructive/30 hover:bg-destructive/5">
                   <X className="h-4 w-4" />Rifiuta
                 </Button>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Registra nel Registro Usato */}
+      {appraisal.status === "approved" && (
+        <Card className={appraisal.registryEntryId ? "border-slate-200 bg-slate-50/50" : "border-primary/20"}>
+          <CardHeader>
+            <CardTitle className="text-base flex items-center gap-2">
+              <BookOpen className="h-4 w-4" />
+              Registro Usato
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            {appraisal.registryEntryId ? (
+              <div className="flex items-center gap-3">
+                <span className="inline-flex items-center gap-1.5 rounded-full bg-green-100 px-3 py-1 text-sm font-medium text-green-700">
+                  <CheckCircle2 className="h-3.5 w-3.5" />
+                  Già registrata nel Registro Usato
+                </span>
+                <Link href="/registry" className="text-sm text-primary hover:underline">Vedi registro →</Link>
+              </div>
+            ) : (
+              <div className="space-y-2">
+                <p className="text-sm text-muted-foreground">
+                  Il cliente è venuto in negozio? Importa la perizia nel Registro Usato — i dati del dispositivo
+                  e il prezzo saranno pre-compilati, ti servirà solo il documento d&apos;identità.
+                </p>
+                <Link href={`/registry/new?perizia=${appraisal.id}`}>
+                  <Button className="gap-2">
+                    <BookOpen className="h-4 w-4" />
+                    Importa in Registro Usato
+                  </Button>
+                </Link>
               </div>
             )}
           </CardContent>

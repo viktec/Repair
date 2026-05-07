@@ -540,6 +540,7 @@ export const deviceAppraisals = pgTable("device_appraisals", {
   customerName: varchar("customer_name", { length: 255 }),
   customerPhone: varchar("customer_phone", { length: 50 }),
   photoKeys: text("photo_keys"),
+  registryEntryId: uuid("registry_entry_id").references(() => usedItemsRegistry.id, { onDelete: "set null" }),
   createdAt: timestamp("created_at").notNull().defaultNow(),
   updatedAt: timestamp("updated_at").notNull().defaultNow(),
 });

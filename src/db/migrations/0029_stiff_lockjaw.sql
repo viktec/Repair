@@ -1,0 +1,2 @@
+ALTER TABLE "device_appraisals" ADD COLUMN "registry_entry_id" uuid;--> statement-breakpoint
+ALTER TABLE "device_appraisals" ADD CONSTRAINT "device_appraisals_registry_entry_id_used_items_registry_id_fk" FOREIGN KEY ("registry_entry_id") REFERENCES "public"."used_items_registry"("id") ON DELETE set null ON UPDATE no action;

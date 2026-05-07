@@ -2,7 +2,7 @@
 
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
-import { usedItemsRegistry } from "@/db/schema";
+import { usedItemsRegistry, deviceAppraisals } from "@/db/schema";
 import { eq, and, max } from "drizzle-orm";
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
@@ -20,21 +20,34 @@ export async function createRegistryEntryAction(_prev: unknown, formData: FormDa
 
   const purchaseRaw = formData.get("purchasePriceCents") as string;
   const sellRaw = formData.get("sellPriceCents") as string;
+  const appraisalId = (formData.get("appraisalId") as string) || null;
 
-  await db.insert(usedItemsRegistry).values({
-    organizationId: orgId,
-    counter: nextCounter,
-    date: new Date(formData.get("date") as string),
-    description: formData.get("description") as string,
-    imeiOrSerial: (formData.get("imeiOrSerial") as string) || null,
-    counterpartyName: formData.get("counterpartyName") as string,
-    counterpartyDocType: formData.get("counterpartyDocType") as "carta_identita" | "patente" | "passaporto" | "altro",
-    counterpartyDocNumber: formData.get("counterpartyDocNumber") as string,
-    purchasePriceCents: purchaseRaw ? Math.round(parseFloat(purchaseRaw) * 100) : null,
-    sellPriceCents: sellRaw ? Math.round(parseFloat(sellRaw) * 100) : null,
-    notes: (formData.get("notes") as string) || null,
-  });
+  const [entry] = await db
+    .insert(usedItemsRegistry)
+    .values({
+      organizationId: orgId,
+      counter: nextCounter,
+      date: new Date(formData.get("date") as string),
+      description: formData.get("description") as string,
+      imeiOrSerial: (formData.get("imeiOrSerial") as string) || null,
+      counterpartyName: formData.get("counterpartyName") as string,
+      counterpartyDocType: formData.get("counterpartyDocType") as "carta_identita" | "patente" | "passaporto" | "altro",
+      counterpartyDocNumber: formData.get("counterpartyDocNumber") as string,
+      purchasePriceCents: purchaseRaw ? Math.round(parseFloat(purchaseRaw) * 100) : null,
+      sellPriceCents: sellRaw ? Math.round(parseFloat(sellRaw) * 100) : null,
+      notes: (formData.get("notes") as string) || null,
+    })
+    .returning({ id: usedItemsRegistry.id });
+
+  // Collega la perizia alla registrazione
+  if (appraisalId) {
+    await db
+      .update(deviceAppraisals)
+      .set({ registryEntryId: entry.id, updatedAt: new Date() })
+      .where(and(eq(deviceAppraisals.id, appraisalId), eq(deviceAppraisals.organizationId, orgId)));
+  }
 
   revalidatePath("/registry");
+  revalidatePath("/registry/perizie");
   redirect("/registry");
 }
