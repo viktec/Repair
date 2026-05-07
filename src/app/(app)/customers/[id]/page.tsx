@@ -103,7 +103,7 @@ export default async function CustomerDetailPage({
         {can.delete(role) && <DeleteCustomerButton customerId={id} />}
       </div>
 
-      <div className="grid gap-6 lg:grid-cols-3">
+      <div className="grid gap-6 grid-cols-1 lg:grid-cols-3">
         {/* Sidebar info */}
         <div className="space-y-4">
           <Card>

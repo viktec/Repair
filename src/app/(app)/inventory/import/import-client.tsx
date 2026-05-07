@@ -147,7 +147,7 @@ export function ImportClient() {
           )}
         </div>
 
-        <div className="grid gap-4 lg:grid-cols-2">
+        <div className="grid gap-4 grid-cols-1 lg:grid-cols-2">
           <div className="rounded-xl border bg-white p-3">
             {pdfBlobUrl && pdfFile?.type === "application/pdf" && (
               <object data={pdfBlobUrl} type="application/pdf" className="w-full h-[600px] rounded-lg" />
