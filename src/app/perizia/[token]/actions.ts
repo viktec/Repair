@@ -5,6 +5,7 @@ import { deviceAppraisals } from "@/db/schema";
 import { eq } from "drizzle-orm";
 import { getPresignedUploadUrl } from "@/lib/storage";
 import { randomUUID } from "crypto";
+import { sendPushToOrgMembers } from "@/lib/push";
 
 export async function getAppraisalPhotoUploadUrl(
   token: string,
@@ -55,7 +56,7 @@ export async function submitSurveyAction(
   formData: FormData,
 ): Promise<{ error?: string; done?: true }> {
   const [appraisal] = await db
-    .select({ id: deviceAppraisals.id, status: deviceAppraisals.status })
+    .select({ id: deviceAppraisals.id, status: deviceAppraisals.status, organizationId: deviceAppraisals.organizationId, brand: deviceAppraisals.brand, model: deviceAppraisals.model })
     .from(deviceAppraisals)
     .where(eq(deviceAppraisals.surveyToken, token))
     .limit(1);
@@ -120,6 +121,14 @@ export async function submitSurveyAction(
       updatedAt: new Date(),
     })
     .where(eq(deviceAppraisals.surveyToken, token));
+
+  const modelStartsWithBrand = appraisal.model?.toLowerCase().startsWith(appraisal.brand.toLowerCase()) ?? false;
+  const deviceName = [!modelStartsWithBrand && appraisal.brand, appraisal.model].filter(Boolean).join(" ");
+  void sendPushToOrgMembers(appraisal.organizationId, {
+    title: "Perizia usato completata",
+    body: `${deviceName} — questionario inviato`,
+    url: `/registry/perizie/${appraisal.id}`,
+  });
 
   return { done: true };
 }

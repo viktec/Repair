@@ -5,6 +5,7 @@ import { organizations } from "@/db/schema";
 import { eq } from "drizzle-orm";
 import { AppShell } from "@/components/layout/app-shell";
 import { getModulesForRole, type RolePermissions } from "@/lib/permissions";
+import { SWRegister } from "@/components/sw-register";
 
 export default async function AppLayout({ children }: { children: React.ReactNode }) {
   const session = await auth();
@@ -64,6 +65,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
       hasStripeCustomer={!!org.stripeCustomerId}
       allowedModules={allowedModules}
     >
+      <SWRegister />
       {children}
     </AppShell>
   );

@@ -3,10 +3,11 @@
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { posTransactions, posTransactionItems, posSessions, inventoryItems } from "@/db/schema";
-import { eq, and, isNull, max, sql } from "drizzle-orm";
+import { eq, and, isNull, max, sql, inArray } from "drizzle-orm";
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
+import { sendPushToOrgMembers } from "@/lib/push";
 
 const itemSchema = z.object({
   inventoryItemId: z.string().uuid().optional().or(z.literal("")),
@@ -98,6 +99,22 @@ export async function createTransactionAction(_prev: { error: string } | null, f
         .update(inventoryItems)
         .set({ quantity: sql`${inventoryItems.quantity} - ${it.quantity}` })
         .where(and(eq(inventoryItems.id, it.inventoryItemId), eq(inventoryItems.organizationId, orgId)));
+    }
+  }
+
+  // Push notification for items now at zero
+  const linkedIds = rawItems.map((it) => it.inventoryItemId).filter(Boolean) as string[];
+  if (linkedIds.length > 0) {
+    const depleted = await db
+      .select({ name: inventoryItems.name })
+      .from(inventoryItems)
+      .where(and(inArray(inventoryItems.id, linkedIds), eq(inventoryItems.quantity, 0), eq(inventoryItems.organizationId, orgId)));
+    if (depleted.length > 0) {
+      void sendPushToOrgMembers(orgId, {
+        title: "Articolo/i esauriti",
+        body: depleted.map((i) => i.name).join(", "),
+        url: "/inventory",
+      });
     }
   }
 

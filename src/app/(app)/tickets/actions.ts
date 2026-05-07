@@ -11,6 +11,7 @@ import { generateQrToken } from "@/lib/utils";
 import { DEVICE_MODELS } from "@/lib/devices";
 import { sendStatusEmail } from "@/lib/email";
 import { logActivity } from "@/lib/activity";
+import { sendPushToOrgMembers } from "@/lib/push";
 
 const ticketSchema = z.object({
   customerId: z.string().uuid().optional().or(z.literal("")),
@@ -142,6 +143,13 @@ export async function createTicketAction(
     entityId: ticket.id,
     entityLabel: `#${nextNumber}`,
   }).catch(() => {});
+
+  const device = [data.deviceBrand, data.deviceModel].filter(Boolean).join(" ");
+  void sendPushToOrgMembers(orgId, {
+    title: `Nuovo ticket #${nextNumber}`,
+    body: device || "Nuovo ticket creato",
+    url: `/tickets/${ticket.id}`,
+  });
 
   revalidatePath("/tickets");
   return { ticketId: ticket.id };

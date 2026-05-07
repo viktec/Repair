@@ -8,6 +8,7 @@ import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { can } from "@/lib/permissions";
+import { sendPushToOrgMembers } from "@/lib/push";
 
 const itemSchema = z.object({
   name: z.string().min(1, "Nome obbligatorio"),
@@ -100,7 +101,7 @@ export async function addMovementAction(itemId: string, type: string, qty: numbe
   const orgId = session.user.organizationId;
 
   const [item] = await db
-    .select({ quantity: inventoryItems.quantity })
+    .select({ quantity: inventoryItems.quantity, name: inventoryItems.name })
     .from(inventoryItems)
     .where(and(eq(inventoryItems.id, itemId), eq(inventoryItems.organizationId, orgId)))
     .limit(1);
@@ -123,6 +124,14 @@ export async function addMovementAction(itemId: string, type: string, qty: numbe
     .update(inventoryItems)
     .set({ quantity: newQty, updatedAt: new Date() })
     .where(eq(inventoryItems.id, itemId));
+
+  if (newQty === 0 && delta < 0) {
+    void sendPushToOrgMembers(orgId, {
+      title: "Articolo esaurito",
+      body: `${item.name} — scorta a zero`,
+      url: `/inventory/${itemId}`,
+    });
+  }
 
   revalidatePath(`/inventory/${itemId}`);
 }
