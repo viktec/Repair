@@ -28,6 +28,9 @@ export async function createSelfServiceAppraisalAction(
   const customerPhone = (formData.get("customerPhone") as string)?.trim() || null;
 
   if (!brand || !model) return { error: "Marca e modello sono obbligatori." };
+  if (!storageGb) return { error: "Inserisci lo storage del dispositivo." };
+  if (!color) return { error: "Inserisci il colore del dispositivo." };
+  if (!imei) return { error: "Inserisci l'IMEI del dispositivo." };
   if (!customerName || !customerPhone) return { error: "Nome e numero di telefono sono obbligatori." };
 
   const surveyToken = crypto.randomUUID().replace(/-/g, "");
