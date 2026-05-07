@@ -66,6 +66,13 @@ export async function submitSurveyAction(
     return { error: "Questa perizia è già stata chiusa." };
   }
 
+  const storageGb = (formData.get("storageGb") as string)?.trim() || null;
+  const color = (formData.get("color") as string)?.trim() || null;
+  const imei = (formData.get("imei") as string)?.trim() || null;
+  if (!storageGb) return { error: "Inserisci lo storage del dispositivo." };
+  if (!color) return { error: "Inserisci il colore del dispositivo." };
+  if (!imei) return { error: "Inserisci l'IMEI del dispositivo." };
+
   const works = formData.get("works") === "yes";
   const screenCondition = formData.get("screenCondition") as string;
   const bodyCondition = formData.get("bodyCondition") as string;
@@ -113,6 +120,9 @@ export async function submitSurveyAction(
       customerExpectedCents,
       intent: intent as "sell" | "trade_in" | "both",
       customerNotes,
+      storageGb,
+      color,
+      imei,
       purchaseMethod: purchaseMethod as "cash" | "card" | "carrier_plan" | "financing",
       purchasePlace: purchasePlace as "physical" | "online",
       hasProofOfPurchase,

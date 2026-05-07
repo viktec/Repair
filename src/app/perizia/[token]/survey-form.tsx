@@ -11,6 +11,8 @@ type Props = {
   brand: string;
   model: string;
   storageGb: string | null;
+  color: string | null;
+  imei: string | null;
   alreadyCompleted: boolean;
   primaryColor?: string;
 };
@@ -39,7 +41,7 @@ function RadioGroup({
   );
 }
 
-export function SurveyForm({ token, brand, model, storageGb, alreadyCompleted, primaryColor = "#0D8F7A" }: Props) {
+export function SurveyForm({ token, brand, model, storageGb, color, imei, alreadyCompleted, primaryColor = "#0D8F7A" }: Props) {
   const boundAction = submitSurveyAction.bind(null, token);
   const [state, action, pending] = useActionState(boundAction, null);
   const [photos, setPhotos] = useState<string[]>([]);
@@ -102,6 +104,52 @@ export function SurveyForm({ token, brand, model, storageGb, alreadyCompleted, p
       <div className="rounded-lg bg-primary/5 border border-primary/20 px-4 py-3 text-sm text-primary font-medium">
         Dispositivo: {deviceName}
       </div>
+
+      {/* 0. Dettagli dispositivo */}
+      <section className="space-y-3">
+        <h3 className="font-semibold">Dettagli dispositivo</h3>
+        <div className="grid grid-cols-2 gap-3">
+          <div className="space-y-1.5">
+            <label className="text-sm font-medium">
+              Storage <span className="text-destructive">*</span>
+            </label>
+            <input
+              name="storageGb"
+              required
+              defaultValue={storageGb ?? ""}
+              placeholder="es. 128GB"
+              className="w-full rounded-lg border border-input bg-background px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+            />
+          </div>
+          <div className="space-y-1.5">
+            <label className="text-sm font-medium">
+              Colore <span className="text-destructive">*</span>
+            </label>
+            <input
+              name="color"
+              required
+              defaultValue={color ?? ""}
+              placeholder="es. Nero"
+              className="w-full rounded-lg border border-input bg-background px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+            />
+          </div>
+        </div>
+        <div className="space-y-1.5">
+          <label className="text-sm font-medium">
+            IMEI <span className="text-destructive">*</span>
+          </label>
+          <p className="text-xs text-muted-foreground">
+            Puoi trovarlo digitando <strong>*#06#</strong> sul telefono oppure in Impostazioni → Informazioni.
+          </p>
+          <input
+            name="imei"
+            required
+            defaultValue={imei ?? ""}
+            placeholder="es. 350000000000000"
+            className="w-full rounded-lg border border-input bg-background px-3 py-2.5 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-ring"
+          />
+        </div>
+      </section>
 
       {/* 1. Funziona? */}
       <section className="space-y-3">

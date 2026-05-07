@@ -14,6 +14,8 @@ export default async function SurveyPage({ params }: { params: Promise<{ token: 
       brand: deviceAppraisals.brand,
       model: deviceAppraisals.model,
       storageGb: deviceAppraisals.storageGb,
+      color: deviceAppraisals.color,
+      imei: deviceAppraisals.imei,
       status: deviceAppraisals.status,
       surveyCompletedAt: deviceAppraisals.surveyCompletedAt,
       orgName: organizations.name,
@@ -49,6 +51,8 @@ export default async function SurveyPage({ params }: { params: Promise<{ token: 
           brand={row.brand}
           model={row.model}
           storageGb={row.storageGb}
+          color={row.color}
+          imei={row.imei}
           alreadyCompleted={alreadyCompleted}
           primaryColor={primaryColor}
         />
