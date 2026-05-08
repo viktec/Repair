@@ -1,1 +1,1 @@
-ALTER TYPE "public"."appraisal_status" ADD VALUE 'cancelled';
+ALTER TYPE "public"."appraisal_status" ADD VALUE IF NOT EXISTS 'cancelled';
