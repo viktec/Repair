@@ -9,6 +9,7 @@ import { Plus, BookOpen, Download } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { formatCurrency } from "@/lib/utils";
+import { RegistryRowActions } from "./registry-row-actions";
 
 export default async function RegistryPage() {
   const session = await requirePlan("business");
@@ -78,6 +79,7 @@ export default async function RegistryPage() {
                 <th className="px-4 py-3">Documento</th>
                 <th className="px-4 py-3 text-right">Acquisto</th>
                 <th className="px-4 py-3 text-right">Vendita</th>
+                <th className="px-4 py-3"></th>
               </tr>
             </thead>
             <tbody>
@@ -103,6 +105,9 @@ export default async function RegistryPage() {
                   </td>
                   <td className="px-4 py-3 text-right font-medium">
                     {e.sellPriceCents != null ? formatCurrency(e.sellPriceCents) : "—"}
+                  </td>
+                  <td className="px-2 py-3">
+                    <RegistryRowActions entryId={e.id} />
                   </td>
                 </tr>
               ))}

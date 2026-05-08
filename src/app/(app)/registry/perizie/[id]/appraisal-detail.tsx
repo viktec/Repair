@@ -533,9 +533,7 @@ export function AppraisalDetail({ appraisal }: { appraisal: Appraisal }) {
                   {appraisal.adminNotes && (
                     <p className="text-xs text-muted-foreground italic">{appraisal.adminNotes}</p>
                   )}
-                  {appraisal.status !== "approved" && (
-                    <Button size="sm" variant="outline" onClick={() => setEditMode(true)}>Modifica offerta</Button>
-                  )}
+                  <Button size="sm" variant="outline" onClick={() => setEditMode(true)}>Modifica offerta</Button>
                 </div>
               )
             }
