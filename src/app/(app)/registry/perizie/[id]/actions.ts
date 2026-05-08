@@ -5,6 +5,7 @@ import { db } from "@/lib/db";
 import { deviceAppraisals } from "@/db/schema";
 import { eq, and } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
+import { redirect } from "next/navigation";
 import Anthropic from "@anthropic-ai/sdk";
 import { getObjectBuffer } from "@/lib/storage";
 
@@ -289,6 +290,19 @@ export async function markSurveySentAction(appraisalId: string): Promise<{ error
 
   revalidatePath(`/registry/perizie/${appraisalId}`);
   return {};
+}
+
+export async function deleteAppraisalAction(appraisalId: string): Promise<{ error?: string }> {
+  const session = await auth();
+  if (!session?.user?.organizationId) return { error: "Non autenticato." };
+  const orgId = session.user.organizationId;
+
+  await db
+    .delete(deviceAppraisals)
+    .where(and(eq(deviceAppraisals.id, appraisalId), eq(deviceAppraisals.organizationId, orgId)));
+
+  revalidatePath("/registry/perizie");
+  redirect("/registry/perizie");
 }
 
 export async function setImeiStatusAction(

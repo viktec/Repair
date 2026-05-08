@@ -7,6 +7,7 @@ import {
   approveAppraisalAction,
   rejectAppraisalAction,
   cancelAppraisalAction,
+  deleteAppraisalAction,
   markSurveySentAction,
   setImeiStatusAction,
 } from "./actions";
@@ -34,7 +35,7 @@ const STATUS_LABELS: Record<string, { label: string; color: string }> = {
   ai_evaluated: { label: "Valutato AI", color: "bg-purple-50 text-purple-700 border-purple-200" },
   approved: { label: "Approvato", color: "bg-green-50 text-green-700 border-green-200" },
   rejected: { label: "Rifiutato", color: "bg-red-50 text-red-700 border-red-200" },
-  cancelled: { label: "Annullata", color: "bg-slate-100 text-slate-500 border-slate-200" },
+  cancelled: { label: "Cancellato", color: "bg-red-50 text-red-600 border-red-200" },
 };
 
 const SCREEN_LABELS: Record<string, string> = {
@@ -185,6 +186,13 @@ export function AppraisalDetail({ appraisal }: { appraisal: Appraisal }) {
     startTransition(async () => {
       const res = await cancelAppraisalAction(appraisal.id);
       if (res.error) setError(res.error);
+    });
+  }
+
+  function handleDelete() {
+    if (!confirm("Eliminare definitivamente questa perizia? L'operazione non è reversibile.")) return;
+    startTransition(async () => {
+      await deleteAppraisalAction(appraisal.id);
     });
   }
 
@@ -632,9 +640,21 @@ export function AppraisalDetail({ appraisal }: { appraisal: Appraisal }) {
         </Card>
       )}
 
-      {/* Annulla perizia */}
-      {!["approved", "rejected", "cancelled"].includes(appraisal.status) && (
-        <div className="flex justify-end border-t pt-4">
+      {/* Annulla / Elimina perizia */}
+      <div className="flex justify-end gap-2 border-t pt-4">
+        {appraisal.status === "cancelled" && (
+          <Button
+            variant="ghost"
+            size="sm"
+            disabled={isPending}
+            onClick={handleDelete}
+            className="gap-1.5 text-destructive hover:bg-destructive/10"
+          >
+            <X className="h-3.5 w-3.5" />
+            Elimina definitivamente
+          </Button>
+        )}
+        {!["approved", "rejected", "cancelled"].includes(appraisal.status) && (
           <Button
             variant="ghost"
             size="sm"
@@ -645,8 +665,8 @@ export function AppraisalDetail({ appraisal }: { appraisal: Appraisal }) {
             <X className="h-3.5 w-3.5" />
             Annulla perizia
           </Button>
-        </div>
-      )}
+        )}
+      </div>
     </div>
   );
 }

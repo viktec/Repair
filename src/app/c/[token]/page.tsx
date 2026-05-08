@@ -80,6 +80,7 @@ export default async function ClientPortalPage({
       billableMinutes: supportInterventions.billableMinutes,
       technicianName: supportInterventions.technicianName,
       status: supportInterventions.status,
+      startTime: supportInterventions.startTime,
       createdAt: supportInterventions.createdAt,
     })
     .from(supportInterventions)
@@ -269,7 +270,7 @@ export default async function ClientPortalPage({
                       <p className="mt-1.5 text-xs text-muted-foreground line-clamp-2">{i.description}</p>
                     )}
                     <p className="mt-1.5 text-xs text-muted-foreground">
-                      Aperto il {formatDate(i.createdAt)}
+                      Aperto il {formatDate(i.startTime ?? i.createdAt)}
                     </p>
                   </div>
                 );
@@ -319,7 +320,7 @@ export default async function ClientPortalPage({
                     <p className="mt-1.5 text-xs text-muted-foreground line-clamp-2">{i.description}</p>
                   )}
                   <div className="mt-1.5 flex items-center justify-between text-xs text-muted-foreground">
-                    <span>{formatDate(i.createdAt)}</span>
+                    <span>{formatDate(i.startTime ?? i.createdAt)}</span>
                     <span className="font-medium">
                       {i.billableMinutes > 0 ? formatMinutes(i.billableMinutes) : "—"}
                       {i.technicianName ? ` · ${i.technicianName}` : ""}
