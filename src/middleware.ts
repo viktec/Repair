@@ -26,6 +26,8 @@ export default auth((req) => {
   if (MARKETING_HOSTS.has(host)) {
     if (
       pathname === "/" ||
+      pathname === "/sitemap.xml" ||
+      pathname === "/robots.txt" ||
       pathname.startsWith("/funzionalita") ||
       pathname.startsWith("/novita") ||
       pathname.startsWith("/blog") ||
