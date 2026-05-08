@@ -9,6 +9,7 @@ import { Plus, Wrench } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { SelfServiceLinkBox } from "./self-service-link-box";
+import { PeriziaRowActions } from "./perizia-row-actions";
 
 const STATUS_LABELS: Record<string, { label: string; color: string }> = {
   draft: { label: "Bozza", color: "bg-slate-100 text-slate-600" },
@@ -17,6 +18,7 @@ const STATUS_LABELS: Record<string, { label: string; color: string }> = {
   ai_evaluated: { label: "Valutato AI", color: "bg-purple-100 text-purple-700" },
   approved: { label: "Approvato", color: "bg-green-100 text-green-700" },
   rejected: { label: "Rifiutato", color: "bg-red-100 text-red-700" },
+  cancelled: { label: "Cancellato", color: "bg-red-50 text-red-400" },
 };
 
 function fmt(cents: number) {
@@ -108,9 +110,7 @@ export default async function PerizieListPage() {
                       {new Intl.DateTimeFormat("it-IT").format(new Date(p.createdAt))}
                     </td>
                     <td className="px-4 py-3 text-right">
-                      <Link href={`/registry/perizie/${p.id}`}>
-                        <Button variant="outline" size="sm">Apri</Button>
-                      </Link>
+                      <PeriziaRowActions id={p.id} status={p.status} />
                     </td>
                   </tr>
                 );
