@@ -1,6 +1,11 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { ArrowRight, BookOpen, Clock } from "lucide-react";
+import { db } from "@/lib/db";
+import { blogPosts } from "@/db/schema";
+import { eq, desc } from "drizzle-orm";
+
+export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = {
   title: "Blog — Guide e consigli per centri di riparazione",
@@ -22,74 +27,29 @@ export const metadata: Metadata = {
   },
 };
 
-type Post = {
-  slug: string;
-  category: string;
-  title: string;
-  excerpt: string;
-  date: string;
-  readMin: number;
-};
-
-const posts: Post[] = [
-  {
-    slug: "come-gestire-i-ticket-in-un-centro-di-riparazione",
-    category: "Gestione",
-    title: "Come gestire i ticket di riparazione senza perdere tempo",
-    excerpt: "Dal foglio Excel al software dedicato: come un centro di riparazione professionale gestisce 50+ ticket al giorno senza chaos.",
-    date: "2025-04-28",
-    readMin: 6,
-  },
-  {
-    slug: "gdpr-centri-riparazione-cosa-sapere",
-    category: "Normativa",
-    title: "GDPR per i centri di riparazione: cosa devi sapere nel 2025",
-    excerpt: "La privacy del cliente è obbligatoria. Ecco cosa registrare, come ottenere il consenso e come My-Repair ti semplifica la conformità.",
-    date: "2025-04-10",
-    readMin: 8,
-  },
-  {
-    slug: "registro-usato-obblighi-rivenditori",
-    category: "Normativa",
-    title: "Registro Usato: obblighi per chi compra e vende dispositivi",
-    excerpt: "Chi acquista dispositivi usati dai privati è soggetto a obblighi normativi precisi. Scopri come tenerli in regola digitalmente.",
-    date: "2025-03-22",
-    readMin: 5,
-  },
-  {
-    slug: "come-aumentare-le-riparazioni-con-il-qr-tracking",
-    category: "Marketing",
-    title: "Il QR tracking aumenta la fiducia del cliente (e le recensioni)",
-    excerpt: "Quando il cliente può seguire lo stato della riparazione in tempo reale, smette di chiamare — e lascia più recensioni positive.",
-    date: "2025-03-05",
-    readMin: 4,
-  },
-  {
-    slug: "cassa-pos-centro-riparazione-come-funziona",
-    category: "Gestione",
-    title: "Cassa POS integrata: perché i migliori centri di riparazione la usano",
-    excerpt: "Dall'incasso al report Z, una cassa POS integrata nel gestionale elimina doppio lavoro e errori di riconciliazione.",
-    date: "2025-02-18",
-    readMin: 5,
-  },
-  {
-    slug: "firma-digitale-modulo-accettazione",
-    category: "Tecnologia",
-    title: "Firma digitale del modulo di accettazione: vale legalmente?",
-    excerpt: "Sì, vale. Ecco perché la firma su tablet è giuridicamente equiparata a quella su carta, e come implementarla correttamente.",
-    date: "2025-02-03",
-    readMin: 7,
-  },
-];
-
 const CATEGORY_COLORS: Record<string, string> = {
   Gestione: "bg-blue-100 text-blue-700",
   Normativa: "bg-amber-100 text-amber-700",
   Marketing: "bg-violet-100 text-violet-700",
   Tecnologia: "bg-emerald-100 text-emerald-700",
+  Prodotto: "bg-teal-100 text-teal-700",
 };
 
-export default function BlogPage() {
+export default async function BlogPage() {
+  const posts = await db
+    .select({
+      id: blogPosts.id,
+      slug: blogPosts.slug,
+      title: blogPosts.title,
+      category: blogPosts.category,
+      excerpt: blogPosts.excerpt,
+      readMin: blogPosts.readMin,
+      publishedAt: blogPosts.publishedAt,
+    })
+    .from(blogPosts)
+    .where(eq(blogPosts.status, "published"))
+    .orderBy(desc(blogPosts.publishedAt));
+
   const [featured, ...rest] = posts;
 
   return (
@@ -108,68 +68,78 @@ export default function BlogPage() {
         </div>
       </section>
 
-      {/* Featured */}
-      <section className="py-12">
-        <div className="container max-w-5xl mx-auto">
-          <div className="rounded-2xl border bg-white shadow-sm overflow-hidden">
-            <div className="grid md:grid-cols-5">
-              <div className="md:col-span-3 bg-gradient-to-br from-slate-800 to-slate-900 p-8 flex flex-col justify-between min-h-[240px]">
-                <span className={`self-start text-[11px] font-semibold rounded-full px-2.5 py-1 ${CATEGORY_COLORS[featured.category] ?? "bg-slate-100 text-slate-700"}`}>
-                  {featured.category}
-                </span>
-                <div>
-                  <h2 className="text-xl font-bold text-white leading-tight mb-2">{featured.title}</h2>
-                  <p className="text-slate-400 text-sm leading-relaxed">{featured.excerpt}</p>
+      {!featured ? (
+        <section className="py-24 text-center text-muted-foreground">
+          <p>Nessun articolo ancora — torna presto.</p>
+        </section>
+      ) : (
+        <>
+          {/* Featured */}
+          <section className="py-12">
+            <div className="container max-w-5xl mx-auto">
+              <div className="rounded-2xl border bg-white shadow-sm overflow-hidden">
+                <div className="grid md:grid-cols-5">
+                  <div className="md:col-span-3 bg-gradient-to-br from-slate-800 to-slate-900 p-8 flex flex-col justify-between min-h-[240px]">
+                    <span className={`self-start text-[11px] font-semibold rounded-full px-2.5 py-1 ${CATEGORY_COLORS[featured.category] ?? "bg-slate-100 text-slate-700"}`}>
+                      {featured.category}
+                    </span>
+                    <div>
+                      <h2 className="text-xl font-bold text-white leading-tight mb-2">{featured.title}</h2>
+                      <p className="text-slate-400 text-sm leading-relaxed">{featured.excerpt}</p>
+                    </div>
+                  </div>
+                  <div className="md:col-span-2 p-8 flex flex-col justify-between">
+                    <div className="flex items-center gap-3 text-xs text-muted-foreground">
+                      <span>{featured.publishedAt?.toLocaleDateString("it-IT", { day: "numeric", month: "long", year: "numeric" })}</span>
+                      <span>·</span>
+                      <span className="flex items-center gap-1"><Clock className="h-3 w-3" /> {featured.readMin} min</span>
+                    </div>
+                    <Link
+                      href={`/blog/${featured.slug}`}
+                      className="inline-flex items-center gap-2 text-sm font-semibold text-primary hover:underline mt-4"
+                    >
+                      Leggi l&apos;articolo <ArrowRight className="h-4 w-4" />
+                    </Link>
+                  </div>
                 </div>
-              </div>
-              <div className="md:col-span-2 p-8 flex flex-col justify-between">
-                <div className="flex items-center gap-3 text-xs text-muted-foreground">
-                  <span>{new Date(featured.date).toLocaleDateString("it-IT", { day: "numeric", month: "long", year: "numeric" })}</span>
-                  <span>·</span>
-                  <span className="flex items-center gap-1"><Clock className="h-3 w-3" /> {featured.readMin} min</span>
-                </div>
-                <Link
-                  href={`/blog/${featured.slug}`}
-                  className="inline-flex items-center gap-2 text-sm font-semibold text-primary hover:underline mt-4"
-                >
-                  Leggi l&apos;articolo <ArrowRight className="h-4 w-4" />
-                </Link>
               </div>
             </div>
-          </div>
-        </div>
-      </section>
+          </section>
 
-      {/* Grid */}
-      <section className="pb-16">
-        <div className="container max-w-5xl mx-auto">
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-5">
-            {rest.map((post) => (
-              <Link
-                key={post.slug}
-                href={`/blog/${post.slug}`}
-                className="group rounded-xl border bg-white p-6 shadow-sm hover:shadow-md hover:border-primary/30 transition-all flex flex-col gap-3"
-              >
-                <div className="flex items-center justify-between">
-                  <span className={`text-[11px] font-semibold rounded-full px-2.5 py-1 ${CATEGORY_COLORS[post.category] ?? "bg-slate-100 text-slate-700"}`}>
-                    {post.category}
-                  </span>
-                  <span className="text-[11px] text-muted-foreground flex items-center gap-1">
-                    <Clock className="h-3 w-3" /> {post.readMin} min
-                  </span>
+          {/* Grid */}
+          {rest.length > 0 && (
+            <section className="pb-16">
+              <div className="container max-w-5xl mx-auto">
+                <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-5">
+                  {rest.map((post) => (
+                    <Link
+                      key={post.slug}
+                      href={`/blog/${post.slug}`}
+                      className="group rounded-xl border bg-white p-6 shadow-sm hover:shadow-md hover:border-primary/30 transition-all flex flex-col gap-3"
+                    >
+                      <div className="flex items-center justify-between">
+                        <span className={`text-[11px] font-semibold rounded-full px-2.5 py-1 ${CATEGORY_COLORS[post.category] ?? "bg-slate-100 text-slate-700"}`}>
+                          {post.category}
+                        </span>
+                        <span className="text-[11px] text-muted-foreground flex items-center gap-1">
+                          <Clock className="h-3 w-3" /> {post.readMin} min
+                        </span>
+                      </div>
+                      <h3 className="font-semibold text-foreground leading-snug group-hover:text-primary transition-colors">
+                        {post.title}
+                      </h3>
+                      <p className="text-xs text-muted-foreground leading-relaxed flex-1">{post.excerpt}</p>
+                      <p className="text-[11px] text-muted-foreground">
+                        {post.publishedAt?.toLocaleDateString("it-IT", { day: "numeric", month: "long" })}
+                      </p>
+                    </Link>
+                  ))}
                 </div>
-                <h3 className="font-semibold text-foreground leading-snug group-hover:text-primary transition-colors">
-                  {post.title}
-                </h3>
-                <p className="text-xs text-muted-foreground leading-relaxed flex-1">{post.excerpt}</p>
-                <p className="text-[11px] text-muted-foreground">
-                  {new Date(post.date).toLocaleDateString("it-IT", { day: "numeric", month: "long" })}
-                </p>
-              </Link>
-            ))}
-          </div>
-        </div>
-      </section>
+              </div>
+            </section>
+          )}
+        </>
+      )}
 
       {/* CTA */}
       <section className="py-16 bg-slate-50 border-t">

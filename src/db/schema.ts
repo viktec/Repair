@@ -13,6 +13,8 @@ import {
 } from "drizzle-orm/pg-core";
 import { relations } from "drizzle-orm";
 
+export const blogPostStatusEnum = pgEnum("blog_post_status", ["draft", "published"]);
+
 export const planEnum = pgEnum("plan", ["start", "pro", "business", "gift"]);
 export const subscriptionStatusEnum = pgEnum("subscription_status", [
   "trial",
@@ -828,3 +830,22 @@ export const supportInterventionsRelations = relations(supportInterventions, ({ 
   contract: one(customerContracts, { fields: [supportInterventions.contractId], references: [customerContracts.id] }),
   technician: one(users, { fields: [supportInterventions.technicianId], references: [users.id] }),
 }));
+
+export const blogPosts = pgTable("blog_posts", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  slug: varchar("slug", { length: 255 }).notNull().unique(),
+  title: varchar("title", { length: 255 }).notNull(),
+  category: varchar("category", { length: 100 }).notNull().default("Gestione"),
+  excerpt: text("excerpt").notNull().default(""),
+  intro: text("intro").notNull().default(""),
+  sections: jsonb("sections").$type<{ heading?: string; body: string }[]>().notNull().default([]),
+  cta: text("cta"),
+  readMin: integer("read_min").notNull().default(5),
+  status: blogPostStatusEnum("status").notNull().default("draft"),
+  publishedAt: timestamp("published_at"),
+  seoTitle: varchar("seo_title", { length: 255 }),
+  seoDescription: text("seo_description"),
+  seoKeywords: text("seo_keywords"),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+});
