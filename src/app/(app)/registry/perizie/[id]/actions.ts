@@ -95,7 +95,7 @@ Aspettativa cliente: ${appraisal.customerExpectedCents != null ? fmt(appraisal.c
 Note del cliente: ${appraisal.customerNotes ?? "nessuna"}
 ${appraisal.photoKeys ? `\nIl cliente ha caricato delle foto del dispositivo — analizzale per verificare le condizioni dichiarate.` : ""}
 
-Calcola il prezzo di acquisto basandoti sui prezzi di mercato italiani che conosci (BackMarket, eBay.it, Subito.it) e considera:
+PRIMA di rispondere, cerca i prezzi attuali su BackMarket Italia, eBay.it e Subito.it per questo modello specifico, poi calcola il prezzo di acquisto considerando:
 - Il negozio rivende con margine 30-40% (per test, pulizia, garanzia)
 - Se non funziona: 10-20% del valore base
 - Schermo rotto: -25-40%; in frantumi: -50%
@@ -106,7 +106,7 @@ Calcola il prezzo di acquisto basandoti sui prezzi di mercato italiani che conos
 - Sii prudente: meglio valutare leggermente meno che perdere soldi
 
 Rispondi SOLO con un oggetto JSON valido, senza testo prima o dopo, senza markdown:
-{"valuationCents": <intero in centesimi>, "reasoning": "<spiegazione in italiano con stima prezzi mercato, max 150 parole>"}`;
+{"valuationCents": <intero in centesimi>, "reasoning": "<spiegazione in italiano con riferimento ai prezzi trovati online, max 150 parole>"}`;
 
   // Load photos for vision
   const photoKeys: string[] = appraisal.photoKeys ? JSON.parse(appraisal.photoKeys) : [];
@@ -130,9 +130,12 @@ Rispondi SOLO con un oggetto JSON valido, senza testo prima o dopo, senza markdo
   let raw = "";
 
   try {
+    // web_search_20250305 is a server-side Anthropic tool — one call, no manual loop needed
     const resp = await anthropic.messages.create({
       model: "claude-sonnet-4-6",
-      max_tokens: 1024,
+      max_tokens: 4096,
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      tools: [{ type: "web_search_20250305" }] as any,
       messages: [{ role: "user", content: userContent }],
     });
     raw = resp.content
@@ -140,22 +143,40 @@ Rispondi SOLO con un oggetto JSON valido, senza testo prima o dopo, senza markdo
       .map((b) => b.text)
       .join("");
   } catch {
-    return { error: "Errore chiamata AI. Riprova." };
+    // web_search not enabled on this key — fallback to plain call
+    try {
+      const resp = await anthropic.messages.create({
+        model: "claude-sonnet-4-6",
+        max_tokens: 1024,
+        messages: [{ role: "user", content: userContent }],
+      });
+      raw = resp.content
+        .filter((b): b is Anthropic.TextBlock => b.type === "text")
+        .map((b) => b.text)
+        .join("");
+    } catch {
+      return { error: "Errore chiamata AI. Riprova." };
+    }
   }
 
   let parsed: { valuationCents: number; reasoning: string };
   try {
-    // Find the first complete JSON object using bracket matching
-    const start = raw.indexOf("{");
+    // Strip markdown code fences if the model wraps output in ```json ... ```
+    let text = raw.trim();
+    const fenced = text.match(/```(?:json)?\s*([\s\S]*?)\s*```/s);
+    if (fenced) text = fenced[1].trim();
+
+    // Bracket-matching extraction of the first complete JSON object
+    const start = text.indexOf("{");
     if (start === -1) throw new Error("No JSON");
     let depth = 0;
     let end = -1;
-    for (let i = start; i < raw.length; i++) {
-      if (raw[i] === "{") depth++;
-      else if (raw[i] === "}") { depth--; if (depth === 0) { end = i; break; } }
+    for (let i = start; i < text.length; i++) {
+      if (text[i] === "{") depth++;
+      else if (text[i] === "}") { depth--; if (depth === 0) { end = i; break; } }
     }
     if (end === -1) throw new Error("Unclosed JSON");
-    parsed = JSON.parse(raw.substring(start, end + 1));
+    parsed = JSON.parse(text.substring(start, end + 1));
     if (typeof parsed.valuationCents !== "number" || typeof parsed.reasoning !== "string") throw new Error();
   } catch {
     return { error: "Risposta AI non valida. Riprova." };

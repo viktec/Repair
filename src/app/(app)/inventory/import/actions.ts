@@ -120,7 +120,11 @@ export async function parseInvoiceAction(formData: FormData): Promise<ParseResul
 
   let parsed: unknown[];
   try {
-    parsed = JSON.parse(rawText);
+    let text = rawText.trim();
+    // Strip markdown code fences if the model wraps output in ```json ... ```
+    const fenced = text.match(/```(?:json)?\s*([\s\S]*?)\s*```/s);
+    if (fenced) text = fenced[1].trim();
+    parsed = JSON.parse(text);
     if (!Array.isArray(parsed)) throw new Error();
   } catch {
     return { ok: false, error: "Risposta AI non valida. Riprova." };
