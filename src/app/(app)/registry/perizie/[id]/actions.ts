@@ -163,7 +163,7 @@ Rispondi SOLO con un oggetto JSON valido, senza testo prima o dopo, senza markdo
   try {
     // Strip markdown code fences if the model wraps output in ```json ... ```
     let text = raw.trim();
-    const fenced = text.match(/```(?:json)?\s*([\s\S]*?)\s*```/s);
+    const fenced = text.match(/```(?:json)?\s*([\s\S]*?)\s*```/);
     if (fenced) text = fenced[1].trim();
 
     // Bracket-matching extraction of the first complete JSON object
