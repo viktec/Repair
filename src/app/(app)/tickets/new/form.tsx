@@ -21,6 +21,7 @@ type Props = {
   statuses: { id: string; name: string }[];
   stores: Store[];
   teamMembers: TeamMember[];
+  faultSuggestions: string[];
 };
 
 // ─── Step 2: Firma ──────────────────────────────────────────────────────────
@@ -154,9 +155,10 @@ function SignatureStep({ ticketId }: { ticketId: string }) {
 
 // ─── Step 1: Form ticket ─────────────────────────────────────────────────────
 
-export function NewTicketForm({ customers: initialCustomers, stores, teamMembers }: Props) {
+export function NewTicketForm({ customers: initialCustomers, stores, teamMembers, faultSuggestions }: Props) {
   const [state, action, pending] = useActionState(createTicketAction, null);
   const [selectedBrand, setSelectedBrand] = useState("");
+  const [faultValue, setFaultValue] = useState("");
 
   // Customer
   const [customerList, setCustomerList] = useState<Customer[]>(initialCustomers);
@@ -330,8 +332,23 @@ export function NewTicketForm({ customers: initialCustomers, stores, teamMembers
         <CardContent className="space-y-3">
           <div className="space-y-1.5">
             <Label htmlFor="faultDescription">Descrizione guasto <span className="text-destructive">*</span></Label>
-            <textarea id="faultDescription" name="faultDescription" rows={3} required placeholder="Schermo rotto, non si accende, batteria scarica…"
+            <textarea id="faultDescription" name="faultDescription" rows={3} required
+              value={faultValue} onChange={(e) => setFaultValue(e.target.value)}
+              placeholder="Schermo rotto, non si accende, batteria scarica…"
               className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring" />
+            {faultSuggestions.length > 0 && (
+              <div className="flex flex-wrap gap-1.5 pt-0.5">
+                {faultSuggestions.map((s) => (
+                  <button
+                    key={s} type="button"
+                    onClick={() => setFaultValue(s)}
+                    className="rounded-full border border-input bg-white px-2.5 py-0.5 text-xs text-muted-foreground hover:bg-slate-50 hover:border-slate-300 transition-colors"
+                  >
+                    {s}
+                  </button>
+                ))}
+              </div>
+            )}
             {state?.errors?.faultDescription && <p className="text-xs text-destructive">{state.errors.faultDescription[0]}</p>}
           </div>
           <div className="grid grid-cols-2 gap-3">

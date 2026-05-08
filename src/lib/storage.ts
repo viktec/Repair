@@ -45,7 +45,7 @@ export function getPublicUrl(storageKey: string): string {
 
 export async function getPresignedDownloadUrl(key: string): Promise<string> {
   const command = new GetObjectCommand({ Bucket: BUCKET_PRIVATE, Key: key });
-  return getSignedUrl(s3Public, command, { expiresIn: 3600 });
+  return getSignedUrl(s3Public, command, { expiresIn: 86400 });
 }
 
 export async function getObjectBuffer(key: string, isPublic: boolean): Promise<Buffer | null> {

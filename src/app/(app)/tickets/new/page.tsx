@@ -1,7 +1,7 @@
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
-import { customers, ticketStatuses, stores, organizations, memberships, users } from "@/db/schema";
-import { eq, and } from "drizzle-orm";
+import { customers, ticketStatuses, stores, organizations, memberships, users, tickets } from "@/db/schema";
+import { eq, and, isNull, sql } from "drizzle-orm";
 import { redirect } from "next/navigation";
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
@@ -22,7 +22,7 @@ export default async function NewTicketPage() {
 
   const isBusiness = hasPlan(org?.plan, "business");
 
-  const [customerList, statusList, storeList, teamMembers] = await Promise.all([
+  const [customerList, statusList, storeList, teamMembers, faultRows] = await Promise.all([
     db
       .select({ id: customers.id, name: customers.name, phone: customers.phone })
       .from(customers)
@@ -45,6 +45,17 @@ export default async function NewTicketPage() {
       .from(users)
       .innerJoin(memberships, and(eq(memberships.userId, users.id), eq(memberships.organizationId, orgId)))
       .orderBy(users.name),
+    db
+      .select({ fault: tickets.faultDescription, cnt: sql<number>`count(*)` })
+      .from(tickets)
+      .where(and(
+        eq(tickets.organizationId, orgId),
+        isNull(tickets.deletedAt),
+        sql`${tickets.faultDescription} is not null and ${tickets.faultDescription} != ''`,
+      ))
+      .groupBy(tickets.faultDescription)
+      .orderBy(sql`count(*) desc`)
+      .limit(12),
   ]);
 
   return (
@@ -59,7 +70,7 @@ export default async function NewTicketPage() {
         <h1 className="text-xl font-bold text-foreground">Nuovo ticket</h1>
       </div>
 
-      <NewTicketForm customers={customerList} statuses={statusList} stores={storeList} teamMembers={teamMembers} />
+      <NewTicketForm customers={customerList} statuses={statusList} stores={storeList} teamMembers={teamMembers} faultSuggestions={faultRows.map((r) => r.fault!)} />
     </div>
   );
 }

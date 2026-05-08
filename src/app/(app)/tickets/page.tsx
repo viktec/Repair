@@ -1,10 +1,10 @@
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { tickets, customers, ticketStatuses, ticketTags, ticketTagAssignments } from "@/db/schema";
-import { eq, and, isNull, ilike, or, sql, inArray } from "drizzle-orm";
+import { eq, and, isNull, ilike, or, sql, inArray, desc, asc } from "drizzle-orm";
 import { redirect } from "next/navigation";
 import Link from "next/link";
-import { Plus, Ticket as TicketIcon, Search, Download } from "lucide-react";
+import { Plus, Ticket as TicketIcon, Search, Download, ArrowUp, ArrowDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
@@ -16,9 +16,9 @@ import { Suspense } from "react";
 export default async function TicketsPage({
   searchParams,
 }: {
-  searchParams: Promise<{ view?: string; q?: string; status?: string; imei?: string; year?: string; tag?: string }>;
+  searchParams: Promise<{ view?: string; q?: string; status?: string; imei?: string; year?: string; tag?: string; sort?: string }>;
 }) {
-  const { view, q, status, imei, year, tag } = await searchParams;
+  const { view, q, status, imei, year, tag, sort } = await searchParams;
   const isKanban = view === "kanban";
 
   const session = await auth();
@@ -100,7 +100,7 @@ export default async function TicketsPage({
     .leftJoin(customers, eq(customers.id, tickets.customerId))
     .leftJoin(ticketStatuses, eq(ticketStatuses.id, tickets.statusId))
     .where(and(...conditions))
-    .orderBy(tickets.ticketNumber);
+    .orderBy(sort === "asc" ? asc(tickets.createdAt) : desc(tickets.createdAt));
 
   const isFiltered = !!(q || status || imei || year || tag);
 
@@ -127,7 +127,7 @@ export default async function TicketsPage({
     tagsByTicket.set(row.ticketId, existing);
   }
 
-  function buildUrl(params: { view?: string; q?: string; status?: string; imei?: string; year?: string; tag?: string }) {
+  function buildUrl(params: { view?: string; q?: string; status?: string; imei?: string; year?: string; tag?: string; sort?: string }) {
     const p = new URLSearchParams();
     if (params.view) p.set("view", params.view);
     if (params.q) p.set("q", params.q);
@@ -135,6 +135,7 @@ export default async function TicketsPage({
     if (params.imei) p.set("imei", params.imei);
     if (params.year) p.set("year", params.year);
     if (params.tag) p.set("tag", params.tag);
+    if (params.sort) p.set("sort", params.sort);
     const s = p.toString();
     return s ? `/tickets?${s}` : "/tickets";
   }
@@ -177,13 +178,13 @@ export default async function TicketsPage({
       {/* Filtro anno */}
       {availableYears.length > 1 && (
         <div className="flex flex-wrap gap-1.5">
-          <Link href={buildUrl({ view, q, status, imei, year: undefined })}>
+          <Link href={buildUrl({ view, q, status, imei, year: undefined, sort })}>
             <span className={`rounded-full px-3 py-1 text-xs font-medium transition-colors cursor-pointer ${!year ? "bg-primary text-white" : "bg-slate-100 text-slate-600 hover:bg-slate-200"}`}>
               Tutti
             </span>
           </Link>
           {availableYears.map((y) => (
-            <Link key={y} href={buildUrl({ view, q, status, imei, year: String(y) })}>
+            <Link key={y} href={buildUrl({ view, q, status, imei, year: String(y), sort })}>
               <span className={`rounded-full px-3 py-1 text-xs font-medium transition-colors cursor-pointer ${year === String(y) ? "bg-primary text-white" : "bg-slate-100 text-slate-600 hover:bg-slate-200"}`}>
                 {y}
               </span>
@@ -196,6 +197,7 @@ export default async function TicketsPage({
       <form method="GET" className="flex flex-col gap-2 sm:flex-row sm:flex-wrap">
         {view && <input type="hidden" name="view" value={view} />}
         {year && <input type="hidden" name="year" value={year} />}
+        {sort && <input type="hidden" name="sort" value={sort} />}
         <div className="relative flex-1 sm:min-w-48">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
           <input
@@ -331,7 +333,12 @@ export default async function TicketsPage({
                   <th className="px-4 py-3">Dispositivo</th>
                   <th className="px-4 py-3">Guasto</th>
                   <th className="px-4 py-3">Stato</th>
-                  <th className="px-4 py-3">Data</th>
+                  <th className="px-4 py-3">
+                    <Link href={buildUrl({ view, q, status, imei, year, tag, sort: sort === "asc" ? "desc" : "asc" })} className="inline-flex items-center gap-1 hover:text-foreground transition-colors">
+                      Data
+                      {sort === "asc" ? <ArrowUp className="h-3 w-3" /> : sort === "desc" ? <ArrowDown className="h-3 w-3" /> : <ArrowDown className="h-3 w-3" />}
+                    </Link>
+                  </th>
                   <th className="px-4 py-3" />
                 </tr>
               </thead>

@@ -39,6 +39,7 @@ function formatDateTime(date: Date | string | null): string {
     year: "numeric",
     hour: "2-digit",
     minute: "2-digit",
+    timeZone: "Europe/Rome",
   }).format(new Date(date));
 }
 

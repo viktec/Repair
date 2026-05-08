@@ -76,9 +76,7 @@ export async function evaluateWithAIAction(appraisalId: string): Promise<{ error
 
   const prompt = `Sei un esperto di compravendita dispositivi usati per centri riparazione italiani.
 
-Devi valutare questo dispositivo e fornire un prezzo di acquisto equo (quanto il negozio pagherebbe al cliente).
-
-PRIMA di valutare, usa il tool web_search per cercare i prezzi correnti su BackMarket Italia, eBay.it e Subito.it per questo modello specifico (es: query "${appraisal.brand} ${appraisal.model}${appraisal.storageGb ? ` ${appraisal.storageGb}` : ""} usato prezzo Italia"). Questo ti darà dati aggiornati sui prezzi di mercato reali.
+Valuta questo dispositivo e indica il prezzo di acquisto equo (quanto il negozio pagherebbe al cliente).
 
 Dispositivo: ${deviceName}
 ${appraisal.imei ? `IMEI: ${appraisal.imei}` : ""}
@@ -97,7 +95,7 @@ Aspettativa cliente: ${appraisal.customerExpectedCents != null ? fmt(appraisal.c
 Note del cliente: ${appraisal.customerNotes ?? "nessuna"}
 ${appraisal.photoKeys ? `\nIl cliente ha caricato delle foto del dispositivo — analizzale per verificare le condizioni dichiarate.` : ""}
 
-Dopo la ricerca web, calcola il prezzo di acquisto considerando:
+Calcola il prezzo di acquisto basandoti sui prezzi di mercato italiani che conosci (BackMarket, eBay.it, Subito.it) e considera:
 - Il negozio rivende con margine 30-40% (per test, pulizia, garanzia)
 - Se non funziona: 10-20% del valore base
 - Schermo rotto: -25-40%; in frantumi: -50%
@@ -107,8 +105,8 @@ Dopo la ricerca web, calcola il prezzo di acquisto considerando:
 - Prova di acquisto presente: +valore di rivendita (certificabile)
 - Sii prudente: meglio valutare leggermente meno che perdere soldi
 
-Rispondi SOLO con JSON valido, niente testo prima o dopo, niente markdown:
-{"valuationCents": <intero in centesimi>, "reasoning": "<spiegazione in italiano con riferimento ai prezzi trovati online, max 150 parole>"}`;
+Rispondi SOLO con un oggetto JSON valido, senza testo prima o dopo, senza markdown:
+{"valuationCents": <intero in centesimi>, "reasoning": "<spiegazione in italiano con stima prezzi mercato, max 150 parole>"}`;
 
   // Load photos for vision
   const photoKeys: string[] = appraisal.photoKeys ? JSON.parse(appraisal.photoKeys) : [];
@@ -129,64 +127,35 @@ Rispondi SOLO con JSON valido, niente testo prima o dopo, niente markdown:
   ];
 
   const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
-  const messages: Anthropic.MessageParam[] = [{ role: "user", content: userContent }];
   let raw = "";
 
   try {
-    for (let iter = 0; iter < 8; iter++) {
-      const resp = await anthropic.messages.create({
-        model: "claude-sonnet-4-6",
-        max_tokens: 1024,
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        tools: [{ type: "web_search_20250305" }] as any,
-        messages,
-      });
-
-      const texts = resp.content
-        .filter((b): b is Anthropic.TextBlock => b.type === "text")
-        .map((b) => b.text)
-        .join("");
-      if (texts) raw = texts;
-
-      if (resp.stop_reason === "end_turn" || resp.stop_reason === "max_tokens") break;
-
-      if (resp.stop_reason === "tool_use") {
-        messages.push({ role: "assistant", content: resp.content });
-        const toolUses = resp.content.filter((b): b is Anthropic.ToolUseBlock => b.type === "tool_use");
-        if (toolUses.length > 0) {
-          messages.push({
-            role: "user",
-            content: toolUses.map((b) => ({
-              type: "tool_result" as const,
-              tool_use_id: b.id,
-              content: "Search completed.",
-            })),
-          });
-        }
-      }
-    }
+    const resp = await anthropic.messages.create({
+      model: "claude-sonnet-4-6",
+      max_tokens: 1024,
+      messages: [{ role: "user", content: userContent }],
+    });
+    raw = resp.content
+      .filter((b): b is Anthropic.TextBlock => b.type === "text")
+      .map((b) => b.text)
+      .join("");
   } catch {
-    // web_search not available — fallback to plain call without tools
-    try {
-      const resp = await anthropic.messages.create({
-        model: "claude-sonnet-4-6",
-        max_tokens: 1024,
-        messages: [{ role: "user", content: userContent }],
-      });
-      raw = resp.content
-        .filter((b): b is Anthropic.TextBlock => b.type === "text")
-        .map((b) => b.text)
-        .join("");
-    } catch {
-      return { error: "Errore chiamata AI. Riprova." };
-    }
+    return { error: "Errore chiamata AI. Riprova." };
   }
 
   let parsed: { valuationCents: number; reasoning: string };
   try {
-    const jsonMatch = raw.match(/\{[\s\S]*\}/);
-    if (!jsonMatch) throw new Error("No JSON");
-    parsed = JSON.parse(jsonMatch[0]);
+    // Find the first complete JSON object using bracket matching
+    const start = raw.indexOf("{");
+    if (start === -1) throw new Error("No JSON");
+    let depth = 0;
+    let end = -1;
+    for (let i = start; i < raw.length; i++) {
+      if (raw[i] === "{") depth++;
+      else if (raw[i] === "}") { depth--; if (depth === 0) { end = i; break; } }
+    }
+    if (end === -1) throw new Error("Unclosed JSON");
+    parsed = JSON.parse(raw.substring(start, end + 1));
     if (typeof parsed.valuationCents !== "number" || typeof parsed.reasoning !== "string") throw new Error();
   } catch {
     return { error: "Risposta AI non valida. Riprova." };
