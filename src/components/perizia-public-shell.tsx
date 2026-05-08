@@ -29,9 +29,6 @@ export function PeriziaPublicShell({ orgName, logoUrl, primaryColor, children, m
               <span className="text-xl font-bold text-foreground">{orgName}</span>
             </div>
           )}
-          {logoUrl && (
-            <span className="text-base font-semibold text-foreground">{orgName}</span>
-          )}
         </div>
 
         {/* Contenuto */}
