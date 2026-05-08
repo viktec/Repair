@@ -101,6 +101,7 @@ type Appraisal = {
   surveyCompletedAt: Date | null;
   aiResaleCents: number | null;
   aiRepairCostsCents: number | null;
+  aiEstimateCents: number | null;
   aiValuationCents: number | null;
   aiReasoning: string | null;
   finalValuationCents: number | null;
@@ -492,6 +493,12 @@ export function AppraisalDetail({ appraisal }: { appraisal: Appraisal }) {
                       <span className="font-medium text-purple-700">
                         {fmt(appraisal.aiResaleCents - (appraisal.aiRepairCostsCents ?? 0))}
                       </span>
+                    </div>
+                  )}
+                  {appraisal.aiEstimateCents != null && (
+                    <div className="flex justify-between">
+                      <span className="text-purple-600/80">Valore negozio (margine)</span>
+                      <span className="font-medium text-purple-700">{fmt(appraisal.aiEstimateCents)}</span>
                     </div>
                   )}
                   <div className="flex justify-between border-t border-purple-300 pt-1.5 mt-0.5">

@@ -1,0 +1,1 @@
+ALTER TABLE "device_appraisals" ADD COLUMN "ai_estimate_cents" integer;

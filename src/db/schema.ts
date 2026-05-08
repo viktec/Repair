@@ -535,6 +535,7 @@ export const deviceAppraisals = pgTable("device_appraisals", {
   surveyCompletedAt: timestamp("survey_completed_at"),
   aiResaleCents: integer("ai_resale_cents"),
   aiRepairCostsCents: integer("ai_repair_costs_cents"),
+  aiEstimateCents: integer("ai_estimate_cents"),
   aiValuationCents: integer("ai_valuation_cents"),
   aiReasoning: text("ai_reasoning"),
   aiEvaluatedAt: timestamp("ai_evaluated_at"),

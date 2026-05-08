@@ -110,16 +110,11 @@ Poi calcola i tre valori separati:
 1. resaleCents — prezzo di rivendita di mercato IN CONDIZIONI PERFETTE (es. iPhone 12 Pro Max 256GB = ~320€). Considera le detrazioni per condizioni NON perfette qui solo se non richiedono riparazione (es. graffi estetici lievi).
 
 2. repairCostsCents — costi stimati per i componenti/riparazioni necessari prima della rivendita (es. batteria <80% = ~50€, schermo rotto = ~80-150€ a seconda del modello). Metti 0 se non serve nulla.
-
-3. valuationCents — prezzo che il NEGOZIO OFFRE AL CLIENTE. Formula:
-   valuationCents = (resaleCents - repairCostsCents) × ${(offerPercent / 100).toFixed(2)}
-   Il ${marginPercent}% di margine copre: manodopera tecnico, test diagnostico, pulizia, garanzia cliente, rischio invenduto.
    Se batteria <80% iPhone: repairCostsCents ≥ 4500 (costo minimo ricambio).
-   Se non funziona: moltiplica il risultato finale per 0.5.
-   Sii prudente: arrotonda per difetto.
+   Se non funziona: riduci resaleCents del 50%.
 
 Rispondi SOLO con un oggetto JSON valido, senza testo prima o dopo, senza markdown:
-{"resaleCents": <intero>, "repairCostsCents": <intero>, "valuationCents": <intero>, "reasoning": "<spiegazione italiana con prezzi trovati online, max 150 parole>"}`;
+{"resaleCents": <intero>, "repairCostsCents": <intero>, "reasoning": "<spiegazione italiana con prezzi trovati online, max 150 parole>"}`;
 
   // Load photos for vision
   const photoKeys: string[] = appraisal.photoKeys ? JSON.parse(appraisal.photoKeys) : [];
@@ -172,7 +167,7 @@ Rispondi SOLO con un oggetto JSON valido, senza testo prima o dopo, senza markdo
     }
   }
 
-  let parsed: { resaleCents?: number; repairCostsCents?: number; valuationCents: number; reasoning: string };
+  let parsed: { resaleCents?: number; repairCostsCents?: number; reasoning: string };
   try {
     // Strip markdown code fences if the model wraps output in ```json ... ```
     let text = raw.trim();
@@ -190,20 +185,31 @@ Rispondi SOLO con un oggetto JSON valido, senza testo prima o dopo, senza markdo
     }
     if (end === -1) throw new Error("Unclosed JSON");
     parsed = JSON.parse(text.substring(start, end + 1));
-    if (typeof parsed.valuationCents !== "number" || typeof parsed.reasoning !== "string") throw new Error();
+    if (typeof parsed.reasoning !== "string") throw new Error();
   } catch {
     return { error: "Risposta AI non valida. Riprova." };
   }
 
+  const resale = parsed.resaleCents != null ? Math.round(parsed.resaleCents) : null;
+  const repairs = parsed.repairCostsCents != null ? Math.round(parsed.repairCostsCents) : 0;
+  const netResale = resale != null ? resale - repairs : null;
+  // Step 1: what the device is worth to the shop (after margin on net resale)
+  const aiEstimate = netResale != null ? Math.round(netResale * offerPercent / 100) : null;
+  // Step 2: what the shop offers the customer (after margin again — customer offer is margin% less than shop value)
+  const customerOffer = aiEstimate != null ? Math.round(aiEstimate * offerPercent / 100) : null;
+
+  if (customerOffer == null) return { error: "Risposta AI non valida. Riprova." };
+
   await db
     .update(deviceAppraisals)
     .set({
-      aiResaleCents: parsed.resaleCents != null ? Math.round(parsed.resaleCents) : null,
-      aiRepairCostsCents: parsed.repairCostsCents != null ? Math.round(parsed.repairCostsCents) : null,
-      aiValuationCents: Math.round(parsed.valuationCents),
+      aiResaleCents: resale,
+      aiRepairCostsCents: repairs > 0 ? repairs : null,
+      aiEstimateCents: aiEstimate,
+      aiValuationCents: customerOffer,
       aiReasoning: parsed.reasoning,
       aiEvaluatedAt: new Date(),
-      finalValuationCents: Math.round(parsed.valuationCents),
+      finalValuationCents: customerOffer,
       status: "ai_evaluated",
       updatedAt: new Date(),
     })
