@@ -6,6 +6,7 @@ import {
   updateAppraisalAction,
   approveAppraisalAction,
   rejectAppraisalAction,
+  cancelAppraisalAction,
   markSurveySentAction,
   setImeiStatusAction,
 } from "./actions";
@@ -33,6 +34,7 @@ const STATUS_LABELS: Record<string, { label: string; color: string }> = {
   ai_evaluated: { label: "Valutato AI", color: "bg-purple-50 text-purple-700 border-purple-200" },
   approved: { label: "Approvato", color: "bg-green-50 text-green-700 border-green-200" },
   rejected: { label: "Rifiutato", color: "bg-red-50 text-red-700 border-red-200" },
+  cancelled: { label: "Annullata", color: "bg-slate-100 text-slate-500 border-slate-200" },
 };
 
 const SCREEN_LABELS: Record<string, string> = {
@@ -174,6 +176,14 @@ export function AppraisalDetail({ appraisal }: { appraisal: Appraisal }) {
     if (!confirm("Rifiutare questa perizia?")) return;
     startTransition(async () => {
       const res = await rejectAppraisalAction(appraisal.id);
+      if (res.error) setError(res.error);
+    });
+  }
+
+  function handleCancel() {
+    if (!confirm("Annullare questa perizia? Il cliente ha rinunciato.")) return;
+    startTransition(async () => {
+      const res = await cancelAppraisalAction(appraisal.id);
       if (res.error) setError(res.error);
     });
   }
@@ -622,6 +632,22 @@ export function AppraisalDetail({ appraisal }: { appraisal: Appraisal }) {
             </div>
           </CardContent>
         </Card>
+      )}
+
+      {/* Annulla perizia */}
+      {!["approved", "rejected", "cancelled"].includes(appraisal.status) && (
+        <div className="flex justify-end border-t pt-4">
+          <Button
+            variant="ghost"
+            size="sm"
+            disabled={isPending}
+            onClick={handleCancel}
+            className="gap-1.5 text-muted-foreground hover:text-destructive hover:bg-destructive/5"
+          >
+            <X className="h-3.5 w-3.5" />
+            Annulla perizia
+          </Button>
+        </div>
       )}
     </div>
   );

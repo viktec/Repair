@@ -500,6 +500,7 @@ export const appraisalStatusEnum = pgEnum("appraisal_status", [
   "ai_evaluated",
   "approved",
   "rejected",
+  "cancelled",
 ]);
 export const appraisalIntentEnum = pgEnum("appraisal_intent", ["sell", "trade_in", "both"]);
 export const screenConditionEnum = pgEnum("screen_condition", ["perfect", "minor_scratches", "cracked", "shattered"]);

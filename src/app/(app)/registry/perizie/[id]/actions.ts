@@ -263,6 +263,20 @@ export async function rejectAppraisalAction(appraisalId: string): Promise<{ erro
   return {};
 }
 
+export async function cancelAppraisalAction(appraisalId: string): Promise<{ error?: string }> {
+  const session = await auth();
+  if (!session?.user?.organizationId) return { error: "Non autenticato." };
+  const orgId = session.user.organizationId;
+
+  await db
+    .update(deviceAppraisals)
+    .set({ status: "cancelled", updatedAt: new Date() })
+    .where(and(eq(deviceAppraisals.id, appraisalId), eq(deviceAppraisals.organizationId, orgId)));
+
+  revalidatePath(`/registry/perizie/${appraisalId}`);
+  return {};
+}
+
 export async function markSurveySentAction(appraisalId: string): Promise<{ error?: string }> {
   const session = await auth();
   if (!session?.user?.organizationId) return { error: "Non autenticato." };
