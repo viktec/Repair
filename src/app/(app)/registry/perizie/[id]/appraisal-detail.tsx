@@ -99,6 +99,8 @@ type Appraisal = {
   customerExpectedCents: number | null;
   customerNotes: string | null;
   surveyCompletedAt: Date | null;
+  aiResaleCents: number | null;
+  aiRepairCostsCents: number | null;
   aiValuationCents: number | null;
   aiReasoning: string | null;
   finalValuationCents: number | null;
@@ -467,12 +469,42 @@ export function AppraisalDetail({ appraisal }: { appraisal: Appraisal }) {
             )}
 
             {appraisal.aiValuationCents != null && (
-              <div className="rounded-md bg-purple-50 border border-purple-200 px-4 py-3 space-y-1">
+              <div className="rounded-md bg-purple-50 border border-purple-200 px-4 py-3 space-y-3">
                 <p className="text-xs font-semibold text-purple-600 uppercase tracking-wide">Suggerimento AI</p>
-                <p className="text-xl font-bold text-purple-700">{fmt(appraisal.aiValuationCents)}</p>
-                {appraisal.aiReasoning && <p className="text-sm text-purple-600/80 mt-1">{appraisal.aiReasoning}</p>}
+
+                {/* Breakdown prezzi */}
+                <div className="space-y-1 text-sm">
+                  {appraisal.aiResaleCents != null && (
+                    <div className="flex justify-between">
+                      <span className="text-purple-600/80">Rivendita di mercato</span>
+                      <span className="font-medium text-purple-700">{fmt(appraisal.aiResaleCents)}</span>
+                    </div>
+                  )}
+                  {appraisal.aiRepairCostsCents != null && appraisal.aiRepairCostsCents > 0 && (
+                    <div className="flex justify-between">
+                      <span className="text-purple-600/80">− Costi riparazione</span>
+                      <span className="font-medium text-red-600">−{fmt(appraisal.aiRepairCostsCents)}</span>
+                    </div>
+                  )}
+                  {appraisal.aiResaleCents != null && (
+                    <div className="flex justify-between border-t border-purple-200 pt-1">
+                      <span className="text-purple-600/80">Rivendita netta</span>
+                      <span className="font-medium text-purple-700">
+                        {fmt(appraisal.aiResaleCents - (appraisal.aiRepairCostsCents ?? 0))}
+                      </span>
+                    </div>
+                  )}
+                  <div className="flex justify-between border-t border-purple-300 pt-1.5 mt-0.5">
+                    <span className="font-semibold text-purple-700">Offerta al cliente (margine ~45%)</span>
+                    <span className="text-xl font-bold text-purple-700">{fmt(appraisal.aiValuationCents)}</span>
+                  </div>
+                </div>
+
+                {appraisal.aiReasoning && (
+                  <p className="text-xs text-purple-600/80 border-t border-purple-200 pt-2">{appraisal.aiReasoning}</p>
+                )}
                 <Button
-                  size="sm" variant="ghost" className="mt-1 text-purple-600 hover:text-purple-800 hover:bg-purple-100"
+                  size="sm" variant="ghost" className="text-purple-600 hover:text-purple-800 hover:bg-purple-100"
                   onClick={handleEvaluate} disabled={isPending}
                 >
                   {isPending ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Sparkles className="h-3.5 w-3.5" />}

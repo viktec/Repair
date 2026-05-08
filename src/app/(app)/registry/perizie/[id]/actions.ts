@@ -95,18 +95,23 @@ Aspettativa cliente: ${appraisal.customerExpectedCents != null ? fmt(appraisal.c
 Note del cliente: ${appraisal.customerNotes ?? "nessuna"}
 ${appraisal.photoKeys ? `\nIl cliente ha caricato delle foto del dispositivo — analizzale per verificare le condizioni dichiarate.` : ""}
 
-PRIMA di rispondere, cerca i prezzi attuali su BackMarket Italia, eBay.it e Subito.it per questo modello specifico, poi calcola il prezzo di acquisto considerando:
-- Il negozio rivende con margine 30-40% (per test, pulizia, garanzia)
-- Se non funziona: 10-20% del valore base
-- Schermo rotto: -25-40%; in frantumi: -50%
-- Batteria iPhone <80%: -15-25%; <70%: -30-40%
-- Batteria scarsa (livello): -10-20%
-- Finanziamento/abbonamento operatore: potenziali vincoli di sblocco, valuta con cautela
-- Prova di acquisto presente: +valore di rivendita (certificabile)
-- Sii prudente: meglio valutare leggermente meno che perdere soldi
+PRIMA di rispondere, cerca i prezzi attuali su BackMarket Italia, eBay.it e Subito.it per questo modello specifico.
+
+Poi calcola i tre valori separati:
+
+1. resaleCents — prezzo di rivendita di mercato IN CONDIZIONI PERFETTE (es. iPhone 12 Pro Max 256GB = ~320€). Considera le detrazioni per condizioni NON perfette qui solo se non richiedono riparazione (es. graffi estetici lievi).
+
+2. repairCostsCents — costi stimati per i componenti/riparazioni necessari prima della rivendita (es. batteria <80% = ~50€, schermo rotto = ~80-150€ a seconda del modello). Metti 0 se non serve nulla.
+
+3. valuationCents — prezzo che il NEGOZIO OFFRE AL CLIENTE. Formula:
+   valuationCents = (resaleCents - repairCostsCents) × 0.55
+   Il 45% di margine copre: manodopera tecnico, test diagnostico, pulizia, garanzia cliente, rischio invenduto.
+   Se batteria <80% iPhone: repairCostsCents ≥ 4500 (costo minimo ricambio).
+   Se non funziona: moltiplica il risultato finale per 0.5.
+   Sii prudente: arrotonda per difetto.
 
 Rispondi SOLO con un oggetto JSON valido, senza testo prima o dopo, senza markdown:
-{"valuationCents": <intero in centesimi>, "reasoning": "<spiegazione in italiano con riferimento ai prezzi trovati online, max 150 parole>"}`;
+{"resaleCents": <intero>, "repairCostsCents": <intero>, "valuationCents": <intero>, "reasoning": "<spiegazione italiana con prezzi trovati online, max 150 parole>"}`;
 
   // Load photos for vision
   const photoKeys: string[] = appraisal.photoKeys ? JSON.parse(appraisal.photoKeys) : [];
@@ -159,7 +164,7 @@ Rispondi SOLO con un oggetto JSON valido, senza testo prima o dopo, senza markdo
     }
   }
 
-  let parsed: { valuationCents: number; reasoning: string };
+  let parsed: { resaleCents?: number; repairCostsCents?: number; valuationCents: number; reasoning: string };
   try {
     // Strip markdown code fences if the model wraps output in ```json ... ```
     let text = raw.trim();
@@ -185,6 +190,8 @@ Rispondi SOLO con un oggetto JSON valido, senza testo prima o dopo, senza markdo
   await db
     .update(deviceAppraisals)
     .set({
+      aiResaleCents: parsed.resaleCents != null ? Math.round(parsed.resaleCents) : null,
+      aiRepairCostsCents: parsed.repairCostsCents != null ? Math.round(parsed.repairCostsCents) : null,
       aiValuationCents: Math.round(parsed.valuationCents),
       aiReasoning: parsed.reasoning,
       aiEvaluatedAt: new Date(),
