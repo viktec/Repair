@@ -1,5 +1,23 @@
+import type { Metadata } from "next";
 import { ArrowRight, Zap } from "lucide-react";
 import Link from "next/link";
+
+export const metadata: Metadata = {
+  title: "Novità — Aggiornamenti e nuove funzionalità",
+  description:
+    "Scopri gli ultimi aggiornamenti di My-Repair: nuove funzionalità, miglioramenti e correzioni per il tuo gestionale centri di riparazione smartphone, PC e TV.",
+  keywords: [
+    "aggiornamenti gestionale riparazioni", "novità software riparazione",
+    "changelog My-Repair", "nuove funzionalità gestionale officina",
+  ],
+  alternates: { canonical: "https://my-repair.it/novita" },
+  openGraph: {
+    title: "Novità | My-Repair",
+    description:
+      "Ultimi aggiornamenti di My-Repair: nuove funzionalità, miglioramenti e correzioni per il gestionale centri di riparazione.",
+    url: "https://my-repair.it/novita",
+  },
+};
 
 type Release = {
   version: string;

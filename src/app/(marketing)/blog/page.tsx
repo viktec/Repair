@@ -1,5 +1,26 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { ArrowRight, BookOpen, Clock } from "lucide-react";
+
+export const metadata: Metadata = {
+  title: "Blog — Guide e consigli per centri di riparazione",
+  description:
+    "Guide pratiche per gestire meglio il tuo centro di riparazione: ticket, GDPR, registro usato, QR tracking, cassa POS e firma digitale. Consigli concreti da chi conosce il settore.",
+  keywords: [
+    "blog gestionale riparazioni", "guida centro riparazione",
+    "GDPR centro riparazione", "registro usato smartphone",
+    "QR tracking riparazione", "cassa pos riparazione",
+    "firma digitale modulo accettazione", "gestione ticket riparazione",
+    "software riparazione smartphone", "consigli officina cellulari",
+  ],
+  alternates: { canonical: "https://my-repair.it/blog" },
+  openGraph: {
+    title: "Blog — Guide per centri di riparazione | My-Repair",
+    description:
+      "Guide pratiche su ticket, GDPR, registro usato, QR tracking e cassa POS per centri di riparazione smartphone, PC e TV.",
+    url: "https://my-repair.it/blog",
+  },
+};
 
 type Post = {
   slug: string;

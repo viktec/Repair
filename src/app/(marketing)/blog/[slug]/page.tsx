@@ -214,6 +214,29 @@ export function generateStaticParams() {
   return SLUGS.map((slug) => ({ slug }));
 }
 
+export async function generateMetadata(
+  { params }: { params: Promise<{ slug: string }> }
+): Promise<import("next").Metadata> {
+  const { slug } = await params;
+  const article = ARTICLES[slug];
+  if (!article) return {};
+  const url = `https://my-repair.it/blog/${slug}`;
+  return {
+    title: article.title,
+    description: article.intro.length > 160 ? article.intro.slice(0, 157) + "..." : article.intro,
+    alternates: { canonical: url },
+    openGraph: {
+      type: "article",
+      title: article.title,
+      description: article.intro.length > 160 ? article.intro.slice(0, 157) + "..." : article.intro,
+      url,
+      publishedTime: article.date,
+      authors: ["My-Repair"],
+      tags: [article.category, "gestionale riparazioni", "centro riparazione"],
+    },
+  };
+}
+
 export default async function BlogPostPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
   const article = ARTICLES[slug];
@@ -223,8 +246,25 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
   const prevSlug = currentIdx > 0 ? SLUGS[currentIdx - 1] : null;
   const nextSlug = currentIdx < SLUGS.length - 1 ? SLUGS[currentIdx + 1] : null;
 
+  const jsonLd = {
+    "@context": "https://schema.org",
+    "@type": "BlogPosting",
+    headline: article.title,
+    description: article.intro,
+    datePublished: article.date,
+    author: { "@type": "Organization", name: "My-Repair", url: "https://my-repair.it" },
+    publisher: { "@type": "Organization", name: "My-Repair", url: "https://my-repair.it" },
+    url: `https://my-repair.it/blog/${slug}`,
+    inLanguage: "it",
+    keywords: ["gestionale riparazioni", "centro riparazione", article.category],
+  };
+
   return (
     <>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+      />
       {/* Breadcrumb */}
       <div className="border-b bg-slate-50">
         <div className="container py-3 flex items-center gap-2 text-xs text-muted-foreground">

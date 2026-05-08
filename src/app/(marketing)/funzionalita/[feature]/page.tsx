@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import { ArrowRight, ChevronLeft, CheckCircle2 } from "lucide-react";
@@ -178,6 +179,25 @@ const FEATURE_ORDER = [
 
 export function generateStaticParams() {
   return Object.keys(FEATURES).map((feature) => ({ feature }));
+}
+
+export async function generateMetadata(
+  { params }: { params: Promise<{ feature: string }> }
+): Promise<Metadata> {
+  const { feature } = await params;
+  const config = FEATURES[feature];
+  if (!config) return {};
+  const url = `https://my-repair.it/funzionalita/${feature}`;
+  return {
+    title: config.title,
+    description: `${config.desc} My-Repair — gestionale per centri di riparazione smartphone, PC e TV.`,
+    alternates: { canonical: url },
+    openGraph: {
+      title: `${config.title} | My-Repair`,
+      description: config.desc,
+      url,
+    },
+  };
 }
 
 export default async function FeaturePage({ params }: { params: Promise<{ feature: string }> }) {

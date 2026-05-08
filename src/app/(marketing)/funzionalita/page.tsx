@@ -1,5 +1,26 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { ArrowRight, ChevronRight, Wrench, Users, QrCode, Package, BarChart3, Headset, Zap, FileSignature, Shield } from "lucide-react";
+
+export const metadata: Metadata = {
+  title: "Funzionalità",
+  description:
+    "Scopri tutte le funzionalità di My-Repair: ticket riparazione, magazzino ricambi, cassa POS, firma digitale, perizie usato, storico IMEI, fornitori e registro usato. Gestionale completo per centri di riparazione smartphone, PC e TV.",
+  keywords: [
+    "funzionalità gestionale riparazioni", "ticket riparazione software",
+    "magazzino ricambi riparazione", "cassa pos centro riparazione",
+    "firma digitale accettazione", "perizie usato smartphone",
+    "storico IMEI dispositivi", "registro usato conforme",
+    "gestione fornitori ricambi", "software riparazione smartphone",
+  ],
+  alternates: { canonical: "https://my-repair.it/funzionalita" },
+  openGraph: {
+    title: "Funzionalità | My-Repair",
+    description:
+      "Ticket, magazzino, cassa POS, firma digitale, perizie usato, storico IMEI. Tutto il necessario per gestire il tuo centro di riparazione.",
+    url: "https://my-repair.it/funzionalita",
+  },
+};
 
 const features = [
   {

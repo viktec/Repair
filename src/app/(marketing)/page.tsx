@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import {
   Wrench, QrCode, Package, Zap, Shield, ArrowRight,
@@ -5,6 +6,69 @@ import {
   CheckCircle2,
 } from "lucide-react";
 import { PricingSection } from "@/app/pricing-section";
+
+export const metadata: Metadata = {
+  title: "My-Repair — Gestionale per centri di riparazione smartphone, PC e TV",
+  description:
+    "Gestionale italiano per centri di riparazione. Ticket, magazzino ricambi, cassa POS, firma digitale, fatture, perizie usato e registro. Prova gratis 14 giorni, nessuna carta di credito.",
+  keywords: [
+    "gestionale riparazioni", "software gestionale centro riparazione",
+    "gestionale riparazioni smartphone", "gestionale riparazioni computer",
+    "gestionale riparazioni televisori", "software officina cellulari",
+    "magazzino ricambi", "carico scarico merce", "ticket riparazione",
+    "registro usato dispositivi", "perizie usato", "cassa pos riparazione",
+    "fatture riparazione", "IMEI tracking", "firma digitale accettazione",
+  ],
+  alternates: { canonical: "https://my-repair.it/" },
+  openGraph: {
+    title: "My-Repair — Gestionale per centri di riparazione smartphone, PC e TV",
+    description:
+      "Ticket, magazzino ricambi, cassa POS, firma digitale e registro usato. Tutto in un posto. Prova gratis 14 giorni.",
+    url: "https://my-repair.it/",
+  },
+};
+
+const jsonLd = {
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "SoftwareApplication",
+      name: "My-Repair",
+      url: "https://my-repair.it",
+      description:
+        "Gestionale italiano per centri di riparazione smartphone, PC e TV. Ticket, magazzino ricambi, cassa POS, firma digitale, perizie usato e registro.",
+      applicationCategory: "BusinessApplication",
+      operatingSystem: "Web",
+      inLanguage: "it",
+      offers: {
+        "@type": "Offer",
+        price: "0",
+        priceCurrency: "EUR",
+        description: "14 giorni di prova gratuita senza carta di credito",
+      },
+      featureList: [
+        "Gestione ticket riparazione",
+        "Magazzino ricambi con carico e scarico",
+        "Cassa POS integrata",
+        "QR tracking pubblico per il cliente",
+        "Firma digitale modulo accettazione",
+        "Registro usato conforme normativa",
+        "Perizie dispositivi usati",
+        "Storico IMEI dispositivi",
+        "Report e statistiche",
+        "Fatture e preventivi",
+        "Notifiche email automatiche",
+        "Gestione team con permessi per ruolo",
+      ],
+    },
+    {
+      "@type": "Organization",
+      name: "My-Repair",
+      url: "https://my-repair.it",
+      description: "Software gestionale per centri di riparazione italiano",
+    },
+  ],
+};
 
 const features = [
   { slug: "ticket",     icon: Wrench,         title: "Gestione Ticket",         desc: "Crea ticket in 30 secondi. Foto pre/post, IMEI, stato e QR code inclusi." },
@@ -32,6 +96,10 @@ const whyUs = [
 export default function MarketingHome() {
   return (
     <>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+      />
       {/* Hero */}
       <section className="relative overflow-hidden bg-gradient-to-br from-slate-900 via-slate-800 to-teal-900 py-24 text-white md:py-36">
         <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,rgba(13,143,122,0.3),transparent_55%)]" />
