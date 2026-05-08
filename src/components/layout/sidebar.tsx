@@ -102,7 +102,15 @@ export function Sidebar({
 }
 
 function NavLink({ item, pathname }: { item: NavItem; pathname: string }) {
-  const isActive = pathname === item.href || pathname.startsWith(item.href + "/");
+  // Exact match, or starts with href + "/" but not matching a more-specific sibling.
+  // e.g. /registry should NOT be active when on /registry/perizie.
+  const isActive = pathname === item.href ||
+    (pathname.startsWith(item.href + "/") &&
+      !navItems.some(
+        (other) => other.href !== item.href &&
+          other.href.startsWith(item.href + "/") &&
+          (pathname === other.href || pathname.startsWith(other.href + "/")),
+      ));
   return (
     <Link
       href={item.href}
