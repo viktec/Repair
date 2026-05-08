@@ -43,6 +43,7 @@ export default async function SettingsPage({
       vatRate: organizations.vatRate,
       telegramBotToken: organizations.telegramBotToken,
       telegramChatId: organizations.telegramChatId,
+      perizieMarginPercent: organizations.perizieMarginPercent,
       plan: organizations.plan,
       subscriptionStatus: organizations.subscriptionStatus,
       trialEndsAt: organizations.trialEndsAt,

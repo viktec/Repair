@@ -495,7 +495,7 @@ export function AppraisalDetail({ appraisal }: { appraisal: Appraisal }) {
                     </div>
                   )}
                   <div className="flex justify-between border-t border-purple-300 pt-1.5 mt-0.5">
-                    <span className="font-semibold text-purple-700">Offerta al cliente (margine ~45%)</span>
+                    <span className="font-semibold text-purple-700">Offerta al cliente</span>
                     <span className="text-xl font-bold text-purple-700">{fmt(appraisal.aiValuationCents)}</span>
                   </div>
                 </div>

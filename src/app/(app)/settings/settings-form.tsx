@@ -41,6 +41,7 @@ type Org = {
   vatRate: number;
   telegramBotToken: string | null;
   telegramChatId: string | null;
+  perizieMarginPercent: number;
   plan: string | null;
 };
 
@@ -152,6 +153,21 @@ export function SettingsForm({ org }: { org: Org }) {
               <Input id="vatRate" name="vatRate" type="number" min="0" max="99" defaultValue={org.vatRate} placeholder="22" />
             </div>
           </div>
+          {isBusiness && (
+            <div className="space-y-1.5 border-t pt-4">
+              <Label htmlFor="perizieMarginPercent">Margine Perizie Usato (%)</Label>
+              <p className="text-xs text-muted-foreground">
+                Percentuale trattenuta dal negozio sul valore di rivendita netto. Il resto viene offerto al cliente.<br />
+                Es. 45% → offerta al cliente = rivendita netta × 55%
+              </p>
+              <Input
+                id="perizieMarginPercent" name="perizieMarginPercent"
+                type="number" min="10" max="80" step="5"
+                defaultValue={org.perizieMarginPercent}
+                className="max-w-[100px]"
+              />
+            </div>
+          )}
         </CardContent>
       </Card>
 

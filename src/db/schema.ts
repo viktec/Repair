@@ -88,6 +88,7 @@ export const organizations = pgTable("organizations", {
   stripeCancelAtPeriodEnd: boolean("stripe_cancel_at_period_end").notNull().default(false),
   stripeCurrentPeriodEnd: timestamp("stripe_current_period_end"),
   onboardingCompletedAt: timestamp("onboarding_completed_at"),
+  perizieMarginPercent: integer("perizie_margin_percent").notNull().default(45),
   rolePermissions: jsonb("role_permissions"),
   createdAt: timestamp("created_at").notNull().defaultNow(),
   updatedAt: timestamp("updated_at").notNull().defaultNow(),

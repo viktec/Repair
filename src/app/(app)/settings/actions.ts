@@ -30,6 +30,7 @@ export async function updateOrganizationAction(formData: FormData) {
   const vatRateRaw = parseInt(formData.get("vatRate") as string, 10);
   const telegramBotToken = formData.get("telegramBotToken") as string;
   const telegramChatId = formData.get("telegramChatId") as string;
+  const perizieMarginRaw = parseInt(formData.get("perizieMarginPercent") as string, 10);
 
   await db
     .update(organizations)
@@ -48,6 +49,7 @@ export async function updateOrganizationAction(formData: FormData) {
       vatRate: !isNaN(vatRateRaw) && vatRateRaw >= 0 ? vatRateRaw : undefined,
       telegramBotToken: telegramBotToken || null,
       telegramChatId: telegramChatId || null,
+      perizieMarginPercent: !isNaN(perizieMarginRaw) && perizieMarginRaw >= 10 && perizieMarginRaw <= 80 ? perizieMarginRaw : undefined,
       updatedAt: new Date(),
     })
     .where(eq(organizations.id, session.user.organizationId));

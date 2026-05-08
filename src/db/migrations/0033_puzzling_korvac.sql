@@ -1,0 +1,1 @@
+ALTER TABLE "organizations" ADD COLUMN "perizie_margin_percent" integer DEFAULT 45 NOT NULL;

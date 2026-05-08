@@ -2,7 +2,7 @@
 
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
-import { deviceAppraisals } from "@/db/schema";
+import { deviceAppraisals, organizations } from "@/db/schema";
 import { eq, and } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
@@ -45,6 +45,14 @@ export async function evaluateWithAIAction(appraisalId: string): Promise<{ error
 
   if (!appraisal) return { error: "Perizia non trovata." };
   if (!appraisal.surveyCompletedAt) return { error: "Il cliente non ha ancora compilato il questionario." };
+
+  const [org] = await db
+    .select({ perizieMarginPercent: organizations.perizieMarginPercent })
+    .from(organizations)
+    .where(eq(organizations.id, orgId))
+    .limit(1);
+  const marginPercent = org?.perizieMarginPercent ?? 45;
+  const offerPercent = 100 - marginPercent;
 
   const accessories = [
     appraisal.hasCharger && "caricatore originale",
@@ -104,8 +112,8 @@ Poi calcola i tre valori separati:
 2. repairCostsCents — costi stimati per i componenti/riparazioni necessari prima della rivendita (es. batteria <80% = ~50€, schermo rotto = ~80-150€ a seconda del modello). Metti 0 se non serve nulla.
 
 3. valuationCents — prezzo che il NEGOZIO OFFRE AL CLIENTE. Formula:
-   valuationCents = (resaleCents - repairCostsCents) × 0.55
-   Il 45% di margine copre: manodopera tecnico, test diagnostico, pulizia, garanzia cliente, rischio invenduto.
+   valuationCents = (resaleCents - repairCostsCents) × ${(offerPercent / 100).toFixed(2)}
+   Il ${marginPercent}% di margine copre: manodopera tecnico, test diagnostico, pulizia, garanzia cliente, rischio invenduto.
    Se batteria <80% iPhone: repairCostsCents ≥ 4500 (costo minimo ricambio).
    Se non funziona: moltiplica il risultato finale per 0.5.
    Sii prudente: arrotonda per difetto.
