@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { rateLimit, getIp } from "@/lib/rate-limit";
 import { db } from "@/lib/db";
 import { customerContracts, supportInterventions, customers, memberships, users } from "@/db/schema";
 import { eq, and, max } from "drizzle-orm";
@@ -9,6 +10,10 @@ import { sendNewClientRequestEmail } from "@/lib/email";
 const APP_URL = process.env.APP_URL ?? "https://app.my-repair.it";
 
 export async function POST(req: NextRequest) {
+  if (!rateLimit(getIp(req.headers), 10, 10 * 60 * 1000)) {
+    return NextResponse.json({ error: "Troppe richieste. Riprova tra qualche minuto." }, { status: 429 });
+  }
+
   const formData = await req.formData();
   const token = formData.get("token");
   const title = (formData.get("title") as string | null)?.trim();

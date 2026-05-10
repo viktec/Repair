@@ -1,4 +1,4 @@
-import { S3Client, PutObjectCommand, GetObjectCommand } from "@aws-sdk/client-s3";
+import { S3Client, PutObjectCommand, GetObjectCommand, DeleteObjectsCommand } from "@aws-sdk/client-s3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 
 // Client interno (server → MinIO diretto sulla rete Docker)
@@ -46,6 +46,29 @@ export function getPublicUrl(storageKey: string): string {
 export async function getPresignedDownloadUrl(key: string): Promise<string> {
   const command = new GetObjectCommand({ Bucket: BUCKET_PRIVATE, Key: key });
   return getSignedUrl(s3Public, command, { expiresIn: 86400 });
+}
+
+export async function deleteObjects(
+  items: { key: string; isPublic: boolean }[],
+): Promise<void> {
+  if (items.length === 0) return;
+
+  const publicKeys = items.filter((i) => i.isPublic).map((i) => i.key);
+  const privateKeys = items.filter((i) => !i.isPublic).map((i) => i.key);
+
+  const deleteFromBucket = async (bucket: string, keys: string[]) => {
+    if (keys.length === 0) return;
+    const command = new DeleteObjectsCommand({
+      Bucket: bucket,
+      Delete: { Objects: keys.map((k) => ({ Key: k })) },
+    });
+    await s3Internal.send(command);
+  };
+
+  await Promise.all([
+    deleteFromBucket(BUCKET_PUBLIC, publicKeys),
+    deleteFromBucket(BUCKET_PRIVATE, privateKeys),
+  ]);
 }
 
 export async function getObjectBuffer(key: string, isPublic: boolean): Promise<Buffer | null> {

@@ -1,9 +1,14 @@
 import { NextRequest, NextResponse } from "next/server";
+import { rateLimit, getIp } from "@/lib/rate-limit";
 import { db } from "@/lib/db";
 import { supportInterventions } from "@/db/schema";
 import { eq } from "drizzle-orm";
 
 export async function POST(req: NextRequest) {
+  if (!rateLimit(getIp(req.headers), 10, 10 * 60 * 1000)) {
+    return NextResponse.json({ error: "Troppe richieste. Riprova tra qualche minuto." }, { status: 429 });
+  }
+
   const body = await req.json().catch(() => null);
   const { token, signatureData } = body ?? {};
 

@@ -4,9 +4,14 @@ import { eq } from "drizzle-orm";
 import { db } from "@/lib/db";
 import { users, memberships } from "@/db/schema";
 import { sendMagicLinkEmail } from "@/lib/email";
+import { rateLimit, getIp } from "@/lib/rate-limit";
 
 // POST /api/auth/magic — genera token e invia email
 export async function POST(req: NextRequest) {
+  if (!rateLimit(getIp(req.headers), 5, 15 * 60 * 1000)) {
+    return NextResponse.json({ error: "Troppe richieste. Riprova tra qualche minuto." }, { status: 429 });
+  }
+
   let email: string | null = null;
   try {
     const body = await req.json();
