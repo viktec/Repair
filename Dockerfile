@@ -40,6 +40,7 @@ COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
 # Script di migrazione e seed (plain JS, nessuna compilazione necessaria)
 COPY --from=builder --chown=nextjs:nodejs /app/src/db/migrate.mjs ./migrate.mjs
 COPY --from=builder --chown=nextjs:nodejs /app/src/db/seed.mjs ./seed.mjs
+COPY --from=builder --chown=nextjs:nodejs /app/src/db/seed-blog.mjs ./seed-blog.mjs
 COPY --from=builder --chown=nextjs:nodejs /app/src/db/migrations ./src/db/migrations
 COPY --from=builder --chown=nextjs:nodejs /app/scripts ./scripts
 
