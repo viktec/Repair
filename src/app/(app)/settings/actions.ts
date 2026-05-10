@@ -115,7 +115,7 @@ export async function changePasswordAction(
   const valid = await bcrypt.compare(currentPassword, user.passwordHash);
   if (!valid) return { error: "Password attuale non corretta." };
 
-  const newHash = await bcrypt.hash(newPassword, 12);
+  const newHash = await bcrypt.hash(newPassword, 13);
   await db
     .update(users)
     .set({ passwordHash: newHash, updatedAt: new Date() })

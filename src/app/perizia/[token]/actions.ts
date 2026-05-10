@@ -3,7 +3,11 @@
 import { db } from "@/lib/db";
 import { deviceAppraisals } from "@/db/schema";
 import { eq } from "drizzle-orm";
-import { getPresignedUploadUrl } from "@/lib/storage";
+import { getPresignedUploadUrl, getPresignedDownloadUrl } from "@/lib/storage";
+
+const ALLOWED_IMAGE_TYPES = new Set([
+  "image/jpeg", "image/png", "image/webp", "image/heic", "image/heif",
+]);
 import { randomUUID } from "crypto";
 import { sendPushToOrgMembers } from "@/lib/push";
 
@@ -11,7 +15,9 @@ export async function getAppraisalPhotoUploadUrl(
   token: string,
   fileName: string,
   contentType: string,
-): Promise<{ error?: string; uploadUrl?: string; key?: string }> {
+): Promise<{ error?: string; uploadUrl?: string; viewUrl?: string; key?: string }> {
+  if (!ALLOWED_IMAGE_TYPES.has(contentType)) return { error: "Formato non supportato." };
+
   const [appraisal] = await db
     .select({ id: deviceAppraisals.id, photoKeys: deviceAppraisals.photoKeys })
     .from(deviceAppraisals)
@@ -25,8 +31,9 @@ export async function getAppraisalPhotoUploadUrl(
 
   const ext = fileName.split(".").pop() ?? "jpg";
   const key = `appraisals/${token}/photo_${randomUUID()}.${ext}`;
-  const { url } = await getPresignedUploadUrl(key, true, contentType);
-  return { uploadUrl: url, key };
+  const { url: uploadUrl } = await getPresignedUploadUrl(key, false, contentType);
+  const viewUrl = await getPresignedDownloadUrl(key);
+  return { uploadUrl, viewUrl, key };
 }
 
 export async function saveAppraisalPhoto(token: string, key: string): Promise<{ error?: string }> {

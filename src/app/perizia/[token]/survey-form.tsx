@@ -4,8 +4,6 @@ import { useActionState, useState, useRef } from "react";
 import { submitSurveyAction, getAppraisalPhotoUploadUrl, saveAppraisalPhoto } from "./actions";
 import { Button } from "@/components/ui/button";
 import { Loader2, CheckCircle2, Camera, X, ImagePlus } from "lucide-react";
-import { getPublicUrl } from "@/lib/storage";
-
 type Props = {
   token: string;
   brand: string;
@@ -42,7 +40,7 @@ function RadioGroup({
 export function SurveyForm({ token, brand, model, storageGb, alreadyCompleted, primaryColor = "#0D8F7A" }: Props) {
   const boundAction = submitSurveyAction.bind(null, token);
   const [state, action, pending] = useActionState(boundAction, null);
-  const [photos, setPhotos] = useState<string[]>([]);
+  const [photos, setPhotos] = useState<{ key: string; viewUrl: string }[]>([]);
   const [uploading, setUploading] = useState(false);
   const [photoError, setPhotoError] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -72,7 +70,7 @@ export function SurveyForm({ token, brand, model, storageGb, alreadyCompleted, p
       }
       await fetch(res.uploadUrl, { method: "PUT", body: file, headers: { "Content-Type": file.type } });
       await saveAppraisalPhoto(token, res.key);
-      setPhotos((prev) => [...prev, res.key!]);
+      setPhotos((prev) => [...prev, { key: res.key!, viewUrl: res.viewUrl! }]);
     } catch {
       setPhotoError("Errore durante il caricamento. Riprova.");
     } finally {
@@ -310,11 +308,11 @@ export function SurveyForm({ token, brand, model, storageGb, alreadyCompleted, p
 
         {photos.length > 0 && (
           <div className="flex flex-wrap gap-2">
-            {photos.map((key, i) => (
+            {photos.map((photo, i) => (
               <div key={i} className="relative">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
-                  src={getPublicUrl(key)}
+                  src={photo.viewUrl}
                   alt={`Foto ${i + 1}`}
                   className="h-20 w-20 rounded-lg object-cover border"
                 />

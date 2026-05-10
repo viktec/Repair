@@ -77,7 +77,7 @@ export async function registerAndAcceptAction(
 
   if (existing) return { error: "Esiste già un account con questa email. Accedi per accettare l'invito." };
 
-  const passwordHash = await bcrypt.hash(password, 12);
+  const passwordHash = await bcrypt.hash(password, 13);
 
   const [newUser] = await db
     .insert(users)

@@ -59,7 +59,7 @@ export async function registerAction(_prev: RegisterState, formData: FormData): 
     return { errors: { email: ["Questa email è già registrata."] } };
   }
 
-  const passwordHash = await bcrypt.hash(password, 12);
+  const passwordHash = await bcrypt.hash(password, 13);
 
   try {
     await db.transaction(async (tx) => {
@@ -276,7 +276,7 @@ export async function resetPasswordAction(
     return { error: "Link non valido o scaduto. Richiedine uno nuovo." };
   }
 
-  const passwordHash = await bcrypt.hash(password, 12);
+  const passwordHash = await bcrypt.hash(password, 13);
   await db.update(users).set({
     passwordHash,
     passwordResetToken: null,

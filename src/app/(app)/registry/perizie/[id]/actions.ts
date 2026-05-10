@@ -120,7 +120,7 @@ Rispondi SOLO con un oggetto JSON valido, senza testo prima o dopo, senza markdo
   const photoKeys: string[] = appraisal.photoKeys ? JSON.parse(appraisal.photoKeys) : [];
   const photoImages: Anthropic.Base64ImageSource[] = [];
   for (const key of photoKeys.slice(0, 4)) {
-    const buf = await getObjectBuffer(key, true);
+    const buf = await getObjectBuffer(key, false);
     if (buf) {
       const ext = key.split(".").pop()?.toLowerCase() ?? "jpg";
       const mt =

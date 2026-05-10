@@ -9,6 +9,10 @@ import { revalidatePath } from "next/cache";
 import { getPresignedUploadUrl } from "@/lib/storage";
 import { randomUUID } from "crypto";
 
+const ALLOWED_IMAGE_TYPES = new Set([
+  "image/jpeg", "image/png", "image/webp", "image/heic", "image/heif", "image/gif",
+]);
+
 export async function getUploadUrl(
   ticketId: string,
   fileName: string,
@@ -18,6 +22,11 @@ export async function getUploadUrl(
 ) {
   const session = await auth();
   if (!session?.user?.organizationId) redirect("/login");
+
+  const isAllowed = photoType === "signature"
+    ? contentType === "image/png"
+    : ALLOWED_IMAGE_TYPES.has(contentType);
+  if (!isAllowed) throw new Error("Tipo file non supportato.");
 
   const [ticket] = await db
     .select({ id: tickets.id })
