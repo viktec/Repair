@@ -9,9 +9,7 @@ import { revalidatePath } from "next/cache";
 import { getPresignedUploadUrl } from "@/lib/storage";
 import { randomUUID } from "crypto";
 
-const ALLOWED_IMAGE_TYPES = new Set([
-  "image/jpeg", "image/png", "image/webp", "image/heic", "image/heif", "image/gif",
-]);
+const ALLOWED_IMAGE_TYPES = new Set(["image/jpeg", "image/png", "image/webp"]);
 
 export async function getUploadUrl(
   ticketId: string,

@@ -5,9 +5,7 @@ import { deviceAppraisals } from "@/db/schema";
 import { eq } from "drizzle-orm";
 import { getPresignedUploadUrl, getPresignedDownloadUrl } from "@/lib/storage";
 
-const ALLOWED_IMAGE_TYPES = new Set([
-  "image/jpeg", "image/png", "image/webp", "image/heic", "image/heif",
-]);
+const ALLOWED_IMAGE_TYPES = new Set(["image/jpeg", "image/png", "image/webp"]);
 import { randomUUID } from "crypto";
 import { sendPushToOrgMembers } from "@/lib/push";
 

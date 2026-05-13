@@ -50,7 +50,7 @@ export function SurveyForm({ token, brand, model, storageGb, alreadyCompleted, p
     if (!file) return;
     if (photos.length >= 5) return;
 
-    const allowed = ["image/jpeg", "image/png", "image/webp", "image/heic", "image/heif"];
+    const allowed = ["image/jpeg", "image/png", "image/webp"];
     if (!allowed.includes(file.type)) {
       setPhotoError("Formato non supportato (usa JPG, PNG o WEBP).");
       return;
@@ -333,7 +333,7 @@ export function SurveyForm({ token, brand, model, storageGb, alreadyCompleted, p
             <input
               ref={fileInputRef}
               type="file"
-              accept="image/jpeg,image/png,image/webp,image/heic,image/heif"
+              accept="image/jpeg,image/png,image/webp"
               className="hidden"
               onChange={handlePhotoChange}
             />
