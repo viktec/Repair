@@ -1,0 +1,1 @@
+ALTER TABLE "tickets" ADD COLUMN "quote_type" varchar(20) DEFAULT 'definitive';

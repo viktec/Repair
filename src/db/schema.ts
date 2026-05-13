@@ -209,6 +209,7 @@ export const tickets = pgTable("tickets", {
   estimatedCost: integer("estimated_cost"),
   finalCost: integer("final_cost"),
   depositCents: integer("deposit_cents"),
+  quoteType: varchar("quote_type", { length: 20 }).default("definitive"),
 
   qrToken: varchar("qr_token", { length: 32 }).notNull().unique(),
 
@@ -788,6 +789,7 @@ export const supportInterventions = pgTable("support_interventions", {
   clientSignatureToken: varchar("client_signature_token", { length: 64 }).unique(),
   clientSignedAt: timestamp("client_signed_at"),
   clientSignatureData: text("client_signature_data"),
+  adminSignedAt: timestamp("admin_signed_at"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });

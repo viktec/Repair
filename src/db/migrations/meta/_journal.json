@@ -253,6 +253,27 @@
       "when": 1778274853050,
       "tag": "0035_wonderful_william_stryker",
       "breakpoints": true
+    },
+    {
+      "idx": 36,
+      "version": "7",
+      "when": 1778664561686,
+      "tag": "0036_dark_mac_gargan",
+      "breakpoints": true
+    },
+    {
+      "idx": 37,
+      "version": "7",
+      "when": 1778664863848,
+      "tag": "0037_odd_texas_twister",
+      "breakpoints": true
+    },
+    {
+      "idx": 38,
+      "version": "7",
+      "when": 1778665989256,
+      "tag": "0038_solid_santa_claus",
+      "breakpoints": true
     }
   ]
 }

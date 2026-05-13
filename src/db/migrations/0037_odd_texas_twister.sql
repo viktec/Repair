@@ -1,0 +1,1 @@
+ALTER TABLE "support_interventions" ADD COLUMN "admin_signed_at" timestamp;

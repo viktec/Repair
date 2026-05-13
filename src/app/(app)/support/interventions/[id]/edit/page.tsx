@@ -76,6 +76,7 @@ export default async function EditInterventionPage({
             applyCallFee: intervention.applyCallFee,
             rawMinutes: intervention.rawMinutes,
             startTime: intervention.startTime,
+            endTime: intervention.endTime,
             location: intervention.location,
             technicianName: intervention.technicianName,
           }}

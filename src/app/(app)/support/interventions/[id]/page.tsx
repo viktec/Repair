@@ -20,6 +20,7 @@ import { getPresignedDownloadUrl } from "@/lib/storage";
 import { InterventionMessage } from "./intervention-message";
 import { WorkflowPanel } from "./workflow-panel";
 import { DeleteInterventionButton } from "./delete-button";
+import { InterventionPhotoUpload } from "./intervention-photo-upload";
 import { can } from "@/lib/permissions";
 
 const TYPE_LABELS: Record<string, string> = {
@@ -73,6 +74,9 @@ export default async function InterventionDetailPage({
       location: supportInterventions.location,
       clientSignatureToken: supportInterventions.clientSignatureToken,
       clientSignedAt: supportInterventions.clientSignedAt,
+      adminSignedAt: supportInterventions.adminSignedAt,
+      endTime: supportInterventions.endTime,
+      photos: supportInterventions.photos,
       createdAt: supportInterventions.createdAt,
     })
     .from(supportInterventions)
@@ -110,6 +114,13 @@ export default async function InterventionDetailPage({
     .from(organizations)
     .where(eq(organizations.id, orgId))
     .limit(1);
+
+  const photosWithUrls = await Promise.all(
+    (intervention.photos ?? []).map(async (key) => ({
+      key,
+      url: await getPresignedDownloadUrl(key),
+    })),
+  );
 
   const snap = (contract.packageSnapshot as PackageSnapshot | null) ?? {
     phoneRoundingMinutes: 5,
@@ -306,6 +317,7 @@ ${org?.phone ?? ""}`.trim();
             editUrl={`/support/interventions/${id}/edit`}
             signUrl={signUrl}
             clientSignedAt={intervention.clientSignedAt}
+            adminSignedAt={intervention.adminSignedAt}
             signWaText={signWaText}
             whatsappPhone={customer?.phone ?? null}
             verbaleUrl={verbaleUrl}
@@ -328,6 +340,11 @@ ${org?.phone ?? ""}`.trim();
               </CardContent>
             </Card>
           )}
+
+          <InterventionPhotoUpload
+            interventionId={id}
+            initialPhotos={photosWithUrls}
+          />
 
           <Card>
             <CardHeader>

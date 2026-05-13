@@ -36,6 +36,7 @@ type Props = {
     applyCallFee: boolean;
     rawMinutes: number;
     startTime: Date | string | null;
+    endTime: Date | string | null;
     location: string | null;
     technicianName: string | null;
   };
@@ -60,14 +61,35 @@ export function InterventionEditForm({
   const [isUrgent, setIsUrgent] = useState(defaultValues.isUrgent);
   const [applyCallFee, setApplyCallFee] = useState(defaultValues.applyCallFee);
 
+  const startTimeValue = defaultValues.startTime
+    ? new Date(defaultValues.startTime).toISOString().slice(0, 16)
+    : "";
+  const endTimeValue = defaultValues.endTime
+    ? new Date(defaultValues.endTime).toISOString().slice(0, 16)
+    : "";
+
+  const [startInput, setStartInput] = useState(startTimeValue);
+  const [endInput, setEndInput] = useState(endTimeValue);
+
+  function handleTimestampChange(newStart: string, newEnd: string) {
+    setStartInput(newStart);
+    setEndInput(newEnd);
+    if (newStart && newEnd) {
+      const s = new Date(newStart).getTime();
+      const e = new Date(newEnd).getTime();
+      if (e > s) {
+        setRawMinutes(Math.round((e - s) / 60000));
+      }
+    }
+  }
+
+  const calculatedFromTimestamps =
+    startInput && endInput && new Date(endInput) > new Date(startInput);
+
   const newBillable = calcBillableMinutes(rawMinutes, type, snap, isUrgent, applyCallFee);
   const diff = newBillable - currentBillableMinutes;
   const newRemaining = contractRemainingMinutes - diff;
   const isOverBudget = newRemaining < 0;
-
-  const startTimeValue = defaultValues.startTime
-    ? new Date(defaultValues.startTime).toISOString().slice(0, 16)
-    : "";
 
   const errors = (state && "errors" in state && state.errors) ? state.errors : {};
   const globalError = (state && "error" in state && state.error) ? state.error : null;
@@ -162,8 +184,15 @@ export function InterventionEditForm({
           min={0}
           step={1}
           value={rawMinutes}
-          onChange={(e) => setRawMinutes(Math.max(0, parseInt(e.target.value) || 0))}
+          readOnly={!!calculatedFromTimestamps}
+          onChange={(e) => {
+            if (!calculatedFromTimestamps) setRawMinutes(Math.max(0, parseInt(e.target.value) || 0));
+          }}
+          className={calculatedFromTimestamps ? "bg-muted text-muted-foreground cursor-not-allowed" : ""}
         />
+        {calculatedFromTimestamps && (
+          <p className="text-xs text-emerald-700">Calcolato automaticamente da inizio/fine intervento.</p>
+        )}
         {rawMinutes === 0 && (
           <p className="text-xs text-amber-600">0 minuti — nessuna ora verrà scalata dal contratto.</p>
         )}
@@ -211,12 +240,34 @@ export function InterventionEditForm({
         <Input id="technicianName" name="technicianName" defaultValue={defaultValues.technicianName ?? ""} placeholder="Nome del tecnico che ha eseguito l'intervento" maxLength={100} />
       </div>
 
-      {/* Data/ora */}
-      <div className="space-y-2">
-        <Label htmlFor="occurredAt">Data e ora inizio intervento</Label>
-        <Input id="occurredAt" name="occurredAt" type="datetime-local" defaultValue={startTimeValue} />
-        <p className="text-xs text-muted-foreground">L&apos;ora di fine viene calcolata automaticamente sommando la durata.</p>
+      {/* Data/ora inizio e fine */}
+      <div className="grid grid-cols-2 gap-4">
+        <div className="space-y-2">
+          <Label htmlFor="occurredAt">Inizio intervento</Label>
+          <Input
+            id="occurredAt"
+            name="occurredAt"
+            type="datetime-local"
+            value={startInput}
+            onChange={(e) => handleTimestampChange(e.target.value, endInput)}
+          />
+        </div>
+        <div className="space-y-2">
+          <Label htmlFor="endTime">Fine intervento</Label>
+          <Input
+            id="endTime"
+            name="endTime"
+            type="datetime-local"
+            value={endInput}
+            onChange={(e) => handleTimestampChange(startInput, e.target.value)}
+          />
+        </div>
       </div>
+      {calculatedFromTimestamps && (
+        <p className="text-xs text-emerald-700">
+          Durata calcolata: {Math.floor(rawMinutes / 60) > 0 ? `${Math.floor(rawMinutes / 60)}h ` : ""}{rawMinutes % 60 > 0 ? `${rawMinutes % 60}min` : rawMinutes === 0 ? "0min" : ""}
+        </p>
+      )}
 
       {/* Luogo */}
       <div className="space-y-2">

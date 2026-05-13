@@ -182,6 +182,7 @@ const updateSchema = z.object({
   applyCallFee: z.string().optional().transform(v => v === "true"),
   rawMinutes: z.coerce.number().int().min(0),
   occurredAt: z.string().optional(),
+  endTime: z.string().optional(),
   location: z.string().max(200).optional(),
   technicianName: z.string().max(100).optional(),
 });
@@ -206,7 +207,15 @@ export async function updateInterventionAction(
   const parsed = updateSchema.safeParse(raw);
   if (!parsed.success) return { errors: parsed.error.flatten().fieldErrors };
 
-  const { title, description, notes, type, isUrgent, applyCallFee, rawMinutes, occurredAt, location, technicianName } = parsed.data;
+  const { title, description, notes, type, isUrgent, applyCallFee, occurredAt, location, technicianName } = parsed.data;
+  let { rawMinutes } = parsed.data;
+
+  // If both start and end times are provided, calculate rawMinutes from them
+  const startDt = occurredAt ? new Date(occurredAt) : null;
+  const endDt = parsed.data.endTime ? new Date(parsed.data.endTime) : null;
+  if (startDt && endDt && endDt > startDt) {
+    rawMinutes = Math.round((endDt.getTime() - startDt.getTime()) / 60000);
+  }
 
   const [intervention] = await db
     .select({
@@ -264,10 +273,10 @@ export async function updateInterventionAction(
       ...(!intervention.clientSignatureToken
         ? { clientSignatureToken: randomUUID().replace(/-/g, "") }
         : {}),
-      ...(occurredAt
+      ...(startDt
         ? {
-            startTime: new Date(occurredAt),
-            endTime: new Date(new Date(occurredAt).getTime() + rawMinutes * 60 * 1000),
+            startTime: startDt,
+            endTime: endDt ?? new Date(startDt.getTime() + rawMinutes * 60 * 1000),
           }
         : {}),
       updatedAt: new Date(),
@@ -297,6 +306,25 @@ export async function updateInterventionStatusAction(
   await db
     .update(supportInterventions)
     .set({ status, updatedAt: new Date() })
+    .where(
+      and(
+        eq(supportInterventions.id, id),
+        eq(supportInterventions.organizationId, session.user.organizationId),
+      ),
+    );
+
+  revalidatePath(`/support/interventions/${id}`);
+}
+
+// ─── adminSignInterventionAction ─────────────────────────────────────────────
+
+export async function adminSignInterventionAction(id: string): Promise<void> {
+  const session = await auth();
+  if (!session?.user?.organizationId) redirect("/login");
+
+  await db
+    .update(supportInterventions)
+    .set({ adminSignedAt: new Date(), updatedAt: new Date() })
     .where(
       and(
         eq(supportInterventions.id, id),

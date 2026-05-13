@@ -1,8 +1,8 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { updateInterventionStatusAction } from "../actions";
-import { Check, Loader2, Pencil, MessageSquare, Copy, FileText, CheckCircle2, AlertTriangle } from "lucide-react";
+import { updateInterventionStatusAction, adminSignInterventionAction } from "../actions";
+import { Check, Loader2, Pencil, MessageSquare, Copy, FileText, CheckCircle2, AlertTriangle, PenLine } from "lucide-react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -14,6 +14,7 @@ type Props = {
   editUrl: string;
   signUrl: string | null;
   clientSignedAt: Date | null;
+  adminSignedAt: Date | null;
   signWaText: string;
   whatsappPhone: string | null;
   verbaleUrl: string;
@@ -33,6 +34,12 @@ function currentStepIndex(status: string, isSigned: boolean) {
   return 0;
 }
 
+const dtFmt = new Intl.DateTimeFormat("it-IT", {
+  day: "2-digit", month: "2-digit", year: "numeric",
+  hour: "2-digit", minute: "2-digit",
+  timeZone: "Europe/Rome",
+});
+
 export function WorkflowPanel({
   interventionId,
   initialStatus,
@@ -40,21 +47,32 @@ export function WorkflowPanel({
   editUrl,
   signUrl,
   clientSignedAt,
+  adminSignedAt,
   signWaText,
   whatsappPhone,
   verbaleUrl,
 }: Props) {
   const [status, setStatus] = useState(initialStatus);
+  const [localClientSigned, setLocalClientSigned] = useState(clientSignedAt);
+  const [localAdminSigned, setLocalAdminSigned] = useState(adminSignedAt);
   const [isPending, startTransition] = useTransition();
+  const [isSignPending, startSignTransition] = useTransition();
   const [copied, setCopied] = useState(false);
 
-  const isSigned = !!clientSignedAt;
+  const isSigned = !!(localClientSigned || localAdminSigned);
   const stepIdx = currentStepIndex(status, isSigned);
 
   function changeStatus(newStatus: string) {
     setStatus(newStatus);
     startTransition(async () => {
       await updateInterventionStatusAction(interventionId, newStatus);
+    });
+  }
+
+  function handleAdminSign() {
+    startSignTransition(async () => {
+      await adminSignInterventionAction(interventionId);
+      setLocalAdminSigned(new Date());
     });
   }
 
@@ -68,6 +86,8 @@ export function WorkflowPanel({
     const phone = whatsappPhone ? whatsappPhone.replace(/\D/g, "") : "";
     const base = phone ? `https://wa.me/${phone}` : "https://wa.me/";
     window.open(`${base}?text=${encodeURIComponent(signWaText)}`, "_blank");
+    // Auto-sign: sending the WA message counts as delivery confirmation
+    if (!isSigned) handleAdminSign();
   }
 
   return (
@@ -157,35 +177,61 @@ export function WorkflowPanel({
 
         {/* ── Step 2: Completato, in attesa firma ── */}
         {status === "completed" && !isSigned && (
-          <div className="space-y-3 pt-1">
+          <div className="space-y-4 pt-1">
             <p className="text-sm text-muted-foreground">
-              Invia il link al cliente per raccogliere la firma digitale sul verbale.
+              Invia il link al cliente per raccogliere la firma digitale, oppure firma tu se ha già firmato in sede o non intende farlo.
             </p>
-            <pre className="whitespace-pre-wrap text-xs bg-slate-50 border rounded-md p-3 font-sans leading-relaxed">
-              {signUrl
-                ? signWaText
-                : "Link di firma non disponibile — salva una modifica al ticket per generarlo."}
-            </pre>
+
+            {/* Firma link WA */}
             {signUrl && (
-              <div className="flex gap-2 flex-wrap">
-                <Button size="sm" variant="outline" className="gap-1.5" onClick={copySign}>
-                  {copied ? <Check className="h-3.5 w-3.5 text-emerald-600" /> : <Copy className="h-3.5 w-3.5" />}
-                  {copied ? "Copiato!" : "Copia testo"}
-                </Button>
-                <Button size="sm" className="gap-1.5 bg-green-600 hover:bg-green-700" onClick={openSignWa}>
-                  <MessageSquare className="h-3.5 w-3.5" />
-                  Apri WhatsApp
-                </Button>
+              <div className="space-y-2">
+                <pre className="whitespace-pre-wrap text-xs bg-slate-50 border rounded-md p-3 font-sans leading-relaxed">
+                  {signWaText}
+                </pre>
+                <div className="flex gap-2 flex-wrap">
+                  <Button size="sm" variant="outline" className="gap-1.5" onClick={copySign}>
+                    {copied ? <Check className="h-3.5 w-3.5 text-emerald-600" /> : <Copy className="h-3.5 w-3.5" />}
+                    {copied ? "Copiato!" : "Copia testo"}
+                  </Button>
+                  <Button size="sm" className="gap-1.5 bg-green-600 hover:bg-green-700" onClick={openSignWa}>
+                    <MessageSquare className="h-3.5 w-3.5" />
+                    Apri WhatsApp
+                  </Button>
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  Link diretto:{" "}
+                  <a href={signUrl} target="_blank" rel="noopener noreferrer" className="underline break-all">
+                    {signUrl}
+                  </a>
+                </p>
               </div>
             )}
-            {signUrl && (
-              <p className="text-xs text-muted-foreground">
-                Link diretto:{" "}
-                <a href={signUrl} target="_blank" rel="noopener noreferrer" className="underline break-all">
-                  {signUrl}
-                </a>
+
+            {!signUrl && (
+              <p className="text-xs text-muted-foreground italic">
+                Link di firma non disponibile — salva una modifica al ticket per generarlo.
               </p>
             )}
+
+            {/* Firma manuale admin */}
+            <div className="border-t pt-3">
+              <p className="text-xs text-muted-foreground mb-2">
+                Il cliente ha firmato in sede o non intende firmare digitalmente?
+              </p>
+              <Button
+                size="sm"
+                variant="outline"
+                className="gap-1.5 border-emerald-300 text-emerald-700 hover:bg-emerald-50"
+                disabled={isSignPending}
+                onClick={handleAdminSign}
+              >
+                {isSignPending
+                  ? <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                  : <PenLine className="h-3.5 w-3.5" />
+                }
+                Segna come firmato
+              </Button>
+            </div>
           </div>
         )}
 
@@ -196,14 +242,19 @@ export function WorkflowPanel({
               <div className="flex items-center gap-3">
                 <CheckCircle2 className="h-5 w-5 text-emerald-600 shrink-0" />
                 <div>
-                  <p className="text-sm font-semibold text-emerald-800">Verbale firmato dal cliente</p>
-                  <p className="text-xs text-emerald-700">
-                    {new Intl.DateTimeFormat("it-IT", {
-                      day: "2-digit", month: "2-digit", year: "numeric",
-                      hour: "2-digit", minute: "2-digit",
-                      timeZone: "Europe/Rome",
-                    }).format(new Date(clientSignedAt!))}
-                  </p>
+                  {localClientSigned ? (
+                    <>
+                      <p className="text-sm font-semibold text-emerald-800">Verbale firmato dal cliente</p>
+                      <p className="text-xs text-emerald-700">{dtFmt.format(new Date(localClientSigned))}</p>
+                    </>
+                  ) : (
+                    <>
+                      <p className="text-sm font-semibold text-emerald-800">Firmato (conferma admin)</p>
+                      <p className="text-xs text-emerald-700">
+                        {localAdminSigned ? dtFmt.format(new Date(localAdminSigned)) : ""}
+                      </p>
+                    </>
+                  )}
                 </div>
               </div>
               <a href={verbaleUrl} target="_blank" rel="noopener noreferrer">

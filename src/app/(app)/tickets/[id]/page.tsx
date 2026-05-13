@@ -46,6 +46,7 @@ export default async function TicketDetailPage({ params }: { params: Promise<{ i
       estimatedCost: tickets.estimatedCost,
       finalCost: tickets.finalCost,
       depositCents: tickets.depositCents,
+      quoteType: tickets.quoteType,
       qrToken: tickets.qrToken,
       quoteAcceptedAt: tickets.quoteAcceptedAt,
       quoteRejectedAt: tickets.quoteRejectedAt,
@@ -299,8 +300,13 @@ export default async function TicketDetailPage({ params }: { params: Promise<{ i
                 estimatedCost={ticket.estimatedCost}
                 finalCost={ticket.finalCost}
                 depositCents={ticket.depositCents}
+                quoteType={(ticket.quoteType as "definitive" | "provisional") ?? "definitive"}
                 accepted={ticket.quoteAcceptedAt != null}
                 rejected={ticket.quoteRejectedAt != null}
+                customerPhone={ticket.customerPhone ?? null}
+                customerName={ticket.customerName ?? null}
+                orgName={org?.name ?? null}
+                orgPhone={org?.phone ?? null}
               />
             </CardContent>
           </Card>

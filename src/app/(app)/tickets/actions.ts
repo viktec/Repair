@@ -269,6 +269,7 @@ export async function updateTicketCostAction(
   estimatedCostEuros: string,
   finalCostEuros: string,
   depositEuros: string,
+  quoteType: "definitive" | "provisional",
 ) {
   const session = await auth();
   if (!session?.user?.organizationId) redirect("/login");
@@ -281,7 +282,7 @@ export async function updateTicketCostAction(
 
   await db
     .update(tickets)
-    .set({ estimatedCost: estimatedCents, finalCost: finalCents, depositCents, updatedAt: new Date() })
+    .set({ estimatedCost: estimatedCents, finalCost: finalCents, depositCents, quoteType, updatedAt: new Date() })
     .where(and(eq(tickets.id, ticketId), eq(tickets.organizationId, session.user.organizationId)));
 
   revalidatePath(`/tickets/${ticketId}`);
