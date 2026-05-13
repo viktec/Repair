@@ -2,6 +2,7 @@
 
 import { useActionState, useState, useRef } from "react";
 import { submitSurveyAction, getAppraisalPhotoUploadUrl, saveAppraisalPhoto } from "./actions";
+import { toJpeg } from "@/lib/image-convert";
 import { Button } from "@/components/ui/button";
 import { Loader2, CheckCircle2, Camera, X, ImagePlus } from "lucide-react";
 type Props = {
@@ -50,11 +51,6 @@ export function SurveyForm({ token, brand, model, storageGb, alreadyCompleted, p
     if (!file) return;
     if (photos.length >= 5) return;
 
-    const allowed = ["image/jpeg", "image/png", "image/webp"];
-    if (!allowed.includes(file.type)) {
-      setPhotoError("Formato non supportato (usa JPG, PNG o WEBP).");
-      return;
-    }
     if (file.size > 10 * 1024 * 1024) {
       setPhotoError("Foto troppo grande (max 10MB).");
       return;
@@ -63,12 +59,17 @@ export function SurveyForm({ token, brand, model, storageGb, alreadyCompleted, p
     setPhotoError(null);
     setUploading(true);
     try {
-      const res = await getAppraisalPhotoUploadUrl(token, file.name, file.type);
+      const converted = await toJpeg(file);
+      if (converted.type !== "image/jpeg") {
+        setPhotoError("Formato non supportato su questo dispositivo. Usa JPG o PNG.");
+        return;
+      }
+      const res = await getAppraisalPhotoUploadUrl(token, converted.name, "image/jpeg");
       if (res.error || !res.uploadUrl || !res.key) {
         setPhotoError(res.error ?? "Errore upload.");
         return;
       }
-      await fetch(res.uploadUrl, { method: "PUT", body: file, headers: { "Content-Type": file.type } });
+      await fetch(res.uploadUrl, { method: "PUT", body: converted, headers: { "Content-Type": "image/jpeg" } });
       await saveAppraisalPhoto(token, res.key);
       setPhotos((prev) => [...prev, { key: res.key!, viewUrl: res.viewUrl! }]);
     } catch {
@@ -333,7 +334,7 @@ export function SurveyForm({ token, brand, model, storageGb, alreadyCompleted, p
             <input
               ref={fileInputRef}
               type="file"
-              accept="image/jpeg,image/png,image/webp"
+              accept="image/*"
               className="hidden"
               onChange={handlePhotoChange}
             />
