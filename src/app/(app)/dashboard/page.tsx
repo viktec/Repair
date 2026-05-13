@@ -1,7 +1,7 @@
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import {
-  organizations, tickets, customers, ticketStatuses, inventoryItems,
+  organizations, tickets, customers, ticketStatuses, inventoryItems, ticketParts,
 } from "@/db/schema";
 import { eq, and, isNull, count, sum, avg, sql, lte, gte, lt, gt } from "drizzle-orm";
 import { redirect } from "next/navigation";
@@ -42,6 +42,7 @@ export default async function DashboardPage() {
     avgTicketValue,
     lowStockItems,
     revenueByMonth,
+    materialCostsThisMonth,
     statusBreakdown,
   ] = await Promise.all([
     // Ticket aperti (stati non finali)
@@ -66,8 +67,8 @@ export default async function DashboardPage() {
       .where(and(eq(customers.organizationId, orgId), gte(customers.createdAt, startOfMonth)))
       .then((r) => r[0].c),
 
-    // Fatturato mese corrente
-    db.select({ total: sum(tickets.finalCost) }).from(tickets)
+    // Fatturato mese corrente — usa finalCost se disponibile, altrimenti estimatedCost
+    db.select({ total: sql<number>`coalesce(sum(coalesce(${tickets.finalCost}, ${tickets.estimatedCost})), 0)` }).from(tickets)
       .leftJoin(ticketStatuses, eq(ticketStatuses.id, tickets.statusId))
       .where(and(
         eq(tickets.organizationId, orgId),
@@ -78,7 +79,7 @@ export default async function DashboardPage() {
       .then((r) => Number(r[0].total ?? 0)),
 
     // Fatturato mese scorso (per confronto)
-    db.select({ total: sum(tickets.finalCost) }).from(tickets)
+    db.select({ total: sql<number>`coalesce(sum(coalesce(${tickets.finalCost}, ${tickets.estimatedCost})), 0)` }).from(tickets)
       .leftJoin(ticketStatuses, eq(ticketStatuses.id, tickets.statusId))
       .where(and(
         eq(tickets.organizationId, orgId),
@@ -89,9 +90,15 @@ export default async function DashboardPage() {
       ))
       .then((r) => Number(r[0].total ?? 0)),
 
-    // Valore medio ticket (con finalCost)
-    db.select({ avg: avg(tickets.finalCost) }).from(tickets)
-      .where(and(eq(tickets.organizationId, orgId), isNull(tickets.deletedAt), gt(tickets.finalCost, 0)))
+    // Valore medio ticket chiuso (finalCost ?? estimatedCost)
+    db.select({ avg: sql<number>`avg(coalesce(${tickets.finalCost}, ${tickets.estimatedCost}))` }).from(tickets)
+      .leftJoin(ticketStatuses, eq(ticketStatuses.id, tickets.statusId))
+      .where(and(
+        eq(tickets.organizationId, orgId),
+        isNull(tickets.deletedAt),
+        eq(ticketStatuses.isFinal, true),
+        sql`coalesce(${tickets.finalCost}, ${tickets.estimatedCost}) > 0`,
+      ))
       .then((r) => Number(r[0].avg ?? 0)),
 
     // Prodotti sotto scorta minima
@@ -104,10 +111,10 @@ export default async function DashboardPage() {
       ))
       .limit(5),
 
-    // Andamento fatturato ultimi 6 mesi
+    // Andamento fatturato ultimi 6 mesi (solo ticket chiusi, coalesce finalCost/estimatedCost)
     db.select({
-      month: sql<string>`to_char(date_trunc('month', ${tickets.createdAt}), 'Mon')`,
-      revenue: sql<number>`coalesce(sum(${tickets.finalCost}), 0)`,
+      month: sql<string>`to_char(date_trunc('month', ${tickets.updatedAt}), 'Mon')`,
+      revenue: sql<number>`coalesce(sum(coalesce(${tickets.finalCost}, ${tickets.estimatedCost})), 0)`,
       count: count(),
     })
       .from(tickets)
@@ -115,10 +122,24 @@ export default async function DashboardPage() {
       .where(and(
         eq(tickets.organizationId, orgId),
         isNull(tickets.deletedAt),
-        sql`${tickets.createdAt} >= now() - interval '6 months'`,
+        eq(ticketStatuses.isFinal, true),
+        sql`${tickets.updatedAt} >= now() - interval '6 months'`,
       ))
-      .groupBy(sql`date_trunc('month', ${tickets.createdAt})`)
-      .orderBy(sql`date_trunc('month', ${tickets.createdAt})`),
+      .groupBy(sql`date_trunc('month', ${tickets.updatedAt})`)
+      .orderBy(sql`date_trunc('month', ${tickets.updatedAt})`),
+
+    // Costo ricambi usati questo mese (da ticketParts su ticket chiusi)
+    db.select({ total: sql<number>`coalesce(sum(${ticketParts.unitCostCents} * ${ticketParts.quantity}), 0)` })
+      .from(ticketParts)
+      .leftJoin(tickets, eq(tickets.id, ticketParts.ticketId))
+      .leftJoin(ticketStatuses, eq(ticketStatuses.id, tickets.statusId))
+      .where(and(
+        eq(tickets.organizationId, orgId),
+        isNull(tickets.deletedAt),
+        eq(ticketStatuses.isFinal, true),
+        gte(ticketParts.createdAt, startOfMonth),
+      ))
+      .then((r) => Number(r[0].total ?? 0)),
 
     // Ticket per stato
     db.select({ statusName: ticketStatuses.name, statusColor: ticketStatuses.color, c: count() })
@@ -158,6 +179,14 @@ export default async function DashboardPage() {
       icon: TrendingUp,
       color: "text-purple-600",
       bg: "bg-purple-50",
+    },
+    {
+      label: "Costo ricambi",
+      value: formatEur(materialCostsThisMonth),
+      sub: "Ricambi usati questo mese",
+      icon: Wrench,
+      color: "text-orange-600",
+      bg: "bg-orange-50",
     },
     {
       label: "Nuovi clienti",
@@ -201,7 +230,7 @@ export default async function DashboardPage() {
       )}
 
       {/* KPI */}
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
         {kpis.map((k) => (
           <Card key={k.label}>
             <CardContent className="pt-5">

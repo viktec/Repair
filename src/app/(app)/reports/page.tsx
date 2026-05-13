@@ -61,12 +61,13 @@ export default async function ReportsPage({
       ))
       .then((r) => Number(r[0].c)),
 
-    db.select({ a: avg(tickets.finalCost) }).from(tickets)
+    db.select({ a: sql<number>`avg(coalesce(${tickets.finalCost}, ${tickets.estimatedCost}))` }).from(tickets)
       .leftJoin(ticketStatuses, eq(ticketStatuses.id, tickets.statusId))
       .where(and(
         eq(tickets.organizationId, orgId),
         isNull(tickets.deletedAt),
         eq(ticketStatuses.isFinal, true),
+        sql`coalesce(${tickets.finalCost}, ${tickets.estimatedCost}) > 0`,
       ))
       .then((r) => Number(r[0].a ?? 0)),
   ]);
@@ -176,7 +177,7 @@ export default async function ReportsPage({
       yr: sql<number>`extract(year from ${tickets.createdAt})`,
       mo: sql<number>`extract(month from ${tickets.createdAt})`,
       moLabel: sql<string>`to_char(date_trunc('month', ${tickets.createdAt}), 'Mon')`,
-      revenue: sql<number>`coalesce(sum(${tickets.finalCost}), 0)`,
+      revenue: sql<number>`coalesce(sum(coalesce(${tickets.finalCost}, ${tickets.estimatedCost})), 0)`,
     })
     .from(tickets)
     .leftJoin(ticketStatuses, eq(ticketStatuses.id, tickets.statusId))
