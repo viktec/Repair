@@ -268,6 +268,7 @@ export async function updateTicketCostAction(
   ticketId: string,
   estimatedCostEuros: string,
   finalCostEuros: string,
+  depositEuros: string,
 ) {
   const session = await auth();
   if (!session?.user?.organizationId) redirect("/login");
@@ -276,10 +277,11 @@ export async function updateTicketCostAction(
     ? Math.round(parseFloat(estimatedCostEuros) * 100)
     : null;
   const finalCents = finalCostEuros ? Math.round(parseFloat(finalCostEuros) * 100) : null;
+  const depositCents = depositEuros ? Math.round(parseFloat(depositEuros) * 100) : null;
 
   await db
     .update(tickets)
-    .set({ estimatedCost: estimatedCents, finalCost: finalCents, updatedAt: new Date() })
+    .set({ estimatedCost: estimatedCents, finalCost: finalCents, depositCents, updatedAt: new Date() })
     .where(and(eq(tickets.id, ticketId), eq(tickets.organizationId, session.user.organizationId)));
 
   revalidatePath(`/tickets/${ticketId}`);

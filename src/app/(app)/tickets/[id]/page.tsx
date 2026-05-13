@@ -45,6 +45,7 @@ export default async function TicketDetailPage({ params }: { params: Promise<{ i
       repairNotes: tickets.repairNotes,
       estimatedCost: tickets.estimatedCost,
       finalCost: tickets.finalCost,
+      depositCents: tickets.depositCents,
       qrToken: tickets.qrToken,
       quoteAcceptedAt: tickets.quoteAcceptedAt,
       quoteRejectedAt: tickets.quoteRejectedAt,
@@ -297,6 +298,7 @@ export default async function TicketDetailPage({ params }: { params: Promise<{ i
                 ticketId={ticket.id}
                 estimatedCost={ticket.estimatedCost}
                 finalCost={ticket.finalCost}
+                depositCents={ticket.depositCents}
                 accepted={ticket.quoteAcceptedAt != null}
                 rejected={ticket.quoteRejectedAt != null}
               />

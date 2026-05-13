@@ -208,6 +208,7 @@ export const tickets = pgTable("tickets", {
   repairNotes: text("repair_notes"),
   estimatedCost: integer("estimated_cost"),
   finalCost: integer("final_cost"),
+  depositCents: integer("deposit_cents"),
 
   qrToken: varchar("qr_token", { length: 32 }).notNull().unique(),
 
