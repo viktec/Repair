@@ -24,6 +24,7 @@ function formatTime(date: Date | string | null): string {
   return new Intl.DateTimeFormat("it-IT", {
     hour: "2-digit",
     minute: "2-digit",
+    timeZone: "Europe/Rome",
   }).format(new Date(date));
 }
 
@@ -393,7 +394,7 @@ export default async function PrintVerbale({
                   style={{ height: 52, maxWidth: "100%", objectFit: "contain", display: "block", marginBottom: 4 }}
                 />
                 <p style={{ fontSize: 9, color: "#666", margin: 0 }}>
-                  Firmato digitalmente il {new Intl.DateTimeFormat("it-IT", { day: "2-digit", month: "2-digit", year: "numeric", hour: "2-digit", minute: "2-digit" }).format(new Date(intervention.clientSignedAt!))}
+                  Firmato digitalmente il {new Intl.DateTimeFormat("it-IT", { day: "2-digit", month: "2-digit", year: "numeric", hour: "2-digit", minute: "2-digit", timeZone: "Europe/Rome" }).format(new Date(intervention.clientSignedAt!))}
                 </p>
               </>
             ) : (
