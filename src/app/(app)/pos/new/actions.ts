@@ -16,6 +16,8 @@ const itemSchema = z.object({
   unitPriceCents: z.coerce.number().int().min(0),
   discountPct: z.coerce.number().int().min(0).max(100).default(0),
   totalCents: z.coerce.number().int().min(0),
+  imei: z.string().max(50).optional().or(z.literal("")),
+  serialNumber: z.string().max(100).optional().or(z.literal("")),
 });
 
 export async function createTransactionAction(_prev: { error: string } | null, formData: FormData) {
@@ -46,6 +48,8 @@ export async function createTransactionAction(_prev: { error: string } | null, f
       unitPriceCents: formData.get(`items[${i}][unitPriceCents]`) as string,
       discountPct: formData.get(`items[${i}][discountPct]`) as string,
       totalCents: formData.get(`items[${i}][totalCents]`) as string,
+      imei: formData.get(`items[${i}][imei]`) as string,
+      serialNumber: formData.get(`items[${i}][serialNumber]`) as string,
     };
     const parsed = itemSchema.safeParse(raw);
     if (!parsed.success) return { error: `Riga ${i + 1} non valida.` };
@@ -89,6 +93,8 @@ export async function createTransactionAction(_prev: { error: string } | null, f
       unitPriceCents: it.unitPriceCents,
       discountPct: it.discountPct,
       totalCents: it.totalCents,
+      imei: it.imei || null,
+      serialNumber: it.serialNumber || null,
     })),
   );
 
