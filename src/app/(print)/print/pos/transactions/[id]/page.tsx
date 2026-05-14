@@ -95,7 +95,7 @@ export default async function PosPrintPage({ params, searchParams }: Props) {
       <>
         <style>{`@page { size: 58mm auto; margin: 0; }`}</style>
         <div className="print:hidden fixed top-0 left-0 right-0 z-50 flex items-center justify-between border-b bg-white px-4 py-2 shadow-sm text-sm">
-          <button onClick={() => window.close()} className="text-muted-foreground hover:underline text-xs">✕ Chiudi</button>
+          <a href={`/pos/transactions/${id}`} className="text-muted-foreground hover:underline text-xs">← Torna</a>
           <PrintButton label="Stampa" />
         </div>
         <div style={{ width: "58mm", padding: "3mm", fontFamily: "monospace", fontSize: 11, marginTop: 44 }} className="print:mt-0">
