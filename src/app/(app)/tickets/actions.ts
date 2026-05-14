@@ -300,6 +300,30 @@ export async function rejectQuoteAction(ticketId: string) {
   revalidatePath(`/tickets/${ticketId}`);
 }
 
+export async function undoRejectQuoteAction(ticketId: string) {
+  const session = await auth();
+  if (!session?.user?.organizationId) redirect("/login");
+
+  await db
+    .update(tickets)
+    .set({ quoteRejectedAt: null, updatedAt: new Date() })
+    .where(and(eq(tickets.id, ticketId), eq(tickets.organizationId, session.user.organizationId)));
+
+  revalidatePath(`/tickets/${ticketId}`);
+}
+
+export async function acceptQuoteAction(ticketId: string) {
+  const session = await auth();
+  if (!session?.user?.organizationId) redirect("/login");
+
+  await db
+    .update(tickets)
+    .set({ quoteAcceptedAt: new Date(), quoteTermsAcceptedAt: new Date(), updatedAt: new Date() })
+    .where(and(eq(tickets.id, ticketId), eq(tickets.organizationId, session.user.organizationId)));
+
+  revalidatePath(`/tickets/${ticketId}`);
+}
+
 export async function updateTicketNotesAction(ticketId: string, notes: string) {
   const session = await auth();
   if (!session?.user?.organizationId) redirect("/login");

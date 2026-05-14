@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { updateTicketCostAction, rejectQuoteAction } from "../actions";
+import { updateTicketCostAction, rejectQuoteAction, undoRejectQuoteAction, acceptQuoteAction } from "../actions";
 import { Pencil, Check, X, Loader2, Copy, MessageSquare } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
@@ -67,6 +67,19 @@ export function CostEditor({
     if (!window.confirm("Segnare il preventivo come rifiutato? Il ticket verrà escluso dal fatturato.")) return;
     startTransition(async () => {
       await rejectQuoteAction(ticketId);
+    });
+  }
+
+  function handleUndoReject() {
+    startTransition(async () => {
+      await undoRejectQuoteAction(ticketId);
+    });
+  }
+
+  function handleAccept() {
+    if (!window.confirm("Segnare il preventivo come accettato dal cliente?")) return;
+    startTransition(async () => {
+      await acceptQuoteAction(ticketId);
     });
   }
 
@@ -230,32 +243,48 @@ export function CostEditor({
             {estimatedCost != null ? fmt(estimatedCost) : <span className="italic text-muted-foreground">Non impostato</span>}
           </p>
           {estimatedCost != null && (
-            <div className="mt-1">
+            <div className="mt-1 space-y-1.5">
               {accepted && (
                 <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2 py-0.5 text-xs font-medium text-emerald-700">
                   ✅ Accettato dal cliente
                 </span>
               )}
               {rejected && (
-                <span className="inline-flex items-center gap-1 rounded-full bg-red-50 px-2 py-0.5 text-xs font-medium text-red-700">
-                  ❌ Rifiutato dal cliente
-                </span>
+                <div className="flex items-center gap-2 flex-wrap">
+                  <span className="inline-flex items-center gap-1 rounded-full bg-red-50 px-2 py-0.5 text-xs font-medium text-red-700">
+                    ❌ Rifiutato dal cliente
+                  </span>
+                  <button
+                    onClick={handleUndoReject}
+                    disabled={isPending}
+                    className="text-xs text-muted-foreground underline-offset-2 hover:underline disabled:opacity-50"
+                  >
+                    Annulla
+                  </button>
+                </div>
               )}
               {!accepted && !rejected && (
-                <span className="inline-flex items-center gap-1 rounded-full bg-amber-50 px-2 py-0.5 text-xs font-medium text-amber-700">
-                  ⏳ In attesa risposta
-                </span>
+                <div className="flex items-center gap-3 flex-wrap">
+                  <span className="inline-flex items-center gap-1 rounded-full bg-amber-50 px-2 py-0.5 text-xs font-medium text-amber-700">
+                    ⏳ In attesa risposta
+                  </span>
+                  <button
+                    onClick={handleAccept}
+                    disabled={isPending}
+                    className="text-xs text-emerald-700 underline-offset-2 hover:underline disabled:opacity-50"
+                  >
+                    Accetta manualmente
+                  </button>
+                  <button
+                    onClick={handleReject}
+                    disabled={isPending}
+                    className="text-xs text-red-600 underline-offset-2 hover:underline disabled:opacity-50"
+                  >
+                    Rifiuta / Riconsegna
+                  </button>
+                </div>
               )}
             </div>
-          )}
-          {estimatedCost != null && !accepted && !rejected && (
-            <button
-              onClick={handleReject}
-              disabled={isPending}
-              className="mt-2 text-xs text-red-600 underline-offset-2 hover:underline disabled:opacity-50"
-            >
-              Rifiutato / Riconsegnato
-            </button>
           )}
           {estimatedCost == null && (
             <button
