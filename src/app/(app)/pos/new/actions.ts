@@ -48,8 +48,8 @@ export async function createTransactionAction(_prev: { error: string } | null, f
       unitPriceCents: formData.get(`items[${i}][unitPriceCents]`) as string,
       discountPct: formData.get(`items[${i}][discountPct]`) as string,
       totalCents: formData.get(`items[${i}][totalCents]`) as string,
-      imei: formData.get(`items[${i}][imei]`) as string,
-      serialNumber: formData.get(`items[${i}][serialNumber]`) as string,
+      imei: (formData.get(`items[${i}][imei]`) ?? "") as string,
+      serialNumber: (formData.get(`items[${i}][serialNumber]`) ?? "") as string,
     };
     const parsed = itemSchema.safeParse(raw);
     if (!parsed.success) return { error: `Riga ${i + 1} non valida.` };
