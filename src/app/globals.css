@@ -69,11 +69,11 @@
   }
 }
 
-/* ── Stampa scontrino termico 80mm ────────────────────────────────────────── */
+/* ── Stampa scontrino termico 58mm ────────────────────────────────────────── */
 @media print {
   body.thermal-print {
-    width: 80mm;
-    max-width: 80mm;
+    width: 58mm;
+    max-width: 58mm;
     font-family: monospace;
     font-size: 10px;
     line-height: 1.4;

@@ -9,9 +9,13 @@ export function ReceiptPrintButtons() {
   }
 
   function printThermal() {
+    const style = document.createElement("style");
+    style.textContent = "@page { size: 58mm auto; margin: 0; }";
+    document.head.appendChild(style);
     document.body.classList.add("thermal-print");
     window.addEventListener("afterprint", () => {
       document.body.classList.remove("thermal-print");
+      style.remove();
     }, { once: true });
     window.print();
   }
