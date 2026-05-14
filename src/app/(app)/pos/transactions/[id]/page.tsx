@@ -103,7 +103,7 @@ export default async function TransactionReceiptPage({ params }: Props) {
           </Link>
           <h1 className="text-xl font-bold">Scontrino {receiptLabel}</h1>
         </div>
-        <ReceiptPrintButtons />
+        <ReceiptPrintButtons transactionId={tx.id} />
       </div>
 
       {/* Scontrino */}
