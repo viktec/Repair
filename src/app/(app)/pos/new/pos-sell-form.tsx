@@ -24,6 +24,8 @@ type CartLine = {
   qty: number;
   unitPriceCents: number;
   discountPct: number;
+  imei: string;
+  serialNumber: string;
 };
 
 function lineTotalCents(l: CartLine): number {
@@ -50,6 +52,7 @@ export function PosSellForm({
 }) {
   const [state, action, pending] = useActionState(createTransactionAction, null);
   const [cart, setCart] = useState<CartLine[]>([]);
+  const [expandedSerials, setExpandedSerials] = useState<Set<number>>(new Set());
   const [search, setSearch] = useState("");
   const [paymentMethod, setPaymentMethod] = useState<string>("cash");
   const [customerId, setCustomerId] = useState<string>("");
@@ -84,12 +87,31 @@ export function PosSellForm({
         qty: 1,
         unitPriceCents: item.sellPriceCents ?? 0,
         discountPct: 0,
+        imei: "",
+        serialNumber: "",
       }];
     });
   }, []);
 
   function addManualLine() {
-    setCart((prev) => [...prev, { inventoryItemId: null, description: "", qty: 1, unitPriceCents: 0, discountPct: 0 }]);
+    setCart((prev) => [...prev, {
+      inventoryItemId: null,
+      description: "",
+      qty: 1,
+      unitPriceCents: 0,
+      discountPct: 0,
+      imei: "",
+      serialNumber: "",
+    }]);
+  }
+
+  function toggleSerial(i: number) {
+    setExpandedSerials((prev) => {
+      const next = new Set(prev);
+      if (next.has(i)) next.delete(i);
+      else next.add(i);
+      return next;
+    });
   }
 
   function updateLine(i: number, patch: Partial<CartLine>) {
@@ -116,6 +138,8 @@ export function PosSellForm({
           <input type="hidden" name={`items[${i}][unitPriceCents]`} value={l.unitPriceCents} />
           <input type="hidden" name={`items[${i}][discountPct]`} value={l.discountPct} />
           <input type="hidden" name={`items[${i}][totalCents]`} value={lineTotalCents(l)} />
+          <input type="hidden" name={`items[${i}][imei]`} value={l.imei} />
+          <input type="hidden" name={`items[${i}][serialNumber]`} value={l.serialNumber} />
         </span>
       ))}
 
@@ -187,50 +211,87 @@ export function PosSellForm({
             </div>
           ) : (
             cart.map((l, i) => (
-              <div key={i} className="grid sm:grid-cols-[1fr_80px_110px_70px_32px] gap-2 items-center px-4 py-2 border-b last:border-0">
-                <Input
-                  value={l.description}
-                  onChange={(e) => updateLine(i, { description: e.target.value })}
-                  placeholder="Descrizione"
-                  className="text-sm"
-                  required
-                />
-                <Input
-                  type="number"
-                  min="1"
-                  value={l.qty}
-                  onChange={(e) => updateLine(i, { qty: Math.max(1, parseInt(e.target.value) || 1) })}
-                  className="text-center"
-                />
-                <div className="relative">
-                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground text-sm">€</span>
+              <div key={i} className="border-b last:border-0 px-4 py-2 space-y-2">
+                {/* riga principale */}
+                <div className="grid sm:grid-cols-[1fr_80px_110px_70px_32px] gap-2 items-center">
+                  <Input
+                    value={l.description}
+                    onChange={(e) => updateLine(i, { description: e.target.value })}
+                    placeholder="Descrizione"
+                    className="text-sm"
+                    required
+                  />
                   <Input
                     type="number"
-                    min="0"
-                    step="0.01"
-                    value={(l.unitPriceCents / 100).toFixed(2)}
-                    onChange={(e) => updateLine(i, { unitPriceCents: Math.round(parseFloat(e.target.value || "0") * 100) })}
-                    className="pl-7 text-right"
+                    min="1"
+                    value={l.qty}
+                    onChange={(e) => updateLine(i, { qty: Math.max(1, parseInt(e.target.value) || 1) })}
+                    className="text-center"
                   />
+                  <div className="relative">
+                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground text-sm">€</span>
+                    <Input
+                      type="number"
+                      min="0"
+                      step="0.01"
+                      value={(l.unitPriceCents / 100).toFixed(2)}
+                      onChange={(e) => updateLine(i, { unitPriceCents: Math.round(parseFloat(e.target.value || "0") * 100) })}
+                      className="pl-7 text-right"
+                    />
+                  </div>
+                  <div className="relative">
+                    <Input
+                      type="number"
+                      min="0"
+                      max="100"
+                      value={l.discountPct}
+                      onChange={(e) => updateLine(i, { discountPct: Math.min(100, Math.max(0, parseInt(e.target.value) || 0)) })}
+                      className="text-center pr-6"
+                    />
+                    <span className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground text-xs">%</span>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => removeLine(i)}
+                    className="p-1 rounded text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors"
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </button>
                 </div>
-                <div className="relative">
-                  <Input
-                    type="number"
-                    min="0"
-                    max="100"
-                    value={l.discountPct}
-                    onChange={(e) => updateLine(i, { discountPct: Math.min(100, Math.max(0, parseInt(e.target.value) || 0)) })}
-                    className="text-center pr-6"
-                  />
-                  <span className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground text-xs">%</span>
+                {/* sezione seriali espandibile */}
+                <div>
+                  <button
+                    type="button"
+                    onClick={() => toggleSerial(i)}
+                    className="text-xs text-muted-foreground hover:text-foreground transition-colors flex items-center gap-1"
+                  >
+                    {expandedSerials.has(i) ? "− Seriale" : "+ Seriale"}
+                  </button>
+                  {expandedSerials.has(i) && (
+                    <div className="grid grid-cols-2 gap-2 mt-1.5">
+                      <div>
+                        <p className="text-[10px] text-muted-foreground uppercase tracking-wide mb-0.5">IMEI</p>
+                        <Input
+                          value={l.imei}
+                          onChange={(e) => updateLine(i, { imei: e.target.value })}
+                          placeholder="es. 356938035643809"
+                          className="text-xs font-mono h-8"
+                          maxLength={50}
+                        />
+                      </div>
+                      <div>
+                        <p className="text-[10px] text-muted-foreground uppercase tracking-wide mb-0.5">S/N</p>
+                        <Input
+                          value={l.serialNumber}
+                          onChange={(e) => updateLine(i, { serialNumber: e.target.value })}
+                          placeholder="Numero seriale"
+                          className="text-xs font-mono h-8"
+                          maxLength={100}
+                        />
+                      </div>
+                    </div>
+                  )}
                 </div>
-                <button
-                  type="button"
-                  onClick={() => removeLine(i)}
-                  className="p-1 rounded text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors"
-                >
-                  <Trash2 className="h-4 w-4" />
-                </button>
               </div>
             ))
           )}
