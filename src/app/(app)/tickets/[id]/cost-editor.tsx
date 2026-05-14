@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { updateTicketCostAction } from "../actions";
+import { updateTicketCostAction, rejectQuoteAction } from "../actions";
 import { Pencil, Check, X, Loader2, Copy, MessageSquare } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
@@ -60,6 +60,13 @@ export function CostEditor({
     startTransition(async () => {
       await updateTicketCostAction(ticketId, estValue, finalValue, depositValue, currentQuoteType);
       setEditing(false);
+    });
+  }
+
+  function handleReject() {
+    if (!window.confirm("Segnare il preventivo come rifiutato? Il ticket verrà escluso dal fatturato.")) return;
+    startTransition(async () => {
+      await rejectQuoteAction(ticketId);
     });
   }
 
@@ -241,6 +248,15 @@ export function CostEditor({
               )}
             </div>
           )}
+          {estimatedCost != null && !accepted && !rejected && (
+            <button
+              onClick={handleReject}
+              disabled={isPending}
+              className="mt-2 text-xs text-red-600 underline-offset-2 hover:underline disabled:opacity-50"
+            >
+              Rifiutato / Riconsegnato
+            </button>
+          )}
           {estimatedCost == null && (
             <button
               onClick={() => setEditing(true)}
@@ -297,7 +313,7 @@ export function CostEditor({
       )}
 
       {/* Deposit request (remote) */}
-      {estimatedCost != null && depositAmountCents != null && (depositCents == null || depositCents === 0) && (
+      {estimatedCost != null && depositAmountCents != null && finalCost == null && (depositCents == null || depositCents === 0) && (
         <div className="rounded-md border border-blue-200 bg-blue-50 p-3 space-y-2">
           <p className="text-xs font-semibold text-blue-800">Richiesta acconto (50%)</p>
           <pre className="whitespace-pre-wrap text-xs text-blue-900 font-sans leading-relaxed">

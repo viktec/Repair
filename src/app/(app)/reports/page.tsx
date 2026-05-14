@@ -66,6 +66,7 @@ export default async function ReportsPage({
       .where(and(
         eq(tickets.organizationId, orgId),
         isNull(tickets.deletedAt),
+        isNull(tickets.quoteRejectedAt),
         eq(ticketStatuses.isFinal, true),
         sql`coalesce(${tickets.finalCost}, ${tickets.estimatedCost}) > 0`,
       ))
@@ -184,6 +185,7 @@ export default async function ReportsPage({
     .where(and(
       eq(tickets.organizationId, orgId),
       isNull(tickets.deletedAt),
+      isNull(tickets.quoteRejectedAt),
       eq(ticketStatuses.isFinal, true),
       sql`${tickets.createdAt} >= now() - interval '3 years'`,
     ))

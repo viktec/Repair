@@ -73,6 +73,7 @@ export default async function DashboardPage() {
       .where(and(
         eq(tickets.organizationId, orgId),
         isNull(tickets.deletedAt),
+        isNull(tickets.quoteRejectedAt),
         eq(ticketStatuses.isFinal, true),
         gte(tickets.updatedAt, startOfMonth),
       ))
@@ -84,6 +85,7 @@ export default async function DashboardPage() {
       .where(and(
         eq(tickets.organizationId, orgId),
         isNull(tickets.deletedAt),
+        isNull(tickets.quoteRejectedAt),
         eq(ticketStatuses.isFinal, true),
         gte(tickets.updatedAt, startOfLastMonth),
         lt(tickets.updatedAt, startOfMonth),
@@ -96,6 +98,7 @@ export default async function DashboardPage() {
       .where(and(
         eq(tickets.organizationId, orgId),
         isNull(tickets.deletedAt),
+        isNull(tickets.quoteRejectedAt),
         eq(ticketStatuses.isFinal, true),
         sql`coalesce(${tickets.finalCost}, ${tickets.estimatedCost}) > 0`,
       ))
@@ -122,6 +125,7 @@ export default async function DashboardPage() {
       .where(and(
         eq(tickets.organizationId, orgId),
         isNull(tickets.deletedAt),
+        isNull(tickets.quoteRejectedAt),
         eq(ticketStatuses.isFinal, true),
         sql`${tickets.updatedAt} >= now() - interval '6 months'`,
       ))

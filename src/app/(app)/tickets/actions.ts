@@ -288,6 +288,18 @@ export async function updateTicketCostAction(
   revalidatePath(`/tickets/${ticketId}`);
 }
 
+export async function rejectQuoteAction(ticketId: string) {
+  const session = await auth();
+  if (!session?.user?.organizationId) redirect("/login");
+
+  await db
+    .update(tickets)
+    .set({ quoteRejectedAt: new Date(), updatedAt: new Date() })
+    .where(and(eq(tickets.id, ticketId), eq(tickets.organizationId, session.user.organizationId)));
+
+  revalidatePath(`/tickets/${ticketId}`);
+}
+
 export async function updateTicketNotesAction(ticketId: string, notes: string) {
   const session = await auth();
   if (!session?.user?.organizationId) redirect("/login");
