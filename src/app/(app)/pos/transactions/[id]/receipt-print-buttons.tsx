@@ -10,8 +10,10 @@ export function ReceiptPrintButtons() {
 
   function printThermal() {
     document.body.classList.add("thermal-print");
+    window.addEventListener("afterprint", () => {
+      document.body.classList.remove("thermal-print");
+    }, { once: true });
     window.print();
-    document.body.classList.remove("thermal-print");
   }
 
   return (

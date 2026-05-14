@@ -120,6 +120,14 @@ export function PosSellForm({
 
   function removeLine(i: number) {
     setCart((prev) => prev.filter((_, idx) => idx !== i));
+    setExpandedSerials((prev) => {
+      const next = new Set<number>();
+      for (const idx of prev) {
+        if (idx < i) next.add(idx);
+        else if (idx > i) next.add(idx - 1);
+      }
+      return next;
+    });
   }
 
   const grandTotal = cart.reduce((s, l) => s + lineTotalCents(l), 0);
