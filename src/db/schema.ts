@@ -418,6 +418,8 @@ export const posTransactionItems = pgTable("pos_transaction_items", {
   unitPriceCents: integer("unit_price_cents").notNull(),
   discountPct: integer("discount_pct").notNull().default(0),
   totalCents: integer("total_cents").notNull(),
+  imei: varchar("imei", { length: 50 }),
+  serialNumber: varchar("serial_number", { length: 100 }),
   createdAt: timestamp("created_at").notNull().defaultNow(),
 });
 
