@@ -8,6 +8,8 @@ import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { EditRegistryForm } from "./edit-form";
+import { RegistryPhotoUpload } from "../registry-photo-upload";
+import { getPresignedDownloadUrl } from "@/lib/storage";
 
 export default async function EditRegistryEntryPage({ params }: { params: Promise<{ id: string }> }) {
   const session = await requirePlan("business");
@@ -23,6 +25,11 @@ export default async function EditRegistryEntryPage({ params }: { params: Promis
 
   if (!entry) notFound();
 
+  const photoKeys: string[] = entry.photoKeys ? JSON.parse(entry.photoKeys) : [];
+  const initialPhotos = await Promise.all(
+    photoKeys.map(async (key) => ({ key, url: await getPresignedDownloadUrl(key) })),
+  );
+
   return (
     <div className="mx-auto max-w-2xl space-y-6">
       <div className="flex items-center gap-3">
@@ -36,6 +43,7 @@ export default async function EditRegistryEntryPage({ params }: { params: Promis
         </h1>
       </div>
       <EditRegistryForm entry={entry} />
+      <RegistryPhotoUpload entryId={entry.id} initialPhotos={initialPhotos} />
     </div>
   );
 }

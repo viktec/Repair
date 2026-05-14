@@ -1,0 +1,1 @@
+ALTER TABLE "used_items_registry" ADD COLUMN "photo_keys" text;

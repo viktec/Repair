@@ -495,6 +495,7 @@ export const usedItemsRegistry = pgTable("used_items_registry", {
   purchasePriceCents: integer("purchase_price_cents"),
   sellPriceCents: integer("sell_price_cents"),
   notes: text("notes"),
+  photoKeys: text("photo_keys"),
   createdAt: timestamp("created_at").notNull().defaultNow(),
 });
 
