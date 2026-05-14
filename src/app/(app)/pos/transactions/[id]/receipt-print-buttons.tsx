@@ -1,0 +1,29 @@
+"use client";
+
+import { Button } from "@/components/ui/button";
+import { Printer } from "lucide-react";
+
+export function ReceiptPrintButtons() {
+  function printA4() {
+    window.print();
+  }
+
+  function printThermal() {
+    document.body.classList.add("thermal-print");
+    window.print();
+    document.body.classList.remove("thermal-print");
+  }
+
+  return (
+    <div className="flex gap-2 print:hidden">
+      <Button variant="outline" className="gap-2" onClick={printA4}>
+        <Printer className="h-4 w-4" />
+        Stampa A4
+      </Button>
+      <Button variant="outline" className="gap-2" onClick={printThermal}>
+        <Printer className="h-4 w-4" />
+        Stampa termica
+      </Button>
+    </div>
+  );
+}
