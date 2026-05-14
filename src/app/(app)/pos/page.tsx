@@ -3,7 +3,7 @@ import { db } from "@/lib/db";
 import { requirePlan } from "@/lib/require-plan";
 import { posTransactions, customers, posSessions, users } from "@/db/schema";
 import { eq, and, desc, sum, count, isNull } from "drizzle-orm";
-import { ShoppingCart, Plus, History, BarChart2 } from "lucide-react";
+import { ShoppingCart, Plus, History, BarChart2, Receipt } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -211,6 +211,7 @@ export default async function PosPage() {
                     <th className="pb-2">Pagamento</th>
                     <th className="pb-2 text-right">Importo</th>
                     <th className="pb-2 text-right">Data</th>
+                    <th className="pb-2" />
                   </tr>
                 </thead>
                 <tbody>
@@ -223,6 +224,13 @@ export default async function PosPage() {
                       <td className="py-2 text-muted-foreground">{methodLabels[t.paymentMethod] ?? t.paymentMethod}</td>
                       <td className="py-2 text-right font-medium">{formatCurrency(t.totalCents)}</td>
                       <td className="py-2 text-right text-muted-foreground">{formatDate(t.createdAt)}</td>
+                      <td className="py-2 text-right">
+                        <Link href={`/pos/transactions/${t.id}`}>
+                          <Button variant="ghost" size="icon" className="h-7 w-7" title="Visualizza scontrino">
+                            <Receipt className="h-3.5 w-3.5" />
+                          </Button>
+                        </Link>
+                      </td>
                     </tr>
                   ))}
                 </tbody>
