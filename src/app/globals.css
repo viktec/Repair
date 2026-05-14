@@ -68,3 +68,36 @@
     font-feature-settings: "rlig" 1, "calt" 1;
   }
 }
+
+/* ── Stampa scontrino termico 80mm ────────────────────────────────────────── */
+@media print {
+  body.thermal-print {
+    width: 80mm;
+    max-width: 80mm;
+    font-family: monospace;
+    font-size: 10px;
+    line-height: 1.4;
+    margin: 0;
+    padding: 2mm;
+    color: #000;
+    background: #fff;
+  }
+
+  body.thermal-print .receipt-no-thermal {
+    display: none !important;
+  }
+
+  body.thermal-print .receipt-table th,
+  body.thermal-print .receipt-table td {
+    padding: 1px 2px;
+    font-size: 9px;
+  }
+
+  body.thermal-print .receipt-total {
+    font-size: 12px;
+    font-weight: bold;
+    border-top: 1px dashed #000;
+    padding-top: 2mm;
+    margin-top: 1mm;
+  }
+}
