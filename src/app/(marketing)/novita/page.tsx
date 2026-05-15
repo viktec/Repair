@@ -30,7 +30,7 @@ type Release = {
 const releases: Release[] = [
   {
     version: "1.5",
-    date: "2025-05-01",
+    date: "2026-05-14",
     label: "new",
     title: "Registro Usato & Permessi granulari",
     changes: [
@@ -42,7 +42,7 @@ const releases: Release[] = [
   },
   {
     version: "1.4",
-    date: "2025-04-15",
+    date: "2026-05-08",
     label: "new",
     title: "Report avanzati & Storico IMEI",
     changes: [
@@ -54,7 +54,7 @@ const releases: Release[] = [
   },
   {
     version: "1.3",
-    date: "2025-03-20",
+    date: "2026-05-05",
     label: "new",
     title: "Cassa POS & Fornitori",
     changes: [
@@ -66,7 +66,7 @@ const releases: Release[] = [
   },
   {
     version: "1.2",
-    date: "2025-02-10",
+    date: "2026-05-02",
     label: "new",
     title: "Assistenza Business & Verbale digitale",
     changes: [
@@ -78,7 +78,7 @@ const releases: Release[] = [
   },
   {
     version: "1.1",
-    date: "2025-01-15",
+    date: "2026-04-30",
     label: "improved",
     title: "Magazzino, inviti team & dashboard",
     changes: [
@@ -90,7 +90,7 @@ const releases: Release[] = [
   },
   {
     version: "1.0",
-    date: "2024-12-01",
+    date: "2026-04-28",
     label: "new",
     title: "Lancio — Ticket, Clienti & QR tracking",
     changes: [
