@@ -2,8 +2,8 @@
 
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
-import { users, organizations } from "@/db/schema";
-import { eq } from "drizzle-orm";
+import { users, organizations, platformConfig } from "@/db/schema";
+import { eq, sql } from "drizzle-orm";
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 
@@ -39,4 +39,14 @@ export async function updateOrgPlanAction(
     .where(eq(organizations.id, orgId));
   revalidatePath("/admin");
   revalidatePath(`/admin/orgs/${orgId}`);
+}
+
+export async function setPricingVisibleAction(visible: boolean) {
+  await assertSuperAdmin();
+  await db
+    .insert(platformConfig)
+    .values({ id: 1, showPricing: visible })
+    .onConflictDoUpdate({ target: platformConfig.id, set: { showPricing: visible } });
+  revalidatePath("/");
+  revalidatePath("/admin");
 }

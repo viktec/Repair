@@ -6,6 +6,9 @@ import {
   CheckCircle2,
 } from "lucide-react";
 import { PricingSection } from "@/app/pricing-section";
+import { db } from "@/lib/db";
+import { platformConfig } from "@/db/schema";
+import { eq } from "drizzle-orm";
 
 export const metadata: Metadata = {
   title: "My-Repair — Gestionale per centri di riparazione smartphone, PC e TV",
@@ -93,7 +96,10 @@ const whyUs = [
   "Installato in 5 minuti, dati sempre tuoi",
 ];
 
-export default function MarketingHome() {
+export default async function MarketingHome() {
+  const [configRow] = await db.select().from(platformConfig).where(eq(platformConfig.id, 1)).limit(1);
+  const showPricing = configRow?.showPricing ?? false;
+
   return (
     <>
       <script
@@ -227,7 +233,34 @@ export default function MarketingHome() {
       </section>
 
       {/* Pricing */}
-      <PricingSection />
+      {showPricing ? (
+        <PricingSection />
+      ) : (
+        <section id="pricing" className="py-20 bg-gradient-to-b from-white to-slate-50">
+          <div className="container text-center max-w-2xl mx-auto">
+            <span className="inline-block rounded-full bg-emerald-100 px-4 py-1 text-xs font-semibold text-emerald-700 mb-4">
+              Accesso gratuito
+            </span>
+            <h2 className="text-3xl font-bold md:text-4xl">Inizia gratis, subito</h2>
+            <p className="mt-4 text-muted-foreground text-lg">
+              Nessuna carta di credito. Nessun impegno. Attivo in 5 minuti.
+            </p>
+            <ul className="mt-8 flex flex-col sm:flex-row justify-center gap-4 text-sm text-muted-foreground">
+              {["Ticket illimitati", "Clienti illimitati", "Magazzino e cassa inclusi", "Supporto via email"].map((f) => (
+                <li key={f} className="flex items-center gap-1.5 justify-center">
+                  <CheckCircle2 className="h-4 w-4 text-emerald-500 shrink-0" />
+                  {f}
+                </li>
+              ))}
+            </ul>
+            <Link href="/register" className="mt-10 inline-block">
+              <button className="rounded-xl bg-primary px-10 py-4 text-base font-semibold text-white shadow-lg shadow-primary/30 hover:bg-primary/90 transition-colors">
+                Crea il tuo account gratis →
+              </button>
+            </Link>
+          </div>
+        </section>
+      )}
 
       {/* Final CTA */}
       <section className="bg-gradient-to-r from-teal-700 to-emerald-600 py-20 text-white">

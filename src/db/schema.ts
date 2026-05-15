@@ -855,3 +855,9 @@ export const blogPosts = pgTable("blog_posts", {
   createdAt: timestamp("created_at").notNull().defaultNow(),
   updatedAt: timestamp("updated_at").notNull().defaultNow(),
 });
+
+// ─── Platform config (single row, id = 1) ────────────────────────────────────
+export const platformConfig = pgTable("platform_config", {
+  id: integer("id").primaryKey().default(1),
+  showPricing: boolean("show_pricing").notNull().default(false),
+});

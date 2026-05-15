@@ -1,12 +1,16 @@
 import { db } from "@/lib/db";
-import { organizations, users, tickets } from "@/db/schema";
+import { organizations, users, tickets, platformConfig } from "@/db/schema";
 import { count, isNull, eq } from "drizzle-orm";
 import Link from "next/link";
 import { Building2, Users, Ticket, Clock } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { formatDate } from "@/lib/utils";
+import { PricingToggle } from "./pricing-toggle";
 
 export default async function AdminDashboardPage() {
+  const [configRow] = await db.select().from(platformConfig).where(eq(platformConfig.id, 1)).limit(1);
+  const showPricing = configRow?.showPricing ?? false;
+
   const [orgCount, userCount, ticketCount, pendingCount] = await Promise.all([
     db.select({ total: count() }).from(organizations).then((r) => r[0].total),
     db.select({ total: count() }).from(users).then((r) => r[0].total),
@@ -76,6 +80,16 @@ export default async function AdminDashboardPage() {
           </div>
         </Link>
       )}
+
+      {/* Impostazioni sito */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-sm font-medium text-muted-foreground">Impostazioni sito marketing</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <PricingToggle showPricing={showPricing} />
+        </CardContent>
+      </Card>
 
       {/* KPI */}
       <div className="grid gap-4 sm:grid-cols-3">
