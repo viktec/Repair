@@ -97,8 +97,13 @@ const whyUs = [
 ];
 
 export default async function MarketingHome() {
-  const [configRow] = await db.select().from(platformConfig).where(eq(platformConfig.id, 1)).limit(1);
-  const showPricing = configRow?.showPricing ?? false;
+  let showPricing = false;
+  try {
+    const [configRow] = await db.select().from(platformConfig).where(eq(platformConfig.id, 1)).limit(1);
+    showPricing = configRow?.showPricing ?? false;
+  } catch {
+    // DB non disponibile in fase di build — default a false
+  }
 
   return (
     <>
